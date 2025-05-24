@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Присоединиться к сессии</title>
+  <style>
+    body { font-family: sans-serif; background: #f5f5f5; margin: 0; }
+    .container {
+      max-width: 340px;
+      margin: 60px auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      padding: 32px 24px 24px 24px;
+      text-align: center;
+    }
+    h2 { margin-top: 0; }
+    label { display: block; margin: 18px 0 6px; text-align: left; }
+    input {
+      width: 100%;
+      padding: 8px;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 18px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #007aff;
+      color: #fff;
+      border: none;
+      padding: 10px 24px;
+      font-size: 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    button:hover { background: #005ecb; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Присоединиться к сессии</h2>
+    <label>Ваш никнейм:</label>
+    <input id="nickname" placeholder="Введите имя">
+    <button id="btnJoin">Присоединиться</button>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+
+    // Проверка валидности токена
+    const invites = JSON.parse(localStorage.getItem('invites') || '{}');
+    if (!token || !invites[token]) {
+      document.querySelector('.container').innerHTML = '<div style="color:red;margin:24px 0;">Некорректная или устаревшая ссылка приглашения.</div>';
+    } else {
+      document.getElementById('btnJoin').onclick = () => {
+        const nick = document.getElementById('nickname').value.trim() || 'Гость';
+        // Сохраняем участника в localStorage
+        const key = 'participants_' + token;
+        let arr = [];
+        try { arr = JSON.parse(localStorage.getItem(key) || '[]'); } catch {}
+        arr.push({ nick, choice: null });
+        localStorage.setItem(key, JSON.stringify(arr));
+        // Переход на main.html с токеном
+        location.href = `main.html?token=${token}`;
+      };
+    }
+  </script>
+</body>
+</html>

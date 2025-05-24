@@ -1,0 +1,482 @@
+[
+  {
+    "id": "sergiev-posad",
+    "base_city": "Москва",
+    "start_coords": [55.7558, 37.6173],
+    "title": "48 часов в Сергиевом Посаде",
+    "duration_days": 2,
+    "transport": {
+      "options": [
+        {
+          "mode": "электричка",
+          "there": { "from": "Ярославский вокзал", "to": "Сергиев Посад", "time_min": 80, "cost_rub": 200 },
+          "back":  { "from": "Сергиев Посад", "to": "Ярославский вокзал", "time_min": 80, "cost_rub": 200 }
+        },
+        {
+          "mode": "автобус",
+          "there": { "from": "Строгино", "to": "Сергиев Посад", "time_min": 120, "cost_rub": 150 },
+          "back":  { "from": "Сергиев Посад", "to": "Москва (ост. Строгино)", "time_min": 120, "cost_rub": 150 }
+        },
+        {
+          "mode": "такси",
+          "there": { "from": "Москва, любой район", "to": "Сергиев Посад", "time_min": 70, "cost_rub": 2500 },
+          "back":  { "from": "Сергиев Посад", "to": "Любой район Москвы", "time_min": 70, "cost_rub": 2500 }
+        }
+      ],
+      "mixed_option": "there: электричка; back: автобус"
+    },
+    "estimated_budget_rub": 3000,
+    "day_variants": [
+      {                       
+        "day": 1,
+        "variants": [
+          {
+            "variant_id": "1A",
+            "name": "Кремль + музеи",
+            "est_budget": 2600,
+            "segments": [
+              {
+                "poi": {
+                  "poi_id": "sp01",
+                  "name": "Троице-Сергиева лавра",
+                  "coords": [56.3153, 38.1306],
+                  "must_see": true
+                },
+                "arrival_window": "10:00–12:00",
+                "opening_hours": {
+                  "mon-fri": "10:00–18:00",
+                  "sat-sun": "10:00–19:00",
+                  "closed": ["2025-01-01", "2025-05-09"]
+                },
+                "tickets": [
+                  { "type": "adult", "price_rub": 500, "booking_url": "https://..." },
+                  { "type": "child", "price_rub": 250 },
+                  { "type": "group", "price_rub": 400, "min_group_size": 10 }
+                ],
+
+                "rating": 4.7,
+                "reviews": [
+                  { "author": "Ирина", "text": "Очень познавательно!", "date": "2025-04-10" },
+                  { "author": "Алексей", "text": "Любопытная ночная экскурсия", "date": "2025-03-21" }
+                ]
+              },
+              {
+                "meal": {
+                  "type": "lunch",
+                  "options": [
+                    { "name": "Трапезная Лавры", "coords": [56.3150, 38.1300], "avg_check_rub": 700 },
+                    { "name": "Кафе «Сергиевский дворик»", "coords": [56.3160, 38.1320], "avg_check_rub": 500 }
+                  ]
+                },
+                "time_window": "12:00–13:30"
+              },
+              {
+                "poi": {
+                  "poi_id": "sp02",
+                  "name": "Улица Купеческий Посад",
+                  "coords": [56.3158, 38.1375]
+                },
+                "arrival_window": "13:45–15:00"
+              },
+              {
+                "poi": {
+                  "poi_id": "sp03",
+                  "name": "Музей Загорской иконописи",
+                  "coords": [56.3161, 38.1389]
+                },
+                "arrival_window": "15:15–17:00"
+              },
+              {
+                "meal": {
+                  "type": "dinner",
+                  "options": [
+                    { "name": "Ресторан «Лавра Гриль»", "coords": [56.3145, 38.1390], "avg_check_rub": 1000 },
+                    { "name": "Гастропаб «Сергиевский»",  "coords": [56.3155, 38.1365], "avg_check_rub": 800 }
+                  ]
+                },
+                "time_window": "18:00–20:00"
+              }
+            ],
+            "lodging_options": [
+            {
+              "name": "Гостиница «Лавра Плаза»",
+              "coords": [56.3155, 38.1310],
+              "avg_price_rub_per_night": 2500,
+              "type": "отель",
+              "distance_min_from_center": 2
+            },
+            {
+              "name": "Глэмпинг на берегу пруда",
+              "coords": [56.3180, 38.1280],
+              "avg_price_rub_per_night": 1800,
+              "type": "глэмпинг",
+              "distance_min_from_center": 5
+            },
+            {
+              "name": "Апартаменты «Сергиевский дом»",
+              "coords": [56.3140, 38.1350],
+              "avg_price_rub_per_night": 2000,
+              "type": "апарт-отель",
+              "distance_min_from_center": 1
+            }
+          ]
+          },
+          {
+            "variant_id": "1B",
+            "name": "Абрамцево + горячие пироги",
+            "est_budget": 3000,
+            "segments": [
+              { "poi": { "poi_id":"ab01","name":"Усадьба Абрамцево","coords":[56.2619,38.1192],"must_see":true },
+                "arrival_window":"10:00–13:00" },
+              { "meal": { "type":"lunch","options":[
+                { "name":"Корчма «Трактир»","avg_check_rub":600,"coords":[56.2610,38.1210] } ] },
+                "time_window":"13:15–14:15" },
+              { "poi": { "poi_id":"ab02","name":"Лесное озеро (прогулка)","coords":[56.2590,38.1250] },
+                "arrival_window":"14:30–16:00" },
+              { "meal": { "type":"dinner","options":[
+                { "name":"Кафе «Дом пилигрима»","avg_check_rub":900,"coords":[56.2620,38.1200] } ] },
+                "time_window":"17:00–18:30" }
+            ],
+            "lodging_options": [
+              { "name":"Гостевой дом «Абрамцево»","coords":[56.2600,38.1220],
+                "avg_price_rub_per_night":2000,"type":"гостевой дом","distance_min_from_center":3 }
+            ]
+          }
+        ]
+      },
+      {                  
+        "day": 2,
+        "variants": [
+          {
+            "variant_id": "2A",
+            "name": "Музей игрушки + Патриаршие пруды",
+            "est_budget": 2500,
+            "segments": [
+          {
+            "poi": {
+              "poi_id": "sp04",
+              "name": "Музей игрушки",
+              "coords": [56.3147, 38.1393]
+            },
+            "arrival_window": "10:00–12:00"
+          },
+          {
+            "meal": {
+              "type": "lunch",
+              "options": [
+                { "name": "Чайная на Кремлёвской", "coords": [56.3157, 38.1362], "avg_check_rub": 400 },
+                { "name": "Кафе «Русские гулянья»", "coords": [56.3140, 38.1380], "avg_check_rub": 600 }
+              ]
+            },
+            "time_window": "12:15–13:45"
+          },
+          {
+            "poi": {
+              "poi_id": "sp06",
+              "name": "Патриаршие пруды (прогулка)",
+              "coords": [56.3165, 38.1300],
+              "weather_constraints": {
+                "max_precip_mm": 2,     
+                "max_wind_m_s": 8
+              }
+            },
+            "arrival_window": "14:00–16:00"
+          },
+          {
+            "transport_segment": {
+              "from": "Патриаршие пруды",
+              "to": "Сергиев Посад вокзал",
+              "options": [
+                { "mode": "такси", "time_min": 15, "cost_rub": 300 },
+                { "mode": "пешком+маршрутка", "time_min": 40, "cost_rub": 100 }
+              ]
+            }
+          },
+          {
+            "transport_back": "электричка в 18:00"
+          }
+        ]
+          },
+          {
+            "variant_id": "2B",
+            "name": "Спасо-Вифанский монастырь + фермерский рынок",
+            "est_budget": 2300,
+            "segments": [
+              { "poi": { "poi_id":"spv01","name":"Спасо-Вифанский монастырь","coords":[56.2980,38.1680],"must_see":true },
+                "arrival_window":"10:00–12:00" },
+              { "meal": { "type":"lunch","options":[
+                { "name":"Фермерский рынок «Посадский»","avg_check_rub":500,"coords":[56.3000,38.1600] } ] },
+                "time_window":"12:15–13:15" },
+              { "poi": { "poi_id":"spv02","name":"Смотровая площадка «Блинная гора»","coords":[56.3030,38.1500] },
+                "arrival_window":"13:30–15:00" }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "session_id": "trip-004",
+    "id": "kazan",
+    "title": "Уикенд в Казани",
+    "base_city": "Москва",
+    "start_coords": [55.7558, 37.6173],
+    "duration_days": 2,
+    "transport": {
+      "options": [
+        {
+          "mode": "Поезд",
+          "there": { "from": "Москва", "to": "Казань", "time_min": 1200, "cost_rub": 2500 },
+          "back":  { "from": "Казань",  "to": "Москва", "time_min": 1200, "cost_rub": 2500 }
+        },
+        {
+          "mode": "Самолёт",
+          "there": { "from": "Москва", "to": "Казань", "time_min": 110, "cost_rub": 4500 },
+          "back":  { "from": "Казань",  "to": "Москва", "time_min": 120, "cost_rub": 4500 }
+        }
+      ]
+    },
+    "estimated_budget_rub": 7000,
+    "day_variants": [
+      {
+        "day": 1,
+        "variants": [
+          {
+            "variant_id": "KZN-1-1",
+            "name": "Казанский кремль и Старо-Татарская слобода",
+            "est_budget": 3200,
+            "segments": [
+              {
+                "poi": {
+                  "name": "Казанский кремль",
+                  "must_see": true,
+                  "opening_hours": { "mon-sun": "09:00–19:00" },
+                  "rating": 4.8
+                },
+                "arrival_window": "10:00–12:00"
+              },
+              {
+                "meal": {
+                  "type": "lunch",
+                  "options": [
+                    { "name": "Татарская кухня", "avg_check_rub": 800 }
+                  ]
+                }
+              },
+              {
+                "poi": {
+                  "name": "Старо-Татарская слобода",
+                  "must_see": false,
+                  "opening_hours": { "mon-sun": "10:00–18:00" },
+                  "rating": 4.5
+                },
+                "arrival_window": "14:00–16:00"
+              }
+            ]
+          },
+          {
+            "variant_id": "KZN-1-2",
+            "name": "Мечеть Кул-Шариф и прогулка по набережной",
+            "est_budget": 3000,
+            "segments": [
+              {
+                "poi": {
+                  "name": "Мечеть Кул-Шариф",
+                  "must_see": true,
+                  "opening_hours": { "mon-sun": "09:00–19:00" },
+                  "rating": 4.9
+                },
+                "arrival_window": "11:00–13:00"
+              },
+              {
+                "poi": {
+                  "name": "Набережная Казанки",
+                  "must_see": false,
+                  "rating": 4.7
+                },
+                "arrival_window": "13:30–15:30"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "day": 2,
+        "variants": [
+          {
+            "variant_id": "KZN-2-1",
+            "name": "Исторический центр и музей Чистопольская",
+            "est_budget": 3100,
+            "segments": [
+              {
+                "poi": {
+                  "name": "Улица Баумана",
+                  "must_see": true,
+                  "opening_hours": { "mon-sun": "00:00–23:59" },
+                  "rating": 4.6
+                },
+                "arrival_window": "10:00–12:00"
+              },
+              {
+                "poi": {
+                  "name": "Музей чайника",
+                  "must_see": false,
+                  "opening_hours": { "mon-sun": "11:00–17:00" },
+                  "rating": 4.3
+                },
+                "arrival_window": "12:30–14:00"
+              },
+              {
+                "meal": {
+                  "type": "dinner",
+                  "options": [
+                    { "name": "Ресторан «Татарский дворик»", "avg_check_rub": 900 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "session_id": "trip-005",
+    "id": "caucasus",
+    "title": "Трёхдневный тур по Кавказу",
+    "base_city": "Минеральные Воды",
+    "start_coords": [44.2106, 43.1351],
+    "duration_days": 3,
+    "transport": {
+      "options": [
+        {
+          "mode": "Автобус",
+          "there": { "from": "Минеральные Воды", "to": "Пятигорск", "time_min": 60, "cost_rub": 300 },
+          "back":  { "from": "Кисловодск", "to": "Минеральные Воды", "time_min": 90, "cost_rub": 350 }
+        },
+        {
+          "mode": "Такси",
+          "there": { "from": "Минеральные Воды", "to": "Пятигорск", "time_min": 40, "cost_rub": 1200 },
+          "back":  { "from": "Кисловодск", "to": "Минеральные Воды", "time_min": 60, "cost_rub": 1500 }
+        }
+      ]
+    },
+    "estimated_budget_rub": 12000,
+    "day_variants": [
+      {
+        "day": 1,
+        "variants": [
+          {
+            "variant_id": "CAU-1-1",
+            "name": "Пятигорск: гора Машук и Цветник",
+            "est_budget": 3500,
+            "segments": [
+              {
+                "poi": {
+                  "name": "Гора Машук",
+                  "must_see": true,
+                  "opening_hours": { "mon-sun": "09:00–18:00" },
+                  "rating": 4.9
+                },
+                "arrival_window": "10:00–13:00"
+              },
+              {
+                "poi": {
+                  "name": "Парк Цветник",
+                  "must_see": false,
+                  "opening_hours": { "mon-sun": "08:00–20:00" },
+                  "rating": 4.7
+                },
+                "arrival_window": "13:30–15:00"
+              },
+              {
+                "meal": {
+                  "type": "dinner",
+                  "options": [
+                    { "name": "Кафе «Горный воздух»", "avg_check_rub": 700 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "day": 2,
+        "variants": [
+          {
+            "variant_id": "CAU-2-1",
+            "name": "Железноводск: озеро и дворец Эмира Бухарского",
+            "est_budget": 4000,
+            "segments": [
+              {
+                "poi": {
+                  "name": "Озеро Железноводское",
+                  "must_see": true,
+                  "opening_hours": { "mon-sun": "09:00–21:00" },
+                  "rating": 4.8
+                },
+                "arrival_window": "10:00–12:00"
+              },
+              {
+                "poi": {
+                  "name": "Дворец Эмира Бухарского",
+                  "must_see": false,
+                  "opening_hours": { "mon-sun": "10:00–17:00" },
+                  "rating": 4.5
+                },
+                "arrival_window": "12:30–14:00"
+              },
+              {
+                "meal": {
+                  "type": "lunch",
+                  "options": [
+                    { "name": "Столовая «У озера»", "avg_check_rub": 400 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "day": 3,
+        "variants": [
+          {
+            "variant_id": "CAU-3-1",
+            "name": "Кисловодск: нарзанная галерея и парк",
+            "est_budget": 4500,
+            "segments": [
+              {
+                "poi": {
+                  "name": "Нарзанная галерея",
+                  "must_see": true,
+                  "opening_hours": { "mon-sun": "08:00–20:00" },
+                  "rating": 4.9
+                },
+                "arrival_window": "09:30–11:00"
+              },
+              {
+                "poi": {
+                  "name": "Кисловодский парк",
+                  "must_see": false,
+                  "opening_hours": { "mon-sun": "07:00–21:00" },
+                  "rating": 4.8
+                },
+                "arrival_window": "11:30–14:00"
+              },
+              {
+                "meal": {
+                  "type": "lunch",
+                  "options": [
+                    { "name": "Кафе «Парк»", "avg_check_rub": 600 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

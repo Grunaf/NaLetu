@@ -1,0 +1,79 @@
+
+body { font-family: sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+input[type="radio"]:checked + span {
+    background-color: #e6f7ff;
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+#extraButtons {
+  display: flex;
+  justify-content: flex-end; /* прижать к правому краю */
+  gap: 12px;                  /* расстояние между кнопками */
+  margin-bottom: 24px;        /* отступ снизу, чтобы не слипалось с контентом */
+}
+
+/* более лёгкий стиль для кнопок */
+#extraButtons .btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+#extraButtons .btn-export {
+  background: #007aff;
+}
+
+#extraButtons .btn-new {
+  background: #34c759;
+}
+
+.container { padding: 16px; }
+.card { background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 16px; overflow: hidden; }
+.card-header { background: #007aff; color: #fff; padding: 12px; font-size: 18px; }
+.section-title { margin: 16px 12px 8px; font-size: 16px; font-weight: bold; }
+.list { list-style: none; padding: 0; margin: 0; }
+.list-item { padding: 12px; border-bottom: 1px solid #eee; }
+.list-item:last-child { border-bottom: none; }
+.badge { background: #34c759; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+.small { font-size: 13px; color: #555; }
+.error { color: red; text-align: center; margin-top: 20px; }
+.transport-option { margin-bottom: 8px; }
+
+.route-card          {border:1px solid #ddd;border-radius:8px;padding:12px;margin:12px 0;
+                        display:flex;align-items:flex-start;gap:12px;transition:box-shadow .2s}
+.route-card:hover    {box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.route-radio         {margin-top:4px}
+.route-title         {font-weight:700;font-size:15px;margin-bottom:4px}
+.route-pois          {font-size:13px;color:#555}
+.cost-pill           {background:#34c759;color:#fff;border-radius:12px;padding:2px 8px;
+                        font-size:12px;margin-left:auto;white-space:nowrap}
+.marker              {width:24px;height:24px;background:#007aff;color:#fff;
+                        border-radius:50%;display:flex;align-items:center;
+                        justify-content:center;font-size:12px;font-weight:bold}
+button {
+    display:inline-block;
+    background:#007aff;
+    color:#fff;
+    border:none;
+    padding:10px 20px;
+    font-size:15px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:background .2s;
+}
+button:hover   { background:#0060d0; }
+button:disabled{
+    background:#a7c5ff;
+    cursor:not-allowed;
+}
+/* ---------- модальные окна ---------- */
+.modal-backdrop {position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;
+                align-items:center;justify-content:center;z-index:999;}
+.modal {background:#fff;border-radius:8px;padding:24px;min-width:280px;
+        box-shadow:0 4px 12px rgba(0,0,0,.25);}
+.modal h3 {margin-top:0;margin-bottom:12px;font-size:18px}
+.modal label {display:block;margin:8px 0 4px}
+.modal input, .modal select {width:100%;padding:6px;border:1px solid #ccc;border-radius:4px}
+.modal footer {margin-top:16px;text-align:right}

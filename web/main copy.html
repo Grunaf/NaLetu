@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>План поездки</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+    input[type="radio"]:checked + span {
+      background-color: #e6f7ff;
+      border-radius: 4px;
+      padding: 2px 4px;
+    }
+    .container { padding: 16px; }
+    .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 16px; overflow: hidden; }
+    .card-header { background: #007aff; color: #fff; padding: 12px; font-size: 18px; }
+    .section-title { margin: 16px 12px 8px; font-size: 16px; font-weight: bold; }
+    .list { list-style: none; padding: 0; margin: 0; }
+    .list-item { padding: 12px; border-bottom: 1px solid #eee; }
+    .list-item:last-child { border-bottom: none; }
+    .badge { background: #34c759; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+    .small { font-size: 13px; color: #555; }
+    .error { color: red; text-align: center; margin-top: 20px; }
+    .transport-option { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+<div class="container" id="app">
+  <!-- Шаг 1: выбор POI и голосование -->
+  <div id="step1">
+    <div class="card"><div class="card-header">Варианты маршрутов (POI)</div></div>
+    <div id="poiList" class="list"></div>
+    <div id="minCost" class="small" style="margin:12px;">Минимальная стоимость: загрузка...</div>
+    <div id="voteSection"></div>
+    <div style="text-align:center; margin:12px;">
+      <button id="toDetailsBtn">→ Далее: выбрать детали</button>
+    </div>
+  </div>
+
+  <!-- Шаг 2: детали поездки -->
+  <div id="step2" style="display:none;">
+    <!-- Здесь ваш существующий код renderItinerary: транспорт, погода, сегменты, meals, lodging, summary -->
+  </div>
+</div>
+
+<script>
+  let selectedTransportThereIndex = 0;
+  let selectedTransportBackIndex = 0;
+  let selectedMealOptionIndex = {}; // ключ: `${day}_${type}`, значение: индекс
+  let selectedLodgingIndex = {};
+  const costCard = document.createElement('div');
+  costCard.className = 'card';
+  let currentStep = 1;
+
+  const step1El = document.getElementById('step1');
+  const step2El = document.getElementById('step2');
+  document.getElementById('toDetailsBtn').onclick = () => {
+    step1El.style.display = 'none';
+    step2El.style.display = '';
+    currentStep = 2;
+    // Повторно рендерим детали только когда находимся на step2
+    renderItinerary(window.itinerary);
+  };
+
+  async function loadPlan() {
+    try {
+      const res = await fetch('plan_travel.json');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      return { error: e.message };
+    }
+  }
+
+  function computeMinCost(it) {
+    // самый дешёвый транспорт туда+обратно
+    const tThere = Math.min(...it.transport.options.map(o=>o.there.cost_rub));
+    const tBack  = Math.min(...it.transport.options.map(o=>o.back.cost_rub));
+    // самый дешёвый обед+ужин по дням
+    const mealCost = it.route.reduce((sum, day) => {
+      if (!day.segments) return sum;
+      day.segments.forEach(seg => {
+        if (seg.meal) {
+          const opts = seg.meal.options.map(o=>o.avg_check_rub);
+          sum += Math.min(...opts);
+        }
+      });
+      return sum;
+    }, 0);
+    // самое дешёвое жильё по дням
+    const lodgeCost = it.route.reduce((sum, day) => {
+      if (!day.lodging_options) return sum;
+      const prices = day.lodging_options.map(o=>o.avg_price_rub_per_night);
+      sum += Math.min(...prices);
+      return sum;
+    }, 0);
+    return tThere + tBack + mealCost + lodgeCost;
+  }
+
+  function renderStep1(itinerary) {
+    // 1) Список POI-маршрутов (можно просто title или первые 3 POI)
+    const poiList = document.getElementById('poiList');
+    poiList.innerHTML = '';
+    itinerary.route.forEach((rt, idx) => {
+      const li = document.createElement('div');
+      li.className = 'list-item';
+      // Покажем первые 3 точки
+      const pois = rt.segments
+        .filter(s=>s.poi)
+        .slice(0,3)
+        .map(s=>s.poi.name)
+        .join(' → ');
+      li.innerHTML = `<label>
+        <input type="radio" name="poiOption" value="${rt.route_id}" ${idx===0?'checked':''}>
+        <strong>Вариант ${idx+1}:</strong> ${pois}
+      </label>`;
+      poiList.appendChild(li);
+    });
+
+    // 2) Минимальная стоимость
+    const mc = computeMinCost(itinerary);
+    document.getElementById('minCost').textContent = `Минимальная стоимость: от ${mc} ₽`;
+
+
+    // 3) Панель голосования (за POI-маршрут)
+    const voteSec = document.getElementById('voteSection');
+    voteSec.innerHTML = `
+      <button id="castVotePOI" style="margin:12px;">Голосовать за POI-маршрут</button>
+      <div id="voteMsgPOI" class="small"></div>`;
+    document.getElementById('castVotePOI').onclick = async ()=>{
+      const sel = document.querySelector('input[name="poiOption"]:checked').value;
+      const msg = document.getElementById('voteMsgPOI');
+      try {
+        await fetch(`/api/session/${itinerary.session_id}/vote`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({route_id: sel})
+        });
+        msg.style.color='green';
+        msg.textContent='Ваш голос за POI-маршрут учтён';
+      } catch(e) {
+        msg.style.color='red';
+        msg.textContent='Ошибка: '+e.message;
+      }
+    };
+  }
+
+  function renderItinerary(itinerary) {
+    // Сохраняем глобально для повторного рендера
+    window.itinerary = itinerary;
+
+    // Показываем только если находимся на step2
+    if (currentStep !== 2) return;
+
+    const app = document.getElementById('step2');
+    app.innerHTML = '';
+
+    if (itinerary.error) {
+      app.innerHTML = `<div class="error">Не удалось загрузить план: ${itinerary.error}</div>`;
+      return;
+    }
+
+    const header = document.createElement('div');
+    header.className = 'card';
+    header.innerHTML = `<div class="card-header">${itinerary.title}</div>`;
+    app.appendChild(header);
+
+    const transportCard = document.createElement('div');
+    transportCard.className = 'card';
+    renderTransportOptions(itinerary, transportCard);
+    app.appendChild(transportCard);
+
+    const weatherCard = document.createElement('div');
+    weatherCard.className = 'card';
+    weatherCard.innerHTML = `
+      <div class="card-header">Погодные условия</div>
+      <div class="list-item">
+        <label>
+          <input type="radio" name="weather" value="good" checked> С прогулками (хорошая погода)
+        </label><br>
+        <label>
+          <input type="radio" name="weather" value="bad"> Без прогулок (плохая погода)
+        </label>
+      </div>
+    `;
+
+    weatherCard.querySelectorAll('input[name="weather"]').forEach(input => {
+      input.addEventListener('change', e => {
+        goodWeather = e.target.value === 'good';
+        renderRoute(itinerary, routeContainer);
+      });
+    });
+
+    app.appendChild(weatherCard);
+
+    const routeContainer = document.createElement('div');
+    app.appendChild(routeContainer);
+    let goodWeather = true;
+
+    function renderRoute() {
+      if (currentStep !== 2) return;
+      const selectedTransportThere = itinerary.transport.options[selectedTransportThereIndex];
+      const baseArrivalHour = 9 + Math.floor(selectedTransportThere.there.time_min / 60);
+      let currentHour = baseArrivalHour;
+
+      itinerary.route.forEach(day => {
+        const dayCard = document.createElement('div');
+        dayCard.className = 'card';
+        dayCard.innerHTML = `<div class="card-header">День ${day.day}</div>`;
+
+        if (Array.isArray(day.segments)) {
+          day.segments.forEach(seg => {
+            // Пропускаем уличные сегменты при плохой погоде
+            if (!goodWeather && seg.poi?.weather_constraints) return;
+
+            const segmentBlock = document.createElement('div');
+            segmentBlock.className = 'list-item';
+            if (seg.poi) {
+              segmentBlock.innerHTML = `<strong>${seg.poi.name}</strong>
+                ${seg.poi.must_see ? '<span class="badge">Must-see</span>' : ''}
+                <div class="small">Время: ${day.day === 1 ? `${currentHour}:00–${currentHour + 2}:00` : seg.arrival_window || '–'}</div>
+                ${seg.rating ? `<div class='small'>Рейтинг: ${seg.rating} ⭐</div>` : ''}
+                ${seg.opening_hours ? `<div class='small'>Часы работы: ${Object.entries(seg.opening_hours).map(([k,v])=>k+': '+v).join('; ')}</div>` : ''}
+                ${seg.tickets ? `<div class='small'>Билеты: ${seg.tickets.map(t=>t.type+': '+t.price_rub+'₽').join(', ')}</div>` : ''}
+                ${seg.poi.weather_constraints ? `<div class='small'>Ограничения по погоде: осадки до ${seg.poi.weather_constraints.max_precip_mm} мм, ветер до ${seg.poi.weather_constraints.max_wind_m_s} м/с</div>` : ''}
+                ${seg.reviews ? `<div class='small'>Отзывы: ${seg.reviews.map(r => `${r.author}: “${r.text}”`).join('; ')}</div>` : ''}`;
+              if (day.day === 1) currentHour += 2;
+            }
+
+            if (seg.meal) {
+              const key = `${day.day}_${seg.meal.type}`;
+              const selected = selectedMealOptionIndex[key];
+              const mealHTML = seg.meal.options.map((opt, idx) => `
+                <label>
+                  <input type="radio" name="meal_${key}" value="${idx}" ${selected === idx ? 'checked' : ''}>
+                  <span>${opt.name} — ${opt.avg_check_rub}₽</span>
+                </label>
+              `).join('<br>');
+
+              segmentBlock.innerHTML = `<strong>${seg.meal.type === 'lunch' ? 'Обед' : 'Ужин'}</strong><br>
+                <div class='small'>Время: ${day.day === 1 ? `${currentHour}:00–${currentHour + 1}:00` : seg.time_window || '–'}</div>
+                ${mealHTML}`;
+
+              segmentBlock.querySelectorAll(`input[name="meal_${key}"]`).forEach(input => {
+                input.addEventListener('change', () => {
+                  selectedMealOptionIndex[key] = Number(input.value);
+                  renderSummaryBlock();
+                });
+              });
+
+              if (day.day === 1) currentHour += 1;
+            }
+
+
+            if (seg.transport_segment) {
+              segmentBlock.innerHTML += `<strong>Транспорт: ${seg.transport_segment.from} → ${seg.transport_segment.to}</strong><br>
+                ${seg.transport_segment.options.map(opt => `${opt.mode}: ${opt.time_min} мин, ${opt.cost_rub}₽`).join('<br>')}`;
+            }
+
+            if (seg.transport_back) {
+              segmentBlock.innerHTML += `<strong>Возвращение:</strong> ${seg.transport_back}`;
+            }
+
+            dayCard.appendChild(segmentBlock);
+          });
+        }
+
+        if (day.lodging_options) {
+          const lodgeTitle = document.createElement('div');
+          lodgeTitle.className = 'section-title';
+          lodgeTitle.textContent = 'Варианты ночёвки';
+          dayCard.appendChild(lodgeTitle);
+
+          const lodgeList = document.createElement('ul');
+          lodgeList.className = 'list';
+          day.lodging_options.forEach((opt, idx) => {
+            const li = document.createElement('li');
+            li.className = 'list-item';
+            const isSelected = selectedLodgingIndex[day.day] === idx;
+            li.innerHTML = `<label>
+              <input type="radio" name="lodging_day_${day.day}" value="${idx}" ${isSelected ? 'checked' : ''}>
+              <span>${opt.name} (${opt.type}) — ${opt.avg_price_rub_per_night}₽</span
+            </label>`;
+            li.querySelector('input').addEventListener('change', () => {
+              selectedLodgingIndex[day.day] = idx;
+              renderSummaryBlock();
+            });
+            lodgeList.appendChild(li);
+          });
+          dayCard.appendChild(lodgeList);
+        }
+
+        routeContainer.appendChild(dayCard);
+      });
+    }
+
+    function renderTransportOptions(itinerary, container) {
+      if (currentStep !== 2) return;
+      container.innerHTML = `<div class="card-header">Выбор транспорта</div>`;
+
+      ['there', 'back'].forEach(dir => {
+        const title = document.createElement('div');
+        title.className = 'section-title';
+        title.textContent = dir === 'there' ? 'Туда:' : 'Обратно:';
+        container.appendChild(title);
+
+        itinerary.transport.options.forEach((opt, idx) => {
+          const div = document.createElement('div');
+          div.className = 'list-item transport-option';
+          const option = dir === 'there' ? opt.there : opt.back;
+          div.innerHTML = `<label>
+            <input type="radio" name="transport_${dir}" value="${idx}" ${idx === (dir === 'there' ? selectedTransportThereIndex : selectedTransportBackIndex) ? 'checked' : ''}>
+            <span>${opt.mode}: ${opt.there.from} → ${opt.there.to} (~${opt.there.time_min} мин, ${opt.there.cost_rub}₽)</span>
+          </label>`;
+          div.querySelector('input').addEventListener('change', () => {
+            if (dir === 'there') selectedTransportThereIndex = idx;
+            else selectedTransportBackIndex = idx;
+            renderRoute();
+            renderSummaryBlock();
+          });
+          container.appendChild(div);
+        });
+      });
+    }
+
+    function renderSummaryBlock() {
+      if (currentStep !== 2) return;
+      const t1 = itinerary.transport.options[selectedTransportThereIndex].there;
+      const t2 = itinerary.transport.options[selectedTransportBackIndex].back;
+      let total = t1.cost_rub + t2.cost_rub;
+
+      itinerary.route.forEach(day => {
+        const idx = selectedLodgingIndex[day.day];
+        if (day.lodging_options?.[idx]) total += day.lodging_options[idx].avg_price_rub_per_night;
+      });
+
+      // добавляем стоимость выбранных блюд
+      itinerary.route.forEach(day => {
+        if (!Array.isArray(day.segments)) return;
+        day.segments.forEach(seg => {
+          if (seg.meal) {
+            const key = `${day.day}_${seg.meal.type}`;
+            const idx = selectedMealOptionIndex[key];
+            if (typeof idx === 'number') {
+              total += seg.meal.options[idx].avg_check_rub;
+            }
+          }
+        });
+      });
+
+      const selectedTransportThere = itinerary.transport.options[selectedTransportThereIndex];
+      const selectedTransportBack = itinerary.transport.options[selectedTransportBackIndex];
+
+      const lodgingSummaries = Object.entries(selectedLodgingIndex).map(([day, idx]) => {
+        const dayObj = itinerary.route.find(d => d.day == day);
+        const opt = dayObj?.lodging_options?.[idx];
+        return opt ? `День ${day}: ${opt.name}` : null;
+      }).filter(Boolean).join('<br>');
+
+      costCard.innerHTML = `
+        <div class="card-header">Вы выбрали</div>
+        <div class="list-item">
+          Транспорт туда: ${selectedTransportThere.mode}<br>
+          Транспорт обратно: ${selectedTransportBack.mode}<br>
+          ${lodgingSummaries ? `Ночёвки:<br>${lodgingSummaries}<br>` : ''}
+        </div>
+        <div class="card-header">Бюджет поездки</div>
+        <div class="list-item">
+          Ориентировочная стоимость: <strong>${total}₽</strong>
+        </div>`;
+    }
+
+    renderRoute();
+    renderSummaryBlock();
+    app.appendChild(costCard);
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const result = await loadPlan();
+    const itinerary = Array.isArray(result) ? result[0] : result;
+    renderStep1(itinerary);
+    // Не вызываем renderItinerary сразу, только после перехода на step2
+  });
+</script>
+
+</body>
+</html>
