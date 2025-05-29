@@ -1,0 +1,37 @@
+<!-- templates/index.html -->
+{% extends 'base.html' %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+  <h1>Каталог маршрутов</h1>
+  <div id="cards">
+    {% for r in routes %}
+      <div class="route-card"
+        data-start-lat="{{ r.start_coords[0] }}"
+        data-start-lon="{{ r.start_coords[1] }}">
+        <img src="{{ r.img }}" alt="{{ r.title }}">
+        <div class="route-info">
+          <h2 class="route-title">{{ r.title }}</h2>
+          <div class="route-meta">
+            <span class="days-trip"><i class="material-icons-round">date_range</i> {{ r.duration_days }} дня</span><span>•</span>
+            <span class="hours-road"><i class="material-icons-round">schedule</i><span class="road_time">–</span></span><span>•</span> 
+            <span class="budget"><i class="material-icons-round">currency_ruble</i> {{ r.estimated_budget_rub }}</span>
+          </div>
+          <div class="route-poi">
+            {% for poi in r.pois %}
+            {{poi.name}} •
+            {% endfor %} др.
+          </div>
+          <div class="route-actions">
+            <a href="{{ url_for('trip_setup') }}?routeId={{ r.id }}" class="btn">
+              Просмотр маршрута
+            </a>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <p>Маршрутов не найдено.</p>
+    {% endfor %}
+
+{% endblock %}

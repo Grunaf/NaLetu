@@ -1,9 +1,12 @@
-from flask import Flask, jsonify, request, send_from_directory, abort
+import uuid
+from flask import Flask, jsonify, request, send_from_directory, abort, render_template
 from flask_migrate import Migrate
-from models import db, Route, TransportOption, Day, DayVariant, Segment, LodgingOption, PriceEntry
+from models import db, Route, TripSession, TransportOption, Day, DayVariant, Segment, LodgingOption, PriceEntry
 from datetime import datetime
 import json
 import os
+
+from routes.hotels import hotels_bp
 
 DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
@@ -12,12 +15,12 @@ DB_PORT = os.getenv("DB_PORT")
 DB_NAME = os.getenv("DB_NAME")
 
 app = Flask(__name__, static_folder='static')
+app.jinja_env.filters['loads'] = json.loads
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 db.init_app(app)
+app.register_blueprint(hotels_bp)
 
-# После app.config и db.init_app(app)
 migrate = Migrate(app, db)
-
 PORT = 3000
 
 # ====================
@@ -45,77 +48,260 @@ def extract_entry_point_summary(entry_json_str):
 # ROUTES
 # ====================
 
+@app.route('/routes')
+def catalog_routes():
+    routes = []
+    for r in Route.query.all():
+        # берём первый город как базу
+        start = r.cities[0]
+        data = {
+            "id": r.id,
+            "title": r.title,
+            "duration_days": r.duration_days,
+            "estimated_budget_rub": r.estimated_budget_rub,
+            "img": r.img,
+            "start_coords": [start.lat, start.lon],
+        }
+
+        pois = (
+            Segment.query
+            .join(DayVariant, Segment.variant_id==DayVariant.id)
+            .join(Day, DayVariant.day_id==Day.id)
+            .filter(Day.route_id==r.id, Segment.type=='poi')
+            .all()
+        )
+        # 3) кладём список упрощённых POI
+        data["pois"] = [
+            {
+                "name": p.poi_name,
+                "arrival": p.arrival_window,
+                "rating": p.rating
+            } for p in pois
+        ]
+        routes.append(data)
+
+    return render_template('catalog.html', routes=routes)
+
+
+@app.route('/trip-setup')
+def trip_setup():
+    route_id = request.args.get('routeId')
+    if not route_id:
+        abort(400, 'routeId обязателен')
+
+    route = Route.query.get(route_id)
+    if not route:
+        abort(404, 'Маршрут не найден')
+
+    # Собираем план по маршруту
+    plan = {
+        "id":                route.id,
+        "title":             route.title,
+        "day_variants": [
+            {
+                "day":      d.day_number,
+                "variants": [
+                    {
+                        "variant_id": v.variant_id,
+                        "name":       v.name,
+                        "est_budget": v.est_budget
+                    } for v in d.variants
+                ]
+            }
+            for d in sorted(route.days, key=lambda d: d.day_number)
+        ]
+    }
+
+    return render_template('trip-setup.html', plan=plan)
+
+@app.route('/trip-itinerary')
+def trip_itinerary():
+    session_id = request.args.get('sessionId')
+    if not session_id:
+        abort(400)
+
+    session = TripSession.query.get(session_id)
+    if not session:
+        abort(404)
+
+    route = Route.query.get(session.route_id)
+    if not route:
+        abort(404)
+
+    # по дефолту берём первый variant каждого дня
+    days = []
+    for day in route.days:
+        variant = day.variants[0] if day.variants else None
+        if variant:
+            segments = sorted(variant.segments, key=lambda s: s.order)
+            days.append({
+                "day_number": day.day_number,
+                "variant": variant,
+                "segments": segments
+            })
+
+    transports = route.transports
+
+    return render_template("trip-itinerary.html", route=route, session=session, days=days, transports=transports)
+
+# 1. Создание сессии (не нужно пояснять пользователю, просто возвращаем ID)
+@app.route('/api/session', methods=['POST'])
+def create_session():
+    data = request.json or {}
+    route_id   = data.get('routeId')
+    check_in   = data.get('checkIn')    # «YYYY-MM-DD»
+    check_out  = data.get('checkOut')
+    if not (route_id and check_in and check_out):
+        abort(400, 'Нужно указать routeId, checkIn и checkOut')
+    try:
+        ci = datetime.fromisoformat(check_in).date()
+        co = datetime.fromisoformat(check_out).date()
+    except ValueError:
+        abort(400, 'Неверный формат даты, ожидаются YYYY-MM-DD')
+    sid = str(uuid.uuid4())
+    session = TripSession(
+        id=sid,
+        route_id=route_id,
+        departure_city=data['departure']['name'],
+        departure_lat=data['departure']['lat'],
+        departure_lon=data['departure']['lon'],
+        check_in=ci,
+        check_out=co,
+        choices_json='{}'
+    )
+    db.session.add(session)
+    db.session.commit()
+    return jsonify({'sessionId': sid})
+
+
 @app.route('/api/routes')
 def get_routes():
     routes = Route.query.all()
+    for r in routes:
+        # берём первую точку маршрута (минимальный order)
+        city = next(iter(r.cities), None)
+        r.start_coords = [city.lat, city.lon] if city else None
+
     return jsonify([
         {
             "id": r.id,
             "title": r.title,
             "days": r.duration_days,
-            "entry_point": extract_entry_point_summary(r.entry_info_json),
             "budget": r.estimated_budget_rub,
             "description": r.title,
             "img": r.img,
-            "entry_info_available": bool(r.entry_info_json)
+            "start_coords": r.start_coords
 
         } for r in routes
     ])
+# app.py
 
-@app.route('/api/plan/<route_id>')
-def get_plan(route_id):
-    route = Route.query.get(route_id)
+# @app.route('/api/plan/<route_id>')
+# def get_variants_plan(route_id):
+#     route = Route.query.get(route_id)
+#     if not route:
+#         abort(404, 'Маршрут не найден')
+#     # Собираем основные данные
+#     return jsonify({
+#         "id": route.id,
+#         "title": route.title,
+#         "day_variants": [
+#           {
+#             "day": d.day_number,
+#             "variants": [
+#               {
+#                 "variant_id": v.variant_id,
+#                 "name":       v.name,
+#                 "est_budget": v.est_budget,
+#               } for v in d.variants
+#             ]
+#           } for d in route.days
+#         ]
+#     })
+
+@app.route('/api/session/<session_id>/plan')
+def get_plan(session_id):
+    session = TripSession.query.get(session_id)
+    if not session:
+        abort(404, 'Session не найдена')
+    # перепользуем вашу логику построения плана из /api/plan/<route_id>
+    route = Route.query.get(session.route_id)
     if not route:
-        return abort(404)
+        abort(404, 'Route не найдена')
+        
+    # Составляем список городов маршрута (шаблона)
+    cities = [
+        {"name": c.name, "lat": c.lat, "lon": c.lon, "order": c.order}
+        for c in sorted(route.cities, key=lambda c: c.order)
+    ]
+
+    # Для удобства фронта возвращаем coords первого города
+    first = cities[0] if cities else None
 
     return jsonify({
-        "id": route.id,
-        "title": route.title,
-        "entry_info": json.loads(route.entry_info_json) if route.entry_info_json else None,
-        "duration_days": route.duration_days,
-        "estimated_budget_rub": route.estimated_budget_rub,
+    "session_id": session.id,                  # фронт ждёт именно это
+        "departure": {                             # новая отправная точка
+            "name": session.departure_city,
+            "lat":  session.departure_lat,
+            "lon":  session.departure_lon
+        },
+        "checkIn":   session.check_in.isoformat(),
+        "checkOut":  session.check_out.isoformat(),
+
+        "id":        route.id,
+        "title":     route.title,
+        "duration_days":           route.duration_days,
+        "estimated_budget_rub":    route.estimated_budget_rub,
+
+        "start_coords": first and {"lat": first["lat"], "lon": first["lon"]},
+
         "transport": {
             "options": [
                 {
                     "mode": t.mode,
-                    "there": {
-                        "from": t.there_from,
-                        "to": t.there_to,
-                        "time_min": t.there_time_min,
-                        "cost_rub": t.there_cost_rub
+                    "start_city": {
+                        "name": t.start_city.name,
+                        "lat":  t.start_city.lat,
+                        "lon":  t.start_city.lon
                     },
-                    "back": {
-                        "from": t.back_from,
-                        "to": t.back_to,
-                        "time_min": t.back_time_min,
-                        "cost_rub": t.back_cost_rub
-                    }
+                    "end_city": {
+                        "name": t.end_city.name,
+                        "lat":  t.end_city.lat,
+                        "lon":  t.end_city.lon
+                    },
+                    "start_time_min": t.start_time_min,
+                    "start_cost_rub": t.start_cost_rub,
+                    "end_time_min":   t.end_time_min,
+                    "end_cost_rub":   t.end_cost_rub
                 } for t in route.transports
             ]
         },
+
         "day_variants": [
             {
                 "day": day.day_number,
                 "variants": [
                     {
                         "variant_id": var.variant_id,
-                        "name": var.name,
+                        "name":       var.name,
                         "est_budget": var.est_budget,
-                        "segments": [
-                            serialize_segment(seg) for seg in var.segments
-                        ],
+                        "segments":   [serialize_segment(s) for s in var.segments],
                         "lodging_options": [
                             {
-                                "name": lodge.name,
-                                "type": lodge.type,
-                                "avg_price_rub_per_night": get_price("lodging", lodge.name)
-                            } for lodge in var.lodgings
+                                "name":                  l.name,
+                                "type":                  l.type,
+                                "avg_price_rub_per_night": get_price("lodging", l.name)
+                            } for l in var.lodgings
                         ]
                     } for var in day.variants
                 ]
             } for day in route.days
-        ]
+        ],
+
+        # если нужно, можете ещё вернуть cities для отрисовки карты:
+        "cities": cities
     })
+
 
 def serialize_segment(seg):
     result = {
@@ -158,9 +344,6 @@ def vote(session_id):
     print(f"🗳 Голос за {session_id}: {data}")
     return jsonify({ "ok": True })
 
-@app.route('/')
-def index():
-    return send_from_directory(app.static_folder, 'catalog_routes.html')
 
 @app.route('/<path:filename>')
 def static_files(filename):

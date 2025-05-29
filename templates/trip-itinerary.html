@@ -1,0 +1,100 @@
+<!-- templates/index.html -->
+{% extends 'base-layout-2col.html' %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<div class="itinerary-left">
+  {% include 'partials/header.html' %}  <!-- Вставка общего header -->
+  <div class="itinerary-content">
+    <h1 class="h1-low-margin">{{ route.title }}</h1>
+    <div class="itinerary-actions">
+      <button class="btn-secondary btn-with-icon"><i class="material-icons-round">download</i>Скачать PDF маршрута</button>
+      <button class="btn-secondary btn-with-icon"><i class="material-icons-round">person_add</i>Пригласить</button>
+    </div>
+    <div class="itinerary-date-picker">
+      <h2>Даты поездки</h2>
+      <div class="date-block">
+        <label>
+          <input type="date" id="startDate">
+        </label>
+    
+        <div class="return-date-block">
+          <div class="return-date-label">
+            Обратно — <span class="return-date-value">20 июля</span>
+          </div>
+          <div class="return-date-controls">
+            <button class="btn-xs">+1 день</button>
+            <button class="btn-xs">+2 дня</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="box">
+    <h2>Выбор транспорта</h2>
+    
+    <h3>Туда:</h3>
+    <form method="post">
+      {% for t in transports %}
+        <label>
+          <input onchange="updateBudget()" type="radio" name="transport_to" value="{{ t.id }}" data-cost="{{ t.end_cost_rub }}">
+          {{ t.mode }}: {{ t.start_city.name }} → {{ t.end_city.name }}
+          (~{{ t.start_time_min }} мин, {{ t.start_cost_rub }}₽)
+        </label><br>
+      {% endfor %}
+    
+      <h3>Обратно:</h3>
+      {% for t in transports %}
+        {% if t.start_city.order > t.end_city.order %}
+          <label>
+            <input onchange="updateBudget()" type="radio" name="transport_back" value="{{ t.id }}" data-cost="{{ t.end_cost_rub }}">
+            {{ t.mode }}: {{ t.start_city.name }} → {{ t.end_city.name }}
+            (~{{ t.end_time_min }} мин, {{ t.end_cost_rub }}₽)
+          </label><br>
+        {% endif %}
+      {% endfor %}
+    </form>
+    
+    </div>
+    
+    <div class="box">
+      {% for d in days %}
+        <h3 class="section-title">День {{ d.day_number }}</h3>
+        {% for s in d.segments %}
+          <div class="segment">
+            {% if s.type == 'poi' %}
+              <p><b>{{ s.poi_name }}</b> — {{ s.arrival_window }} (Рейтинг: {{ s.rating }})</p>
+            {% elif s.type == 'meal' %}
+            <form method="post">
+            <p>Обед:</p>
+            {% set meals = s.meal_options_json | safe | loads %}
+            <ul>
+              {% for m in meals %}
+                <label>
+                  <input onchange="updateBudget()" type="radio" name="meal" value="{{ m.id }}" data-cost="{{ m.avg_check_rub }}">
+                    {{ m.name }} — {{ m.avg_check_rub }}₽
+                </label><br>
+                {% endfor %}
+              </ul>
+            </form>
+            {% elif s.type == 'lodging' %}
+              <p>Ночёвка: {{ s.lodging_name }}</p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+    
+    <div class="budget-box">
+      <strong>Оценка бюджета:</strong> <span id="budgetAmount">0</span> ₽
+    </div>
+  </div>
+</div>
+<div class="itinerary-right">
+    <div id="map" class="map-box"></div>
+</div>
+
+{% endblock %}
+
+

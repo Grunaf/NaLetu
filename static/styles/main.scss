@@ -1,0 +1,397 @@
+@use 'variables' as v;
+@use 'fonts' as f;
+@use 'buttons' as b;
+
+@use 'sass:color';
+
+body {
+  font-family: v.$font-family-main;
+  background: v.$bg;
+  margin: 0 auto;
+  padding: 20px;
+  max-width: 858px;
+}
+main > div {
+  margin-bottom: 32px;
+}
+
+h1 {
+  margin: 32px 0 24px 0;
+  font-size: 40px;
+  font-weight: 700;
+}
+.h1-low-margin {
+  margin-bottom: 8px;
+}
+
+h2 {
+  margin: 0;
+  font-size: 20px;
+}
+// === Header ===
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  
+  .logo {
+    width: 82px;
+    height: auto;
+    margin-bottom: 4px;
+  }
+  
+  .logo-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    
+    a {
+      display: flex;
+      align-self: center;
+    }
+  }
+  
+  .city-location {
+    display: flex;
+    align-items: center;
+    color: #48464C;
+    gap: 8px;
+  }
+}
+
+.itinerary-left {
+  width: 46%;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  background: #fff;
+  overflow-y: auto;
+}
+
+
+.itinerary-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-top: 24px;
+}
+
+.itinerary-right {
+  width: 54%;
+  position: relative;
+  background: #f2f2f2;
+}
+.layout-2col {
+  display: flex;
+  height: 100vh;
+  max-width: none;
+  padding: 0;
+  overflow: hidden;
+}
+.map-box {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+}
+// === Controls ===
+
+
+input{
+  box-sizing: border-box;
+  padding: 8px 16px;
+  font-size: 16px;
+  height: 50px;
+  background-color: v.$bg-card;
+  border: 1px solid v.$material-neutral-80;
+  border-radius: v.$border-radius-s;
+}
+
+// === Кнопки ===
+
+.btn {
+  @include b.button-style(v.$primary-color);
+}
+
+// === Карточки маршрутов ===
+
+.itinerary-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+    margin-top: auto;
+  }
+.route-card {
+  background: v.$white;
+  border-radius: v.$border-radius-m;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 12px 0;
+  display: flex;
+  align-items: flex-start;
+  height: 266px;
+  gap: 12px;
+  border: 1px solid #ddd;
+  transition: box-shadow 0.2s;
+  
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  img {
+    width: 316px;
+    height: 100%;
+    border-radius: v.$border-radius-m 0 0 v.$border-radius-m;
+    object-fit: cover;
+  }
+  
+  .route-info {
+    box-sizing: border-box;
+    padding: 26px 16px;
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .route-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  
+  .route-meta {
+    display: flex;
+    font-size: 16px;
+    color: v.$text-light;
+    margin-bottom: 16px;
+    i {
+      font-size: 20px;
+      margin-right: 4px;
+    }
+    span {
+      display: flex;
+      align-items: flex-end;
+      margin-right: 6px;
+    }
+  }
+  
+  .route-poi {
+    font-size: 14px;
+    color:v.$text-dark;
+    flex: 1;
+    height: 56px;
+    width: 100%;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    -webkit-line-clamp: 2; /* ← Сколько строк оставить */
+    line-clamp: 2;          /* для современных браузеров */
+    margin-bottom: 34px;
+  }
+
+  .cost-pill {
+    background: v.$success-color;
+    color:v.$white;
+    border-radius: v.$border-radius-s;
+    padding: 2px 8px;
+    font-size: 12px;
+    white-space: nowrap;
+    margin-left: auto;
+  }
+
+  .marker {
+    width: 24px;
+    height: 24px;
+    background:v.$primary-color;
+    color:v.$white;
+    border-radius: v.$border-radius-s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+  }
+}
+
+.itinerary-date-picker {
+  display: flex;
+  flex-direction: column;
+  width: 366px;
+  gap: 10px;
+  .date-block {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+  }
+  .return-date-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
+    .return-date-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+}
+.btn-xs {
+  padding: 2px 12px;
+  font-size: 16px;
+  font-weight: 500;
+  min-width: 0;
+  border-radius: v.$border-radius-s;
+  background: v.$bg-card;
+  color: v.$text-dark;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover {
+    background: color.adjust(v.$bg-card, $lightness: -10%, $space: hsl);
+  }
+
+}
+// === Радио ===
+
+input[type="radio"]:checked + span {
+  background-color: #e6f7ff;
+  border-radius: v.$border-radius-s;
+  padding: 2px 4px;
+}
+
+// === Общие блоки и карточки ===
+
+.card {
+  background: v.$white;
+  border-radius: v.$border-radius-s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.card-header {
+  background:v.$primary-color;
+  color:v.$white;
+  padding: 12px;
+  font-size: 18px;
+}
+
+.section-title {
+  margin: 16px 12px 8px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.list-item {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.badge {
+  background:v.$success-color;
+  color:v.$white;
+  padding: 2px 6px;
+  border-radius: v.$border-radius-s;
+  font-size: 12px;
+}
+
+.small {
+  font-size: 13px;
+  color:v.$text-light;
+}
+
+.error {
+  color: red;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.transport-option {
+  margin-bottom: 8px;
+}
+
+// === Кнопки по умолчанию ===
+
+button {
+  @include b.button-style(v.$primary-color);
+}
+.btn-secondary {
+  display: flex;
+  padding: 0;
+  align-items: center;
+  background: none;
+  color: v.$material-neutral-30;
+
+  &:hover {
+    background: none;
+  }
+}
+.btn-with-icon {
+  display: flex;
+  gap: 8px;
+}
+
+// === Модальные окна ===
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal {
+  background: v.$white;
+  border-radius: v.$border-radius-s;
+  padding: 24px;
+  min-width: 280px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 18px;
+  }
+
+  label {
+    display: block;
+    margin: 8px 0 4px;
+  }
+
+  input,
+  select {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid v.$material-neutral-80;
+    border-radius: v.$border-radius-s;
+  }
+
+  footer {
+    margin-top: 16px;
+    text-align: right;
+  }
+}

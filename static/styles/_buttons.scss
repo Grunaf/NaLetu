@@ -1,0 +1,44 @@
+@use 'variables' as v;
+@use 'sass:color';
+
+@mixin button-style($bg) {
+  display: inline-block;
+  background: $bg;
+  color: v.$white;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 146px;
+  padding: 14px 20px;
+  border-radius: v.$border-radius-s;
+  cursor: pointer;
+  text-decoration: none;
+
+  &:hover {
+    background: color.adjust($bg, $lightness: -10%, $space: hsl);
+  }
+}
+
+
+.btn {
+  @include button-style(v.$primary-color);
+}
+
+#extraButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 24px;
+
+  .btn {
+    box-shadow: none;
+  }
+
+  .btn-export {
+    @include button-style(v.$primary-color);
+  }
+
+  .btn-new {
+    @include button-style(v.$success-color);
+  }
+}

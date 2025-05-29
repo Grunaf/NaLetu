@@ -1,3 +1,68 @@
-/.env
-/venv
-/__pycache__
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+
+# Virtual environment
+venv/
+.env/
+.env.*     # для .env.dev, .env.prod и пр.
+
+# dotenv
+.env
+
+# Flask / Gunicorn
+instance/
+*.log
+
+# Database
+*.sqlite3
+*.db
+*.bak
+
+# PostgreSQL dumps (если вдруг)
+*.sql
+
+# Pytest / coverage
+.coverage
+.tox/
+.nox/
+pytest_cache/
+htmlcov/
+
+# VS Code / PyCharm / JetBrains
+.vscode/
+.idea/
+*.iml
+
+# Migrations
+migrations/versions/*.pyc
+migrations/__pycache__/
+migrations/versions/__pycache__/
+eslint.config.mjs
+
+# Static builds
+dist/
+build/
+*.egg-info/
+
+# Jupyter (если используешь)
+.ipynb_checkpoints/
+
+# OS crap
+.DS_Store
+Thumbs.db
+
+# Routes/data (если временные)
+plan_travel.json
+migrations/__pycache__/env.cpython-312.pyc

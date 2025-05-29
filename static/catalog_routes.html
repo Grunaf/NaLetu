@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Список маршрутов</title>
+  <link rel="stylesheet" href="styles copy.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Список маршрутов</h1>
+      <div class="controls">
+        <button id="geoBtn">📍 Моё местоположение</button>
+        <select id="manualLocation">
+          <option value="">Выбрать город...</option>
+          <option selected value="Москва, 55.75, 37.61">Москва</option>
+          <option value="Казань, 55.79, 49.12">Казань</option>
+          <option value="Домбай, 43.44, 41.64">Домбай</option>
+        </select>
+
+        <input type="text" placeholder="Поиск маршрута...">
+        <select>
+          <option>Все темы</option>
+          <option>Культура</option>
+          <option>Природа</option>
+          <option>Гастрономия</option>
+        </select>
+      </div>
+    </header>
+  <div class="container" id="app"></div>
+<script src="catalog_routes.js"></script>
+</body>
+</html>
