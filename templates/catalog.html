@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Список маршрутов</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    header h1 { margin: 0; font-size: 24px; }
+    .controls { display: flex; gap: 10px; }
+    .controls input, .controls select { padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
+    .route-card { background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; overflow: hidden; display: flex; }
+    .route-card img { width: 240px; height: 180px; object-fit: cover; }
+    .route-info { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+    .route-title { font-size: 20px; margin: 0 0 8px; }
+    .route-meta { font-size: 14px; color: #555; margin-bottom: 12px; }
+    .route-description { font-size: 14px; color: #333; margin-bottom: 12px; flex: 1; }
+    .route-actions { display: flex; justify-content: flex-end; }
+    .btn { background: #007aff; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 14px; }
+    .btn:hover { background: #005bb5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Список маршрутов</h1>
+      <form method="get" action="" class="controls" style="display:flex; gap:10px;">
+        <input type="text" name="q" id="searchInput" placeholder="Поиск маршрута..." value="{{ request.args.get('q', '') }}">
+        <select name="theme">
+          <option value="">Все темы</option>
+          <option value="Культура">Культура</option>
+          <option value="Природа">Природа</option>
+          <option value="Гастрономия">Гастрономия</option>
+        </select>
+      </form>
+    </header>
+
+    <div id="cards">
+      {% for route in routes %}
+        <div class="route-card">
+          <img src="{{ route.img }}" alt="{{ route.title }}">
+          <div class="route-info">
+            <h2 class="route-title">{{ route.title }}</h2>
+            <div class="route-meta">
+              {{ route.duration_days }} дня • {{ route.distance if route.distance else "—" }} • Бюджет: {{ route.estimated_budget_rub }}₽
+            </div>
+            <p>
+              {{ route.pois | map(attribute='name') | select | unique | join(', ') | truncate(100) }}
+            </p>
+
+            <div class="route-actions">
+              <a href="{{ url_for('start_trip_session') }}?route_id={{ route.id }}" class="btn">Подробнее</a>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <p>Маршрутов не найдено.</p>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+</html>

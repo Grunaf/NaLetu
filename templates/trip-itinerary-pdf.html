@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+
+  <h1>{{ itinerary.title }}</h1>
+  <p>Даты поездки: {{ start_date }} — {{ end_date }}</p>
+
+  {% if selected_transport_from %}
+  <div class="transport-block">
+    <h2>Транспорт туда</h2>
+    <p>{{ selected_transport_from }}</p>
+  </div>
+  {% endif %}
+  
+  {% if selected_transport_to %}
+  <div class="transport-block">
+    <h2>Транспорт обратно</h2>
+    <p>{{ selected_transport_to }}</p>
+  </div>
+  {% endif %}
+
+  {% for day in days %}
+  <div class="day-block">
+    <h2>День {{ day.day_number }}</h2>
+    {% for seg in day.segments %}
+      {% if seg.type == 'poi' %}
+      <div class="poi">
+        <strong>{{ seg.poi_name }}</strong><br>
+        {% set desc = seg.poi_description_json | loads %}
+        {% if desc.hours %}Часы работы: {{ desc.hours }}<br>{% endif %}
+        {% if desc.ticket_price_rub is not none %}Билет: {{ desc.ticket_price_rub }} ₽<br>{% endif %}
+        {% if seg.arrival_window %}Время по плану: {{ seg.arrival_window }}<br>{% endif %}
+      </div>
+      {% elif seg.type == 'meal' and seg.selected_meal %}
+        <p><strong>{{ seg.meal_type|capitalize }}:</strong> {{ seg.selected_meal.name }} — {{ seg.selected_meal.avg_check_rub }}₽</p>
+      {% endif %}
+    {% endfor %}
+    
+    {% if not loop.last and day.selected_lodging %}
+    <div class="lodging">
+      <strong>Ночёвка:</strong> {{ day.selected_lodging.name }} — {{ day.selected_lodging.avg_check_rub }}₽
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <div class="summary-block">
+    <h2>Итоговая стоимость</h2>
+    <p>
+      {{ total_cost }} ₽
+    </p>
+  </div>
+{% endblock %}

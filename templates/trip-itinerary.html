@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+  <div class="card-header">{{ itinerary.title }}</div>
+</div>
+<div class="card-body">
+  <label>Дата начала поездки:</label>
+  <input type="date" name="visible_start_date" id="startDate"    value="{{ session.check_in.strftime('%Y-%m-%d') if session.check_in else '' }}" required>
+</div>
+
+{% if transports_to %}
+<div class="card">
+  <div class="card-header">Выбор транспорта</div>    
+  <div class="card-body">
+    <strong style="display: block;">Туда:</strong><br>
+    {% for transport in (transports_to.transport_data_json | loads)[:5] %}
+      <label class="transport-label">
+        <input type="radio" name="transport_to" {% if loop.first %}checked{% endif %} data-cost="{% if transport.tickets_info and transport.tickets_info.places and transport.tickets_info.places[0].price %}{{ transport.tickets_info.places[0].price.whole }}{% endif %}">
+        <span class="info">
+          Номер рейса: {{ transport.thread.number }} ({{ transport.thread.translated_type  }}):
+          {{ transport.from.title }} → {{ transport.to.title }},
+          {{ transport.departure | replace("T", " ") }} – {{ transport.arrival | replace("T", " ") }},
+          {{ (transport.duration // 60)|int }} мин
+          {% if transport.tickets_info and transport.tickets_info.places and transport.tickets_info.places[0].price %}
+            — {{ transport.tickets_info.places[0].price.whole }} ₽
+          {% else %}
+            — цена не указана
+          {% endif %}
+        </span>
+      </label>
+      
+      {% endfor %}
+      {% if transports_from %}
+    <div class="transport-options">
+      <strong style="display: block;">Обратно:</strong><br>
+      {% for transport in (transports_from.transport_data_json | loads)[:5] %}
+      <label class="transport-label">
+        <input type="radio" name="transport_from" {% if loop.first %}checked{% endif %} data-cost="{% if transport.tickets_info and transport.tickets_info.places and transport.tickets_info.places[0].price %}{{ transport.tickets_info.places[0].price.whole }}{% endif %}">
+        <span class="info">
+          Номер рейса: {{ transport.thread.number }} ({{ transport.thread.translated_type  }}):
+          {{ transport.from.title }} → {{ transport.to.title }},
+          {{ transport.departure | replace("T", " ") }} – {{ transport.arrival | replace("T", " ") }},
+          {{ (transport.duration // 60)|int }} мин
+          {% if transport.tickets_info and transport.tickets_info.places and transport.tickets_info.places[0].price %}
+            — {{ transport.tickets_info.places[0].price.whole }} ₽
+          {% else %}
+            — цена не указана
+          {% endif %}
+        </span>
+      </label>      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<p>Нет доступных вариантов транспорта.</p>
+{% endif %}
+
+
+<div class="card">
+  <div class="card-header">Погодные условия</div>
+  <div class="card-body">
+    <label>
+    <input type="radio" name="wheather_condition" checked value="with_walk">
+      С прогулками (хорошая погода)
+    </label><br>
+    <label>
+    <input type="radio" name="wheather_condition" value="without_walk">
+      Без прогулок (пасмурная погода)
+    </label><br>
+  </div>
+</div>
+{% for day in days %}
+  <div class="card">
+    <div class="card-header">День {{ day.day_number }}</div>
+    <div class="card-body">
+      {% for seg in day.segments %}
+      {% if seg.type == 'poi' %}
+        <div class="segment" data-title="{{ seg.poi_name|lower }}" style="margin-bottom: 12px;">
+          <strong>{{ seg.poi_name }}</strong><br>
+
+          {% set desc = seg.poi_description_json | loads %}
+          {% if desc %}
+            {% if desc.hours %}Часы работы: {{ desc.hours }}<br>{% endif %}
+            {% if desc.closed_on %}Выходной: {{ desc.closed_on }}<br>{% endif %}
+            {% if desc.rating %}Рейтинг: {{ desc.rating }}<br>{% endif %}
+            {% if desc.ticket_price_rub is not none %}Билет: {{ desc.ticket_price_rub }} ₽<br>{% endif %}
+            {% if desc.note %}<em>{{ desc.note }}</em><br>{% endif %}
+          {% else %}
+            <em>Информация недоступна</em><br>
+          {% endif %}
+
+          {% if seg.arrival_window %}Время по плану: {{ seg.arrival_window }}<br>{% endif %}
+        </div>
+        {% elif seg.type == 'meal' %}
+          <div style="margin-bottom: 8px;">
+            <strong>{{ seg.meal_type|capitalize }}:</strong><br>
+            {% for option in seg.meal_options_json | loads %}
+              <label>
+                <input type="radio" name="meal{{ seg.id }}" {% if loop.first %}checked{% endif %} data-cost="{{ option.avg_check_rub }}">
+                {{ option.name }} — {{ option.avg_check_rub }}₽
+              </label><br>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+      {% if not loop.last %}
+        <div><strong>Варианты ночёвки:</strong><br>
+        {% for lodging in day.lodgings %}
+          <label>
+            <input type="radio" name="lodging{{ day.day_number }}" {% if loop.first %}checked{% endif %} data-cost="{{ lodging.avg_check_rub }}">
+            {{ lodging.name }} — {{ lodging.avg_check_rub }}₽
+          </label><br>
+        {% endfor %}
+
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endfor %}
+<div class="card">
+  <div class="card-header">Итоговая сводка</div>
+  <div class="card-body">
+    <p>Общая стоимость:<span id="totalCost"> {{ itinerary.total_cost }}</span> ₽</p>
+  </div>
+</div>  
+<form action="{{ url_for('export_pdf_from_form') }}" method="POST" id="exportForm">
+  <input type="hidden" name="session_id" value="{{ session.id }}">
+  <input type="hidden" name="selected_transport_from">
+  <input type="hidden" name="selected_transport_to">
+  <input type="hidden" name="selected_meals">
+  <input type="hidden" name="selected_lodgings">
+  <input type="hidden" name="start_date">
+  <input type="hidden" name="totalCost">
+  <button type="submit" class="btn">📄 Скачать маршрут в PDF</button>
+  
+</form>
+
+{% endblock %}
+{% block script %}
+<script>
+  document.querySelectorAll('input[name="wheather_condition"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const withoutWalks = radio.value === 'without_walk';
+
+      document.querySelectorAll('.segment').forEach(el => {
+        const title = el.dataset.title || '';
+        if (withoutWalks && title.includes('прогулка')) {
+          el.style.display = 'none';
+        } else {
+          el.style.display = '';
+        }
+      });
+    });
+  });
+
+  const dateInput = document.getElementById("startDate");
+  dateInput.addEventListener("change", function () {
+    const startDate = this.value;
+    const sessionId = "{{ session.id }}";
+
+    fetch("/update-transport", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        session_id: sessionId,
+        start_date: startDate
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "ok") {
+        location.reload();  // 🔁 перезагружаем страницу с обновлёнными данными
+      } else {
+        alert("Ошибка при обновлении транспорта");
+      }
+    });
+  });
+
+  document.getElementById("exportForm").addEventListener("submit", function (e) {
+    const transportRadios = document.querySelectorAll('input[name="transport_from"]:checked');
+    const meals = [];
+    const lodgings = [];
+
+    document.querySelectorAll('input[name^="meal"]').forEach(el => {
+      if (el.checked) {
+        meals.push({
+          name: el.parentElement.innerText.trim().split("—")[0].trim(),        });
+      }
+    });
+
+    document.querySelectorAll('input[name^="lodging"]').forEach(el => {
+      if (el.checked) {
+        lodgings.push({
+          name: el.nextSibling.textContent.trim().split("—")[0].trim(),
+        });
+      }
+    });
+
+    const selectedTransportFrom = document.querySelector('input[name="transport_from"]:checked');
+    const selectedTransportFromValue = selectedTransportFrom?.closest("label")?.querySelector("span.info")?.innerText.trim() || '';
+    const selectedTransportTo = document.querySelector('input[name="transport_to"]:checked');
+    const selectedTransportToValue = selectedTransportTo?.closest("label")?.querySelector("span.info")?.innerText.trim() || '';
+
+    const startDate = document.getElementById("startDate")?.value || "";
+    const totalCost = document.getElementById("totalCost")?.textContent.trim() || "";
+
+    document.querySelector('input[name="selected_transport_from"]').value = selectedTransportFromValue;
+    document.querySelector('input[name="selected_transport_to"]').value = selectedTransportToValue;
+    document.querySelector('input[name="selected_meals"]').value = JSON.stringify(meals);
+    document.querySelector('input[name="selected_lodgings"]').value = JSON.stringify(lodgings);
+    document.querySelector('input[name="start_date"]').value = startDate;
+    document.querySelector('input[name="totalCost"]').value = totalCost;
+  });
+
+  function recalculateTotal() {
+    let total = 0;
+    document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
+      const cost = parseInt(radio.dataset.cost);
+      if (!isNaN(cost)) total += cost;
+    });
+    document.getElementById('totalCost').textContent = total;
+  }
+
+  // Привязка событий
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.addEventListener('change', recalculateTotal);
+    });
+    recalculateTotal();  // Начальный расчёт
+  });
+</script>
+{% endblock %}

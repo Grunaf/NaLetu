@@ -1,0 +1,204 @@
+<!-- <!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>План поездки</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container" id="app">
+  Шаг 1: выбор POI и голосование
+  <div id="step1">
+    
+    <div id="poiList" class="list"></div>
+    <div id="minCost" class="small" style="margin:12px;">Минимальная стоимость: загрузка...</div>
+    <div id="voteSection"></div>
+    <div style="text-align:center; margin:12px;">
+      <button id="toDetailsBtn">→ Далее: выбрать детали</button>
+    </div>
+  </div>
+
+  Шаг 2: детали поездки 
+  <div id="step2" style="display:none;">
+    <Здесь ваш существующий код renderItinerary: транспорт, погода, сегменты, meals, lodging, summary
+    <div id="extraButtons" style="text-align:center;margin:24px 0;"></div>
+
+  </div>
+</div>
+<script src="main.js"></script>
+</body>
+</html> -->
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+  <div class="card-header">{{ itinerary.title }}</div>
+</div>
+<button style="margin-bottom: 20px;" class="invite-button" onclick="copyInviteLink()">
+👤➕  Пригласить друзей
+</button>
+
+<div class="card">
+  <div class="card-header">Варианты маршрутов (POI)</div>
+</div>
+<form action="/api/session/{{ itinerary.session_id }}/vote" method="POST" id="vote-form">
+  <div id="poiList">
+    {% for day in itinerary.day_variants %}
+      <div class="section-title">День {{ day.day }}</div>
+      {% for variant in day.variants %}
+        <div class="route-card">
+          <div class="marker">{{ day.day }}.{{ loop.index }}</div>
+          <div style="flex:1">
+            <label class="route-radio">
+              <input type="radio" name="day{{ day.day }}" value="{{ variant.variant_id }}" {% if loop.first %}checked{% endif %}>
+              <span class="route-title">{{ variant.name }}</span>
+            </label>
+            <div class="route-pois">
+              {{ variant.segments | selectattr("type", "equalto", "poi") | map(attribute="poi_name") | slice(3) | join(" → ") }}
+              {% if variant.segments | selectattr("poi_name", "defined") | list | length > 3 %}…{% endif %}
+            </div>
+          </div>
+        <span class="cost-pill" data-cost="{{ variant.est_budget }}">от {{ variant.est_budget }} ₽</span>
+        </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+
+  <div id="voteSection">
+    <div id="minCost">Минимальная стоимость: от {{ itinerary.min_cost }} ₽</div>
+    <button id="castVotePOI" style="margin:12px;">Голосовать за POI-маршрут</button>
+  </div>
+</form>
+<div id="votes-block">
+  <h3>Голосование еще идет</h3>
+  <ul id="votes-list">
+    {% for v in votes %}
+      <li>
+        {{ v.name }} выбрал:
+        {% for day, var in v.choices.items() %}
+          {{ day }}-й день ({{ var }}){% if not loop.last %}, {% endif %}
+        {% endfor %}
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% if voting_complete %}
+  <div class="vote-summary">
+    <p>Больше голосов собрали след. варианты:</p>
+    {% for day, winner in winners.items() %}
+      <p>На {{ day }}-й день выбран {{ winner }}</p>
+    {% endfor %}
+  </div>
+{% endif %}
+{% if voting_complete %}
+<a href="{{ url_for('trip_itinerary', session_id=session_id) }}" class="btn">
+    Перейти к маршруту
+  </a>
+{% else %}
+  <button class="btn" disabled>Ожидаем остальных участников</button>
+{% endif %}
+
+
+<div style="margin-top: 20px;">
+</div>
+{% if show_modal %}
+<div id="nameModal" class="modal" style="display: block;">
+  <div class="modal-content">
+    <h3>Введите ваше имя</h3>
+    <form id="nameForm">
+      <input type="text" id="nameInput" name="name" placeholder="Ваше имя" required>
+      <button type="submit">Присоединиться</button>
+    </form>
+  </div>
+</div>
+<div class="modal-backdrop"></div>
+{% endif %}
+
+{% endblock %}
+{% block script %}
+<script>
+  function recalculateTotalCost() {
+  let total = 0;
+  const selectedRadios = document.querySelectorAll('#poiList input[type="radio"]:checked');
+  selectedRadios.forEach(radio => {
+    const container = radio.closest('.route-card');
+    const costText = container.querySelector('.cost-pill')?.dataset.cost;
+    const cost = parseInt(costText || "0", 10);
+    total += cost;
+  });
+
+  const minCostDiv = document.getElementById("minCost");
+  if (minCostDiv) {
+    minCostDiv.textContent = "Минимальная стоимость: от " + total + " ₽";
+  }
+}
+
+// При загрузке пересчитай
+document.addEventListener("DOMContentLoaded", () => {
+  recalculateTotalCost();
+
+  // Добавь обработчик на изменение выбора
+  document.querySelectorAll('#poiList input[type="radio"]').forEach(radio => {
+    radio.addEventListener("change", recalculateTotalCost);
+  });
+});
+
+  document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("nameForm");
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("nameInput").value;
+
+      const res = await fetch("/api/save-name", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: "{{ session_id }}",
+          name: name
+        })
+      });
+
+      const result = await res.json();
+      if (result.status === "ok") {
+        window.location.reload();
+      } else {
+        alert("Ошибка: " + result.message);
+      }
+    });
+  }
+});
+
+function copyInviteLink() {
+  const link = `${window.location.origin}/trip-setup?session_id={{ itinerary.session_id }}`;
+  navigator.clipboard.writeText(link);
+  alert("Ссылка скопирована: " + link);
+}
+document.getElementById("vote-form").addEventListener("submit", async function (e) {
+  e.preventDefault(); // отменяем обычную отправку формы
+
+  const form = e.target;
+  const formData = new FormData(form);
+
+  const sessionId = "{{ itinerary.session_id }}"; // передаётся из Flask
+  const response = await fetch(`/api/session/${sessionId}/vote`, {
+    method: "POST",
+    body: formData
+  });
+
+  const result = await response.json();
+  const votesList = document.getElementById("votes-list");
+
+  if (result.status === "ok") {
+    const messageElement = document.createElement("li"); // или "div", если надо
+    messageElement.textContent = result.message;
+    votesList.appendChild(messageElement);
+  } else {
+    resultDiv.textContent = "Ошибка: " + result.message;
+    resultDiv.style.color = "red";
+  }
+});
+</script>
+
+{% endblock %}
