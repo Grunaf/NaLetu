@@ -78,11 +78,17 @@
                 {% endfor %}
               </ul>
             </form>
-            {% elif s.type == 'lodging' %}
-              <p>Ночёвка: {{ s.lodging_name }}</p>
             {% endif %}
           </div>
         {% endfor %}
+        {% if not loop.last and d.lodgings %}
+        <p>Ночлег:</p>
+          {% for l in d.lodgings %}
+            <label>
+              <input onchange="updateBudget()" type="radio" name="lodgings"> {{l.type}} - {{ l.name }} {{l.distance_km }} км от центра
+            </label>
+          {% endfor %}
+        {% endif %}
       {% endfor %}
     </div>
     
@@ -97,4 +103,19 @@
 
 {% endblock %}
 
+{% block script %}
+
+<script>
+  function updateBudget() {
+    const items = document.querySelectorAll('input[type="radio"][data-cost]:checked')
+    let total = 0;
+    items.forEach(item => {
+      const cost = parseFloat(item.dataset.cost)
+      total += isNaN(cost) ? 0 : cost;
+    })
+    document.getElementById('budgetAmount').textContent = total;
+  }
+</script>
+
+{% endblock %}
 

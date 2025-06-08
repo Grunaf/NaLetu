@@ -5,17 +5,15 @@
   <meta charset="UTF-8">
   <title>{% block title %}Лету{% endblock %}</title>
   <link rel="icon" type="image/x-icon" href="/static/favicon.png">
+  <script src="https://api-maps.yandex.ru/v3/?apikey=APIKEY&lang=ru_RU"></script>
   <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
+  <script type="module" src="{{ url_for('static', filename='js/index.js') }}"></script>
 </head>
-<body>
+<body class="layout-2col">
+  
+  {% block content %}{% endblock %}
 
-  {% include 'partials/header.html' %}  <!-- Вставка общего header -->
-
-  <main>
-    {% block content %}{% endblock %}
-  </main>
-
-  <script src="{{ url_for('static', filename='js/catalog.js') }}"></script>
+  {% block script %}{% endblock %}
 </body>
 </html>

@@ -1,0 +1,90 @@
+<!-- templates/index.html -->
+{% extends 'base.html' %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+    <h1>{{ plan.title }}</h1>
+    <h3>Выберите вариант маршрута для поездки</h3>
+    <input type="date" id="startDate" value="{{ today }}" class="data-picker">
+    {% for day_block in plan.day_variants %}
+      <div class="card">
+        <div class="card-header">День {{ day_block.day }}</div>
+        <div class="list">
+          {% for v in day_block.variants %}
+            <div class="list-item">
+              <label>
+                <input type="radio"
+                       name="day{{ day_block.day }}"
+                       value="{{ v.variant_id }}"
+                       {% if loop.first %}checked{% endif %}>
+                <strong>{{ v.name }}</strong> — от {{ v.est_budget }} ₽
+              </label>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+
+    <button id="goToItinerary" class="btn" disabled>
+      → Посмотреть план
+    </button>
+  </div>
+
+{% endblock %}
+{% block script %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const btn       = document.getElementById('goToItinerary');
+  const dateInput = document.getElementById('startDate');
+  inputs_with_variants = document.querySelectorAll('input[name^="day"]:checked')
+
+  function checkReady() {
+    if (!dateInput.value) return btn.disabled = true;
+    for (let d = 0; d < inputs_with_variants.length; d++) {
+      if (!inputs_with_variants[d]) {
+        return btn.disabled = true;
+      }
+    }
+    btn.disabled = false;
+  }
+
+  dateInput.addEventListener('change', checkReady);
+  document.body.addEventListener('change', checkReady);
+
+  btn.addEventListener('click', async () => {
+    const choices = [];
+    for (let d = 0; d < inputs_with_variants.length; d++) {
+      choices.push(inputs_with_variants[d].value);
+    }
+    const checkIn = new Date(dateInput.value);
+    const routeId = "{{ plan.id }}";
+    const checkOut = new Date(dateInput.value);
+    checkOut.setDate(checkOut.getDate()+"{{ plan.day_variants|length }}");
+    const departure = {
+      "name": document.getElementById('cityName').innerText,
+      "lat": 53.22, 
+      "lon": 56.12
+    }
+
+
+    const res = await fetch('/api/session', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({routeId, checkIn, checkOut, departure})
+    });
+    const { sessionId } = await res.json();
+
+    // сохраняем выбор и переходим на Step 2
+    await fetch(`/api/session/${sessionId}/vote`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({choices:choices})
+    });
+
+    window.location = `/trip-itinerary?sessionId=${sessionId}`;
+  });
+});
+
+</script>
+{% endblock %}

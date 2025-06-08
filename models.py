@@ -126,14 +126,25 @@ class RouteCity(db.Model):
 
     id           = db.Column(db.Integer, primary_key=True)
     route_id     = db.Column(db.String, ForeignKey('route.id'), nullable=False)
+    # city_id      = db.Column(db.Integer, ForeignKey('route_city.id'), nullable=False)
     name         = db.Column(db.String, nullable=False)      # например, "Москва"
     lat = db.Column(db.Float)
     lon = db.Column(db.Float)
     station_code = db.Column(db.String, nullable=True)       # код Яндекс.Расписаний
+
     order        = db.Column(db.Integer, nullable=False)     # порядковый номер в маршруте
 
     # связь обратно к маршруту
+    # city =  relationship('City', back_populates='route_cities')
     route = relationship('Route', back_populates='cities')
+
+# class City(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     name = db.Column(db.String, nullable=False)
+#     lat = db.Column(db.Float)
+#     lon = db.Column(db.Float)
+#     yandex_code = db.Column(db.String, nullable=False)
+#     route_cities = relationship('RouteCity', back_populates='city') 
 
 class MealPlace(db.Model):
     id = db.Column(db.Integer, primary_key=True)

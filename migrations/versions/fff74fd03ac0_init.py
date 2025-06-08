@@ -1,8 +1,8 @@
 """init
 
-Revision ID: e1d9348d6cdc
+Revision ID: fff74fd03ac0
 Revises: 
-Create Date: 2025-05-25 13:20:21.607260
+Create Date: 2025-06-07 12:13:27.412780
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'e1d9348d6cdc'
+revision = 'fff74fd03ac0'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -68,6 +68,9 @@ def upgrade():
     op.create_table('trip_session',
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('route_id', sa.String(), nullable=True),
+    sa.Column('departure_city', sa.String(), nullable=False),
+    sa.Column('departure_lat', sa.Float(), nullable=False),
+    sa.Column('departure_lon', sa.Float(), nullable=False),
     sa.Column('check_in', sa.Date(), nullable=False),
     sa.Column('check_out', sa.Date(), nullable=False),
     sa.Column('choices_json', sa.Text(), nullable=True),
