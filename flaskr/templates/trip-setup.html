@@ -4,87 +4,106 @@
 {% block title %}Главная{% endblock %}
 
 {% block content %}
-    <h1>{{ plan.title }}</h1>
-    <h3>Выберите вариант маршрута для поездки</h3>
-    <input type="date" id="startDate" value="{{ today }}" class="data-picker">
-    {% for day_block in plan.day_variants %}
-      <div class="card">
-        <div class="card-header">День {{ day_block.day }}</div>
-        <div class="list">
-          {% for v in day_block.variants %}
-            <div class="list-item">
-              <label>
-                <input type="radio"
-                       name="day{{ day_block.day }}"
-                       value="{{ v.variant_id }}"
-                       {% if loop.first %}checked{% endif %}>
-                <strong>{{ v.name }}</strong> — от {{ v.est_budget }} ₽
-              </label>
-            </div>
-          {% endfor %}
+{% if show_name_modal %}
+<div class='enter-name-modal' id='enter-name-modal'>
+  <input type='text' placeholder="Введите имя" name='' id='participant-name' required>
+  <button id='btn-save-participant-name' data-session-id="{{ plan.session_id }}">Сохранить</button>
+</div>
+{%endif%}
+<h1>{{ plan.title }}</h1>
+<h3>Выберите вариант маршрута для поездки</h3>
+<input type='date' id='start-date' value='{{ today }}' class='data-picker'>
+{% for day_block in plan.day_variants %}
+  <div class='card'>
+    <div class='card-header'>День {{ day_block.day }}</div>
+    <div class='list'>
+      {% for v in day_block.variants %}
+        <div class='list-item'>
+          <label>
+            <input type='radio'
+                    name='day{{ day_block.day }}'
+                    value='{{ v.id }}'
+                    data-day-number="{{ day_block.day }}"
+                    {% if loop.first %}checked{% endif %}>
+            <strong>{{ v.name }}</strong> — от {{ v.est_budget }} ₽
+          </label>
         </div>
-      </div>
-    {% endfor %}
-
-    <button id="goToItinerary" class="btn" disabled>
-      → Посмотреть план
-    </button>
+      {% endfor %}
+    </div>
   </div>
+{% endfor %}
+<div class="votes">
+  {% for item in votes %}
+    <div class="vote">
+      <p>--------------{{item.participant_name}} выбрал</p>
+      <div>
+        {%for d, v in item.votes.items() %} <p>{{v}}</p> {% endfor %}
+      </div>
+    </div>
+  {% endfor%}
+</div>
+{% if is_completed_vote %}
+<div id="is-completed-vote">
+  Голосование завершено. Все выбрали варианты. Итоговый маршрут:
+  {%for d, v_name in winner_variants.items()%}
+    <p>{{d}}: {{v_name}}</p>
+  {%endfor%}
+</div>
+{%endif%}
+<button id='vote-and-to-itinerary' class='btn' data-session-id='{{plan.session_id}}'>
+  → Проголосовать
+</button>
 
 {% endblock %}
 {% block script %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const btn       = document.getElementById('goToItinerary');
-  const dateInput = document.getElementById('startDate');
-  inputs_with_variants = document.querySelectorAll('input[name^="day"]:checked')
-
-  function checkReady() {
-    if (!dateInput.value) return btn.disabled = true;
-    for (let d = 0; d < inputs_with_variants.length; d++) {
-      if (!inputs_with_variants[d]) {
-        return btn.disabled = true;
-      }
+const btnVoteAndToIniterary = document.getElementById('vote-and-to-itinerary');
+const sessionId = btnVoteAndToIniterary.dataset.sessionId;
+participantNameModal = document.getElementById("enter-name-modal");
+if(participantNameModal) {
+    btnVoteAndToIniterary.setAttribute("disabled",true);
+    participantNameInput = document.querySelector("input[id='participant-name']");
+    btnSaveParticipantName = document.getElementById('btn-save-participant-name');
+    btnSaveParticipantName.onclick = async () => {
+      participantNameModal.style["display"] = "none";
+      const resp = await fetch(`/api/session/save_participant_name`, {
+        method:"POST",
+        headers:{"Content-Type": "application/json"},
+        body: JSON.stringify({"participant_name": participantNameInput.value, "session_id": sessionId})
+      })
+      btnVoteAndToIniterary.removeAttribute("disabled");
     }
-    btn.disabled = false;
+}
+
+if (document.getElementById("is-completed-vote")) {
+  console.log("Маршрут утвержден")
+  btnVoteAndToIniterary.onclick = async() => {
+    window.location = `/trip-itinerary?sessionId=${sessionId}`;
   }
-
-  dateInput.addEventListener('change', checkReady);
-  document.body.addEventListener('change', checkReady);
-
-  btn.addEventListener('click', async () => {
+}
+else {
+  btnVoteAndToIniterary.addEventListener('click', async () => {
+    const startDateInput = document.getElementById('start-date');
+    inputs_with_variants = document.querySelectorAll("input[name^='day']:checked")
     const choices = [];
     for (let d = 0; d < inputs_with_variants.length; d++) {
-      choices.push(inputs_with_variants[d].value);
+      variant_id = inputs_with_variants[d].value;
+      dayNumber = inputs_with_variants[d].dataset.dayNumber;
+
+      choices.push({[variant_id]: dayNumber});
     }
-    const checkIn = new Date(dateInput.value);
-    const routeId = "{{ plan.id }}";
-    const checkOut = new Date(dateInput.value);
-    checkOut.setDate(checkOut.getDate()+"{{ plan.day_variants|length }}");
-    const departure = {
-      "name": document.getElementById('cityName').innerText,
-      "lat": 53.22, 
-      "lon": 56.12
-    }
+    const checkIn = new Date(startDateInput.value);
+    const checkOut = new Date(checkIn.getDate()+'{{ plan.day_variants|length }}');
 
-
-    const res = await fetch('/api/session', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({routeId, checkIn, checkOut, departure})
-    });
-    const { sessionId } = await res.json();
-
-    // сохраняем выбор и переходим на Step 2
-    await fetch(`/api/session/${sessionId}/vote`, {
+    await fetch(`/api/session/vote`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({choices:choices})
+      body: JSON.stringify({"choices":choices, "session_id": sessionId})
     });
 
-    window.location = `/trip-itinerary?sessionId=${sessionId}`;
+    // window.location = `/trip-itinerary?sessionId=${sessionId}`;
   });
-});
+}
 
 </script>
 {% endblock %}

@@ -4,7 +4,7 @@
 {% block title %}Главная{% endblock %}
 
 {% block content %}
-<div class="itinerary-left">
+<div class="itinerary-left" data-session-id="{{ session.id }}">
   {% include 'partials/header.html' %}  <!-- Вставка общего header -->
   <div class="itinerary-content">
     <h1 class="h1-low-margin">{{ route.title }}</h1>
@@ -16,7 +16,7 @@
       <h2>Даты поездки</h2>
       <div class="date-block">
         <label>
-          <input type="date" id="startDate">
+          <input type="date" value="{{session.start_date}}" id="start-date">
         </label>
     
         <div class="return-date-block">
@@ -34,33 +34,31 @@
     <div class="box">
     <h2>Выбор транспорта</h2>
     
-    <h3>Туда:</h3>
     <form method="post">
-      {% for t in transports %}
-        <label>
-          <input onchange="updateBudget()" type="radio" name="transport_to" value="{{ t.id }}" data-cost="{{ t.end_cost_rub }}">
-          {{ t.mode }}: {{ t.start_city.name }} → {{ t.end_city.name }}
-          (~{{ t.start_time_min }} мин, {{ t.start_cost_rub }}₽)
-        </label><br>
-      {% endfor %}
-    
-      <h3>Обратно:</h3>
-      {% for t in transports %}
-        {% if t.start_city.order > t.end_city.order %}
-          <label>
-            <input onchange="updateBudget()" type="radio" name="transport_back" value="{{ t.id }}" data-cost="{{ t.end_cost_rub }}">
-            {{ t.mode }}: {{ t.start_city.name }} → {{ t.end_city.name }}
-            (~{{ t.end_time_min }} мин, {{ t.end_cost_rub }}₽)
-          </label><br>
-        {% endif %}
-      {% endfor %}
-    </form>
+      {% if transports["there"]|length != 0 %}
+      {% for direction, trips in transports.items() %}
+          {% if direction == "there"%}
+            <h3>Туда:</h3>
+          {% else %}
+            <h3>Обратно:</h3>
+          {% endif %}
+          {% for t in trips[:5] %}
+            <label>
+              <input onchange="updateBudget()" type="radio" name="transport_{{direction}}" value="{{ t.id }}" data-cost="{{ t.end_cost_rub }}">
+              {{ t.transport_type }}: {{ t.title }} Прибытие: {{t.arrival}} Отбытие: {{t.departure}}
+              (~{{ t.duration_min }} мин, {% if t.start_cost_rub == None %}информации о цене нет{%else%} {{t.start_cost_rub}}₽{%endif%})
+            </label><br>
+          {% endfor %}
+          {% endfor %}
+          {% else %}
+              Рейсов из {{session.city.name}} в {{route.cities[0].city.name}} на {{session.start_date}} не найдено. Попробуйте поменять даты поездки
+          {% endif %}
     
     </div>
     
     <div class="box">
       {% for d in days %}
-        <h3 class="section-title">День {{ d.day_number }}</h3>
+        <h3 class="section-title">День {{ d.day_order }}</h3>
         {% for s in d.segments %}
           <div class="segment">
             {% if s.type == 'poi' %}
@@ -106,6 +104,20 @@
 {% block script %}
 
 <script>
+  const sessionId = document.getElementsByClassName("itinerary-left")[0].dataset.sessionId
+  const startDateInput = document.getElementById("start-date")
+  const startDateValue = startDateInput.value
+
+  startDateInput.addEventListener('change', async () => {
+    const resp = await fetch('/api/session/update_transports', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({startDateValue, sessionId})
+    });
+    console.log(resp.body);
+  });
+
+  
   function updateBudget() {
     const items = document.querySelectorAll('input[type="radio"][data-cost]:checked')
     let total = 0;

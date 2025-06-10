@@ -24,9 +24,12 @@
             {% endfor %} др.
           </div>
           <div class="route-actions">
-            <a href="{{ url_for('trip_setup') }}?routeId={{ r.id }}" class="btn">
+            <button class="btn-to-itinerary" data-route-id="{{r.id}}">
               Просмотр маршрута
-            </a>
+            </button>
+            <!-- <a href="{{ url_for('trip_setup') }}?routeId={{ r.id }}" class="btn">
+              Просмотр маршрута
+            </a> -->
           </div>
         </div>
       </div>
@@ -37,6 +40,22 @@
 {% endblock %}
 {% block script %}
 <script>
+const departureCityId = checkedCityName.dataset.cityId
+
+Array.from(document.getElementsByClassName("btn-to-itinerary")).forEach(element => {
+  element.onclick = async() => {
+    routeId = element.dataset.routeId;
+    const res = await fetch('/api/session', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({routeId, departureCityId})
+    });
+    const data = await res.json();
+    location.replace(`/trip-setup?sessionId=${data.sessionId}`);
+  }
+});
+
+
 function formatHours(hours) {
   const n = Math.round(hours);
   const rem100 = n % 100;
@@ -54,19 +73,6 @@ function formatHours(hours) {
   return `${n} ${word}`;
 }
 
-// 1) получаем геолокацию
-let userCoords = [55.75, 37.61];
-document.getElementById('geoBtn').onclick = () => {
-  navigator.geolocation.getCurrentPosition(p=> {
-    userCoords = [p.coords.latitude, p.coords.longitude];
-    updateDistances();
-  });
-};
-document.getElementById('manualLocation').onchange = e => {
-  const [, lat, lon] = e.target.value.split(',');
-  userCoords = [parseFloat(lat), parseFloat(lon)];
-  updateDistances();
-};
 // 2) рассчитываем haversine
 function haversine(lat1, lon1, lat2, lon2) {
   const toRad = deg => deg * Math.PI / 180;

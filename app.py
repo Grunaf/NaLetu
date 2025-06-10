@@ -1,8 +1,7 @@
 import uuid
 from flask import Flask, jsonify, request, send_from_directory, abort, render_template
 from flask_migrate import Migrate
-from models import db, Route, TripSession, Day, DayVariant, Segment, LodgingOption, PriceEntry
-from datetime import datetime
+from models import db, PriceEntry
 from flaskr import create_app
 import json
 import os

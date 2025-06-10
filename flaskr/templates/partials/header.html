@@ -4,8 +4,13 @@
       <a href="routes"><img src="/static/img/logo.png" alt="НаЛету" class="logo"></a>
       <span>Сервис планирования маршрутов</span>
     </div>
-    <div class="city-location">
+    <div class="city-location" id="departureCity">
       <i class="material-icons-round">location_on</i>
-      <span id="cityName">Москва</span>
+      <span id="cityName" data-city-id="{{cities[2].id}}">{{cities[2].name}}</span>
+    </div>
+    <div class="cities-modal" style="display: none;">
+      {% for c in cities %}
+        <div class="item" data-city-id="{{c.id}}">{{c.name}}</div>
+      {% endfor %}
     </div>
 </header>

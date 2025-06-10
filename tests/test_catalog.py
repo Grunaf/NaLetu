@@ -1,14 +1,12 @@
-from tests.conftest import capture_template_rendered, contextmanager
-from models import Route, RouteCity
-
+from tests.conftest import capture_template_rendered
 
 # Status code and template rendering: send a GET request to /routes and assert that the response status is 200 and that it uses the catalog.html template.
-def test_catalog_ok(client):
+def test_catalog_ok(client, add_cities):
     response = client.get('/routes')
     assert response.status_code == 200
 
 # Empty database scenario: clear all Route records, request /routes, and verify the routes context variable is an empty list.
-def test_catalog_empty_db(client):
+def test_catalog_empty_db(client, add_cities):
     with capture_template_rendered(client.application) as templates:
         resp = client.get("/routes")
         assert resp.status_code == 200

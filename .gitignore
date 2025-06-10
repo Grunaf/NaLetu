@@ -65,4 +65,3 @@ Thumbs.db
 
 # Routes/data (если временные)
 plan_travel.json
-migrations/__pycache__/env.cpython-312.pyc
