@@ -97,15 +97,14 @@ class Segment(db.Model):
     variant_id = db.Column(db.Integer, ForeignKey("day_variant.id"))
     type = db.Column(db.String)  # poi, meal, transport_segment, transport_back
     order = db.Column(db.Integer, nullable=False)
+    attached_next_segment_id = db.Column(db.Integer, ForeignKey("segment.id"))
+    attached_next_segment = relationship("Segment")
 
     start_time = db.Column(db.Time, nullable=True)
     end_time   = db.Column(db.Time, nullable=True)
 
-    # POI
-    poi_name = db.Column(db.String)
-    must_see = db.Column(db.Boolean)
-    open_hours = db.Column(db.String)
-    rating = db.Column(db.Float)
+    poi_id = db.Column(db.Integer, ForeignKey("poi.id"))
+    poi = relationship("POI", back_populates="segment")
 
     # Meal
     meal_type = db.Column(db.String)
@@ -115,9 +114,22 @@ class Segment(db.Model):
     lodging_name = db.Column(db.String)
 
     # Transition
-    city_id   = db.Column(db.Integer, ForeignKey("route_city.id"), nullable=True)
+    city_id   = db.Column(db.Integer, ForeignKey("route_city.id"))
     city      = relationship("RouteCity")
     transition_option    = relationship("TransitionOption")
+
+class POI(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    must_see = db.Column(db.Boolean)
+    open_time = db.Column(db.Time)
+    close_time = db.Column(db.Time)
+    rating = db.Column(db.Float)
+    
+    lat = db.Column(db.Float)
+    lon = db.Column(db.Float)
+
+    segment = relationship("Segment", back_populates="poi")
 
 class TransitionOption(db.Model):
     id            = db.Column(db.Integer, primary_key=True)
@@ -163,7 +175,14 @@ class MealPlace(db.Model):
 class PriceEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     object_type = db.Column(db.String)
-    object_id = db.Column(db.String)
+    object_id = db.Column(db.Integer)
+    price = db.Column(db.Integer)
+    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
+
+class TransportPriceEntry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    object_type = db.Column(db.String)
+    object_id = db.Column(db.Integer)
     last_known_price = db.Column(db.Integer)
     updated_at = db.Column(db.DateTime, onupdate=func.now())
     source_url = db.Column(db.String)

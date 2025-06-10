@@ -62,8 +62,10 @@
         {% for s in d.segments %}
           <div class="segment">
             {% if s.type == 'poi' %}
-              <p><b>{{ s.poi_name }}</b> — {{ s.arrival_window }} (Рейтинг: {{ s.rating }})</p>
-            {% elif s.type == 'meal' %}
+            <div class="poi" data-lat="{{s.poi.lat}}" data-lon="{{s.poi.lon}}" data-name="{{s.poi.name}}">
+                <p><b>{{ s.poi.name }}</b> — с {{ s.poi.open_time }} до {{ s.poi.close_time }} (Рейтинг: {{ s.poi.rating }})</p>
+              </div>
+              {% elif s.type == 'meal' %}
             <form method="post">
             <p>Обед:</p>
             {% set meals = s.meal_options_json | safe | loads %}
@@ -103,31 +105,7 @@
 
 {% block script %}
 
-<script>
-  const sessionId = document.getElementsByClassName("itinerary-left")[0].dataset.sessionId
-  const startDateInput = document.getElementById("start-date")
-  const startDateValue = startDateInput.value
-
-  startDateInput.addEventListener('change', async () => {
-    const resp = await fetch('/api/session/update_transports', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({startDateValue, sessionId})
-    });
-    console.log(resp.body);
-  });
-
-  
-  function updateBudget() {
-    const items = document.querySelectorAll('input[type="radio"][data-cost]:checked')
-    let total = 0;
-    items.forEach(item => {
-      const cost = parseFloat(item.dataset.cost)
-      total += isNaN(cost) ? 0 : cost;
-    })
-    document.getElementById('budgetAmount').textContent = total;
-  }
-</script>
+<script src="static/js/trip-itinerary.js"></script>
 
 {% endblock %}
 

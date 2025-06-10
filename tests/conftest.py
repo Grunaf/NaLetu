@@ -1,7 +1,7 @@
 import pytest
 from contextlib import contextmanager
 from flask import template_rendered
-from models import db as db_from_model, Route, RouteCity, City, Day, DayVariant, Segment, TripSession, LodgingOption
+from models import db as db_from_model, Route, RouteCity, City, Day, DayVariant, Segment, TripSession, LodgingOption, POI
 from flaskr import create_app
 from datetime import datetime as datetime_c
 import datetime as datetime_p
@@ -91,15 +91,20 @@ def full_route( _db, add_cities):
     var2 = DayVariant(id=2, name='Var 2', est_budget=2000, day=day2)
     _db.session.add_all([var1, var2])
 
+    p1 = POI(name="Казанский кремль", must_see = True, open_time = datetime_p.time.fromisoformat("06:00:00Z"),
+              close_time= datetime_p.time.fromisoformat("16:00:00Z"), rating= 4.8, lat = 55.797557, lon = 49.107295)
+    p2 = POI(name="Мечеть Кул Шариф", must_see = True, open_time = datetime_p.time.fromisoformat("07:00:00Z"),
+              close_time= datetime_p.time.fromisoformat("15:00:00Z"), rating= 4.7, lat = 55.798399, lon = 49.105148)
+    
+    _db.session.add_all([p1,p2])
+
     # 4) A couple of POI Segments on each variant
     seg1 = Segment(id=1, variant=var1, type='poi', order=1,
                     start_time=datetime_c.strptime('09:00', '%H:%M').time(), end_time=datetime_c.strptime('10:00', '%H:%M').time(),
-                    poi_name='POI A', open_hours='09:00–10:00',
-                    rating=4.5)
+                    poi_id=1)
     seg2 = Segment(id=2, variant=var2, type='poi', order=1,
                     start_time=datetime_c.strptime('11:00', '%H:%M').time(), end_time=datetime_c.strptime('12:00', '%H:%M').time(),
-                    poi_name='POI B', open_hours='11:00–12:00',
-                    rating=4.7)
+                    poi_id=2)
     _db.session.add_all([seg1, seg2])
 
     # 5) Lodging for var1

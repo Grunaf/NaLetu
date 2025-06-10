@@ -4,17 +4,37 @@
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}Лету{% endblock %}</title>
-  <link rel="icon" type="image/x-icon" href="/static/favicon.png">
-  <script src="https://api-maps.yandex.ru/v3/?apikey=APIKEY&lang=ru_RU"></script>
+  <link rel="icon" type="image/x-icon" href="/static/img/favicon.png">
+      <script crossorigin src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
+
+  <script src="https://api-maps.yandex.ru/v3?apikey={{ya_map_js_api_key}}&lang=ru_RU" type="text/javascript"></script>
   <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp" rel="stylesheet">
+  <script
+      data-plugins="transform-modules-umd"
+      data-presets="react, typescript"
+      type="text/babel"
+      src="static/js/variables.ts"
+  ></script>
+  <script
+      data-plugins="transform-modules-umd"
+      data-presets="react, typescript"
+      type="text/babel"
+      src="static/js/common.ts"
+  ></script>
+  <script
+      data-plugins="transform-modules-umd"
+      data-presets="react, typescript"
+      type="text/babel"
+      src="static/js/index.ts"
+  ></script>
+    <link rel="stylesheet" href="static/js/common.css" />
+
   <link rel="stylesheet" href="/static/styles.css">
-  <script type="module" src="{{ url_for('static', filename='js/index.js') }}"></script>
 </head>
 <body class="layout-2col">
   
   {% block content %}{% endblock %}
   
- <script src="js/main.js"></script> 
   {% block script %}{% endblock %}
 </body>
 </html>

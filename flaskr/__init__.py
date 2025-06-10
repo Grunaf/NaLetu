@@ -2,7 +2,7 @@ from collections import defaultdict, Counter
 from datetime import date
 import datetime
 import time
-import json, uuid
+import json, uuid, os
 
 from flask import Flask, render_template, request, abort, jsonify, redirect, url_for, session
 from models import db, Route, TripSession, Day, DayVariant, Segment, City, TripParticipant, TripVote
@@ -10,7 +10,7 @@ from services.get_api_transports import search_api_or_get_from_db_transports_fro
 
 def create_app(test_config=None):
     app = Flask(__name__)
-    
+    app.config["YA_MAP_JS_API_KEY"] = os.getenv("YA_MAP_JS_API_KEY")
     app.jinja_env.filters['loads'] = json.loads
     app.jinja_env.trim_blocks = True
     app.jinja_env.lstrip_blocks = True
@@ -190,7 +190,7 @@ def create_app(test_config=None):
         transports["there"] = [format_transports(t_to) for t_to in transports_to_json] 
         transports["back"] = [format_transports(t_from) for t_from in transports_from_json]
 
-        return render_template("trip-itinerary.html", route=route, session=session, days=days, transports=transports)
+        return render_template("trip-itinerary.html", route=route, session=session, days=days, transports=transports, ya_map_js_api_key = app.config["YA_MAP_JS_API_KEY"])
     
     @app.route('/api/session/update_departure_city', methods=['POST'])
     def get_cities():

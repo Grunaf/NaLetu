@@ -20,7 +20,6 @@ def search_api_or_get_from_db_transports_from_city_to_city_on_date(date, from_ci
                 "lang": "ru_RU"}
     
     resp = requests.get(yandex_api_uri, params)
-    print(resp.url)
     if resp.status_code == 200:
         transport_data = json.loads(resp.text)
         transport_segments = transport_data.get("segments")
