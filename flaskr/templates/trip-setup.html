@@ -25,7 +25,7 @@
                     value='{{ v.id }}'
                     data-day-number="{{ day_block.day }}"
                     {% if loop.first %}checked{% endif %}>
-            <strong>{{ v.name }}</strong> — от {{ v.est_budget }} ₽
+            <strong>{{ v.name }}</strong> — {% if v.is_default != True%} +{{ day_block.budget_for_default - v.est_budget }}  {% else %} {{v.est_budget}} {%endif%} ₽
           </label>
         </div>
       {% endfor %}
@@ -76,7 +76,6 @@ if(participantNameModal) {
 }
 
 if (document.getElementById("is-completed-vote")) {
-  console.log("Маршрут утвержден")
   btnVoteAndToIniterary.onclick = async() => {
     window.location = `/trip-itinerary?sessionId=${sessionId}`;
   }
@@ -100,8 +99,6 @@ else {
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({"choices":choices, "session_id": sessionId})
     });
-
-    // window.location = `/trip-itinerary?sessionId=${sessionId}`;
   });
 }
 

@@ -4,9 +4,21 @@ import datetime
 import time
 import json, uuid, os
 
-from flask import Flask, render_template, request, abort, jsonify, redirect, url_for, session
-from models import db, Route, TripSession, Day, DayVariant, Segment, City, TripParticipant, TripVote
-from services.get_api_transports import search_api_or_get_from_db_transports_from_city_to_city_on_date
+from sqlalchemy.orm import joinedload
+from flask import Flask, render_template, request, abort, jsonify, redirect, url_for, session, send_from_directory
+from models.models import db, Route, Day, DayVariant, Segment, City, POI
+from models.meal_place import MealPlace
+from models.trip import TripSession, TripParticipant, TripVote
+from services.get_f_api_transports import get_transports_f_db_or_api
+from services.get_f_api_meal_places import get_nearby_cuisins_spots
+from services.get_meal_places import get_f_db_meal_places_near_poi
+from .DTOs.segmentDTO import SegmentDTO, POIDTO, MealPlaceDTO, SimularMealPlaceCacheDTO
+from .utils import format_transports
+
+def get_winners_day_variants(votes, day_count):
+    # winner_variants = [ Counter([v.variant_id for v in d]).most_common(1)[0][0] for d in zip(participant_votes[0], participant_votes[1], participant_votes[2])]
+    winner_days_variant = [ c[0] for c in Counter([v.day_variant for v in votes]).most_common(day_count)]
+    return sorted(winner_days_variant, key=lambda dv: dv.day.day_order)
 
 def create_app(test_config=None):
     app = Flask(__name__)
@@ -23,6 +35,24 @@ def create_app(test_config=None):
     def inject_common_vars():
         return {"cities": City.query.all()}
     
+    @app.before_request
+    def ensure_participant_joined():
+        session_id = request.args.get("sessionId")
+        if session_id is None:
+            return
+        
+        participant_name = session.get("participant_name")
+        if participant_name is None:
+            return
+        
+        existing_patricipant = TripParticipant.query.filter_by(name=participant_name).first()
+        if existing_patricipant:
+            return
+        else:
+            trip_participant = TripParticipant(name=participant_name, session_id=session_id)
+            db.session.add(trip_participant)
+            db.session.commit()
+
     @app.route('/routes')
     def catalog_routes():
         routes = []
@@ -39,7 +69,8 @@ def create_app(test_config=None):
             }
 
             pois = (
-                Segment.query
+                POI.query
+                .join(Segment, POI.id==Segment.poi_id)
                 .join(DayVariant, Segment.variant_id==DayVariant.id)
                 .join(Day, DayVariant.day_id==Day.id)
                 .filter(Day.route_id==r.id, Segment.type=='poi')
@@ -48,8 +79,7 @@ def create_app(test_config=None):
             # 3) кладём список упрощённых POI
             data["pois"] = [
                 {
-                    "name": p.poi_name,
-                    "arrival": p.open_hours,
+                    "name": p.name,
                     "rating": p.rating
                 } for p in pois
             ]
@@ -57,8 +87,7 @@ def create_app(test_config=None):
 
         return render_template('catalog.html', routes=routes)
 
-
-    @app.route('/trip-setup')
+    @app.route('/trip-setup/')
     def trip_setup():
         session_id = request.args.get('sessionId')
         if not session_id:
@@ -67,7 +96,6 @@ def create_app(test_config=None):
         trip_session = db.session.get(TripSession, session_id)
         if not trip_session:
             abort(404, 'Сессия не найден')
-
         plan = {
             "session_id":                trip_session.id,
             "title":             trip_session.route.title,
@@ -75,11 +103,13 @@ def create_app(test_config=None):
             "day_variants": [
                 {
                     "day":      d.day_order,
+                    "budget_for_default": d.default_variant.est_budget,
                     "variants": [
                         {
                             "id": v.id,
                             "name":       v.name,
-                            "est_budget": v.est_budget
+                            "est_budget": v.est_budget,
+                            "is_default": v.is_default
                         } for v in d.variants
                     ]
                 } for d in sorted(trip_session.route.days, key=lambda d: d.day_order)
@@ -115,40 +145,6 @@ def create_app(test_config=None):
         return render_template('trip-setup.html', show_name_modal=show_name_modal, is_completed_vote=is_completed_vote, votes=votes,
                                winner_variants=winner_variants, plan=plan, today=date.today())
     
-    def format_transports(t):
-        tickets = t.get("tickets_info")
-        places = tickets.get("places") if tickets else []
-        m = datetime.timedelta(seconds=int(t.get("duration")))
-        formated_transports = {
-                    "title":t.get("thread").get("title"),
-                    "transport_type": t.get("thread").get("transport_type"),
-                    "departure": t.get("departure"),
-                    "arrival": t.get("arrival"),
-                    "start_cost_rub": min(places, key=lambda p:p["price"]["whole"])["price"]["whole"] if len(places) else None,
-                    "duration_min":  m
-                }
-        return formated_transports
-    
-    @app.before_request
-    def ensure_participant_joined():
-        session_id = request.args.get("sessionId")
-        if session_id is None:
-            return
-        
-        participant_name = session.get("participant_name")
-        if participant_name is None:
-            return
-        
-        existing_patricipant = TripParticipant.query.filter_by(name=participant_name).first()
-        if existing_patricipant:
-            return
-        else:
-            trip_participant = TripParticipant(name=participant_name, session_id=session_id)
-            db.session.add(trip_participant)
-            db.session.commit()
-
-        
-
     @app.route('/trip-itinerary')
     def trip_itinerary():
         session_id = request.args.get('sessionId')
@@ -164,25 +160,42 @@ def create_app(test_config=None):
             abort(404)
 
         votes = list(TripVote.query.filter_by(session_id=session_id).all())
-
-        choices = [
-            c[0] for c in Counter([v.day_variant for v in votes]).most_common(session.route.duration_days)
-        ]
+        winner_variants = iter(get_winners_day_variants(votes, session.route.duration_days))
         days = []
-        iter_list = iter([v for v in sorted(choices, key=lambda v: v.day.day_order)])
         for day in route.days:
-            variant = next(iter_list, None)
-            if variant:
-                segments = sorted(variant.segments, key=lambda s: s.order)
-                days.append({
-                    "day_order": day.day_order,
-                    "variant": variant,
-                    "segments": segments,
-                    "lodgings": variant.lodgings
-                })
+            variant = next(winner_variants)
+                # variant = next(iter_list, None)
+                # if variant:
+                    # segmentDTOs = list(map(lambda seg: SegmentDTO.model_validate(seg), sorted(variant.segments, key=lambda s: s.order)))
+                    # meal_places =  [ get_f_db_meal_places_near_poi(segments[i-1].poi) for i in range(len(segments)) if segments[i].type == "meal" and i != 0]
+                    # segments = sorted(variant.segments, key=lambda s: s.order)
+            stmt_segments_for_variants = db.select(Segment).options(joinedload(Segment.poi)).where(Segment.variant_id == variant.id).order_by(Segment.order)                           
+            segments_for_variants = db.session.execute(stmt_segments_for_variants).scalars().all()
+            segment_dtos = []
+            for i in range(len(segments_for_variants)):
+                current_segment = segments_for_variants[i]
+                if current_segment.type == "meal" and i != 0:
+                    meal_places =  ([ MealPlaceDTO.model_validate(i) 
+                                    for i in get_f_db_meal_places_near_poi(segments_for_variants[i-1].poi)])
+                    # dict_segment = {"id": current_segment.id, "type": current_segment.type,
+                    #                 "start_time":current_segment.start_time, "end_time": current_segment.end_time,
+                    #                 "meal_places": meal_places}
+                    model_dump = SegmentDTO.model_validate(segments_for_variants[i]).model_dump()
+                    del model_dump["meal_places"]
+                    segment_dtos.append(SegmentDTO(**model_dump, meal_places=meal_places))
+                    continue
+                # elif segments[i].type == "poi":
+                    # poi_dto =  POIDTO.model_validate(segments[i].poi)
+                segment_dtos.append(SegmentDTO.model_validate(segments_for_variants[i]))
+            days.append({
+                "day_order": day.day_order,
+                "variant_id": variant.id,
+                "segments": segment_dtos,
+                # "lodgings": variant.lodgings
+            })
 
-        transports_to_with_data_json = search_api_or_get_from_db_transports_from_city_to_city_on_date(session.start_date, session.city, route.cities[0].city)
-        transports_from_with_data_json = search_api_or_get_from_db_transports_from_city_to_city_on_date(session.start_date, route.cities[0].city, session.city)
+        transports_to_with_data_json = get_transports_f_db_or_api(session.start_date, session.city, route.cities[0].city)
+        transports_from_with_data_json = get_transports_f_db_or_api(session.start_date, route.cities[0].city, session.city)
         transports_to_json = transports_to_with_data_json.data_json
         transports_from_json = transports_from_with_data_json.data_json
         transports = defaultdict()
@@ -191,7 +204,8 @@ def create_app(test_config=None):
         transports["back"] = [format_transports(t_from) for t_from in transports_from_json]
 
         return render_template("trip-itinerary.html", route=route, session=session, days=days, transports=transports, ya_map_js_api_key = app.config["YA_MAP_JS_API_KEY"])
-    
+
+
     @app.route('/api/session/update_departure_city', methods=['POST'])
     def get_cities():
         data = request.json
@@ -215,8 +229,8 @@ def create_app(test_config=None):
         db.session.commit()
         route = db.session.get(Route, session.route_id)
 
-        _ = search_api_or_get_from_db_transports_from_city_to_city_on_date(session.start_date, session.city, route.cities[0].city)
-        _ = search_api_or_get_from_db_transports_from_city_to_city_on_date(session.start_date, route.cities[0].city, session.city)
+        _ = get_transports_f_db_or_api(session.start_date, session.city, route.cities[0].city)
+        _ = get_transports_f_db_or_api(session.start_date, route.cities[0].city, session.city)
         return jsonify({"message": "Transport updated "})
     
     @app.route('/api/session', methods=['POST'])
@@ -239,7 +253,7 @@ def create_app(test_config=None):
         #     abort(400, 'Неверный формат даты, ожидаются YYYY-MM-DD')
         sid = str(uuid.uuid4())
         session = TripSession(
-            id=sid,
+            uuid=sid,
             route_id=route_id,
             departure_city_id=departure_city_id,
             start_date=datetime.datetime.today(),
@@ -287,5 +301,22 @@ def create_app(test_config=None):
         db.session.add_all(trip_votes_to_add)
         db.session.commit()
         return jsonify({"message": "choices accepted"})
+    
+    @app.route("/api/meal_place/<int:meal_place_id>/get_simulars")
+    def get_simulars_meal_places(meal_place_id):
+        meal_place = db.session.get(MealPlace, meal_place_id)
+        if meal_place is None:
+            abort(404)
+        simular_meal_places_result = get_nearby_cuisins_spots(coords=meal_place.coords,
+                                                cuisine=meal_place.cuisine,
+                                                meal_place_id=meal_place_id)
+        if simular_meal_places_result is None:
+            return ("", 204)
+        return jsonify({"simular_meal_places_result": json.dumps([SimularMealPlaceCacheDTO.model_validate(spot).to_dict() for spot in simular_meal_places_result[:4]])})
+    
+    @app.route('/<path:filename>')
+    def static_files(filename):
+        return send_from_directory(app.static_folder, filename)
+
 
     return app

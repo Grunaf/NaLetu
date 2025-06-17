@@ -246,6 +246,35 @@ input{
     }
   }
 }
+.segments {
+  .block-simular-spots {
+    flex-direction: column;
+    gap: 12px;
+
+    .items {
+      display: flex;
+      flex-direction: row;
+      gap: 16px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding-bottom: 6px;
+      
+      .item {
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        width: 250px;
+        gap: 6px;
+        
+        .attributes {
+          font-size: 14px;
+          color: v.$material-neutral-30;
+        }
+      }
+    }
+
+  }
+}
 .btn-xs {
   padding: 2px 12px;
   font-size: 16px;

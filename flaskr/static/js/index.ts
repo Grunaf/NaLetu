@@ -19,7 +19,6 @@ async function main() {
     ]);
 console.log(POIS)
  POIS.forEach(p=> {  // Create and set the marker popup content
-    console.log(p);
     const createPopupContent = () => {
         const content = document.createElement('div');
         content.classList.add('balloon');
@@ -71,27 +70,3 @@ console.log(POIS)
 }
 
 main();
-
-
-// const {YMap, YMapDefaultSchemeLayer} = ymaps3;
-
-// // Иницилиазируем карту
-// const map = new YMap(
-//     // Передаём ссылку на HTMLElement контейнера
-//     document.getElementById('map'),
-
-//     // Передаём параметры инициализации карты
-//     {
-//         location: {
-//             // Координаты центра карты
-//             center: [37.588144, 55.733842],
-
-//             // Уровень масштабирования
-//             zoom: 10
-//         }
-//     }
-// );
-
-// // Добавляем слой для отображения схематической карты
-// map.addChild(new YMapDefaultSchemeLayer());
-

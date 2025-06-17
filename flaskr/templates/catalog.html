@@ -40,10 +40,22 @@
 {% endblock %}
 {% block script %}
 <script>
-const departureCityId = checkedCityName.dataset.cityId
+const checkedCityName = document.getElementById("cityName")
+const citiesModal = document.getElementsByClassName("cities-modal")[0]
+document.getElementById("departureCity").addEventListener('click', async() => {
+  citiesModal.style.display = "block";
+});
+Array.from(citiesModal.children).forEach(element => {
+  element.onclick = async () => {
+    const cityId = element.dataset.cityId;
+    checkedCityName.innerText = element.innerText;
+    checkedCityName.dataset.cityId = cityId;
+  }; 
+});
 
 Array.from(document.getElementsByClassName("btn-to-itinerary")).forEach(element => {
   element.onclick = async() => {
+    const departureCityId = checkedCityName.dataset.cityId
     routeId = element.dataset.routeId;
     const res = await fetch('/api/session', {
       method: 'POST',

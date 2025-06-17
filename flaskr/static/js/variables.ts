@@ -1,7 +1,5 @@
 import {LngLat, type YMapLocationRequest} from '@yandex/ymaps3-types';
 
-export const MARKER_LOCATION: LngLat = [39.9046, 57.6186];
-
 export const GEOCODING_URL = 'https://geocode-maps.yandex.ru/1.x/?apikey=2cf712cf-75d8-4bbf-9611-9bccf9ccc15a&format=json&lang=ru_RU';
 export const POIS = []
 let totalLats = 0

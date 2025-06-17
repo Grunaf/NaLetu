@@ -1,13 +1,13 @@
-from models import TransportCache
+from models.transport import TransportCache
 import requests, os
-from models import db
+from models.models import db
 import json
 import datetime
 
 yandex_api_key = os.getenv("YANDEX_API_KEY")
 yandex_api_uri = os.getenv("YANDEX_API_URI")
 
-def search_api_or_get_from_db_transports_from_city_to_city_on_date(date, from_city, to_city):
+def get_transports_f_db_or_api(date, from_city, to_city):
     cache_duration = datetime.timedelta(minutes=60)
     exist_transport_cache = TransportCache.query.filter_by(date_at=date, start_city_id=from_city.id, end_city_id=to_city.id).first()
     if exist_transport_cache and datetime.datetime.now() - exist_transport_cache.updated_at < cache_duration:

@@ -33,54 +33,59 @@
     
     <div class="box">
     <h2>Выбор транспорта</h2>
-    
-    <form method="post">
-      {% if transports["there"]|length != 0 %}
-      {% for direction, trips in transports.items() %}
-          {% if direction == "there"%}
-            <h3>Туда:</h3>
-          {% else %}
-            <h3>Обратно:</h3>
-          {% endif %}
-          {% for t in trips[:5] %}
-            <label>
-              <input onchange="updateBudget()" type="radio" name="transport_{{direction}}" value="{{ t.id }}" data-cost="{{ t.end_cost_rub }}">
-              {{ t.transport_type }}: {{ t.title }} Прибытие: {{t.arrival}} Отбытие: {{t.departure}}
-              (~{{ t.duration_min }} мин, {% if t.start_cost_rub == None %}информации о цене нет{%else%} {{t.start_cost_rub}}₽{%endif%})
-            </label><br>
-          {% endfor %}
-          {% endfor %}
-          {% else %}
-              Рейсов из {{session.city.name}} в {{route.cities[0].city.name}} на {{session.start_date}} не найдено. Попробуйте поменять даты поездки
-          {% endif %}
-    
+        
+        <form method="post">
+          {% if transports["there"]|length != 0 %}
+          {% for direction, trips in transports.items() %}
+              {% if direction == "there"%}
+                <h3>Туда:</h3>
+              {% else %}
+                <h3>Обратно:</h3>
+              {% endif %}
+              {% for t in trips[:3] %}
+                <label>
+                  <input onchange="updateBudget()" type="radio" name="transport_{{direction}}" value="{{ t.id }}" data-cost="{{ t.end_cost_rub }}">
+                  {{ t.transport_type }}: {{ t.title }} Прибытие: {{t.arrival}} Отбытие: {{t.departure}}
+                  (~{{ t.duration_min }} мин, {% if t.start_cost_rub == None %}информации о цене нет{%else%} {{t.start_cost_rub}}₽{%endif%})
+                </label><br>
+              {% endfor %}
+              {% endfor %}
+              {% else %}
+                  Рейсов из {{session.city.name}} в {{route.cities[0].city.name}} на {{session.start_date}} не найдено. Попробуйте поменять даты поездки
+              {% endif %}
+        </form>
     </div>
     
     <div class="box">
       {% for d in days %}
         <h3 class="section-title">День {{ d.day_order }}</h3>
+        <div class="segments">
         {% for s in d.segments %}
-          <div class="segment">
-            {% if s.type == 'poi' %}
+          {% if s.type == 'poi' %}
             <div class="poi" data-lat="{{s.poi.lat}}" data-lon="{{s.poi.lon}}" data-name="{{s.poi.name}}">
                 <p><b>{{ s.poi.name }}</b> — с {{ s.poi.open_time }} до {{ s.poi.close_time }} (Рейтинг: {{ s.poi.rating }})</p>
               </div>
-              {% elif s.type == 'meal' %}
-            <form method="post">
-            <p>Обед:</p>
-            {% set meals = s.meal_options_json | safe | loads %}
-            <ul>
-              {% for m in meals %}
-                <label>
-                  <input onchange="updateBudget()" type="radio" name="meal" value="{{ m.id }}" data-cost="{{ m.avg_check_rub }}">
-                    {{ m.name }} — {{ m.avg_check_rub }}₽
-                </label><br>
+            {% elif s.type == 'meal' %}
+            {% set meal_type = s.meal_type %}
+            <p>{{ meal_type }}</p>
+              <ul>
+                {% for meal_p in s.meal_places %}
+                <div class="meal-place">
+                  <label>
+                    <input onchange="updateBudget()" type="radio" name="meal" value="{{ meal_p.id }}" data-cost="{{ meal_p.avg_check_rub }}">
+                      {{ meal_p.name }} — {{ meal_p.avg_check_rub }}₽
+                  </label><br>
+                  <button class="show-simular-spots" data-meal-place-name="{{ meal_p.name }}" data-meal-place-id="{{meal_p.id}}">Показать похожие места</button>
+                </div>
                 {% endfor %}
               </ul>
-            </form>
+              <div class="block-simular-spots" style="display:none;">
+                <div class="header">Места похожие на </div>
+                <div class="items"></div>
+              </div>
             {% endif %}
-          </div>
-        {% endfor %}
+          {% endfor %}
+        </div>
         {% if not loop.last and d.lodgings %}
         <p>Ночлег:</p>
           {% for l in d.lodgings %}

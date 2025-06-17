@@ -1,6 +1,6 @@
 # utils/meal_fetcher.py
 from datetime import datetime, timedelta
-from models import MealPlace, db
+from models.models import MealPlace, db
 from utils.fetch_meals_2gis import fetch_meals_2gis  # твоя функция с запросом к 2GIS
 
 from sqlalchemy import func
