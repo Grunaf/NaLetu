@@ -11,6 +11,13 @@
 </div>
 {%endif%}
 <h1>{{ plan.title }}</h1>
+<div>
+  <div id="liveAlertPlaceholder"></div>
+  <button id='create-invite' class='btn' data-session-uuid='{{plan.session_uuid}}'>
+    Создать ссылку-приглашение
+  </button>
+  <span id="invite-link-text"></span>
+</div>
 <h3>Выберите вариант маршрута для поездки</h3>
 <input type='date' id='start-date' value='{{ today }}' class='data-picker'>
 {% for day_block in plan.day_variants %}
@@ -66,15 +73,42 @@ if(participantNameModal) {
     btnSaveParticipantName = document.getElementById('btn-save-participant-name');
     btnSaveParticipantName.onclick = async () => {
       participantNameModal.style["display"] = "none";
-      const resp = await fetch(`/api/session/save_participant_name`, {
+      const resp = await fetch(`/api/session/add_user_name`, {
         method:"POST",
         headers:{"Content-Type": "application/json"},
-        body: JSON.stringify({"participant_name": participantNameInput.value, "session_id": sessionId})
+        body: JSON.stringify({"user_name": participantNameInput.value, "session_id": sessionId})
       })
       btnVoteAndToIniterary.removeAttribute("disabled");
     }
 }
+const alertPlaceholder = document.getElementById('liveAlertPlaceholder')
 
+const alert = (message, type) => {
+  const wrapper = document.createElement('div')
+  wrapper.innerHTML = [
+    `<div class="alert alert-${type} alert-dismissible" role="alert">`,
+    `   <div>${message}</div>`,
+    '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+    '</div>'
+  ].join('')
+
+  alertPlaceholder.append(wrapper)
+}
+const btnCreateInvite = document.getElementById("create-invite");
+const inviteLinkText = document.getElementById("invite-link-text");
+btnCreateInvite.addEventListener("click", async() => {
+  const sessionUuid = btnCreateInvite.dataset.sessionUuid;
+  const resp = await fetch(`/api/session/${sessionUuid}/create_invite`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"}
+  })
+  if (resp.status != 200) {    
+      alert(resp.status, "danger");
+      return
+  }
+  const data = await resp.json()
+  inviteLinkText.innerHTML = data.link
+});
 if (document.getElementById("is-completed-vote")) {
   btnVoteAndToIniterary.onclick = async() => {
     window.location = `/trip-itinerary?sessionId=${sessionId}`;

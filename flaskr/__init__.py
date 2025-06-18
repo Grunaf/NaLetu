@@ -4,11 +4,12 @@ import datetime
 import time
 import json, uuid, os
 
+from sqlalchemy import select
 from sqlalchemy.orm import joinedload
-from flask import Flask, render_template, request, abort, jsonify, redirect, url_for, session, send_from_directory
+from flask import Flask, render_template, request, abort, jsonify, redirect, url_for, send_from_directory, session as fk_session
 from models.models import db, Route, Day, DayVariant, Segment, City, POI
 from models.meal_place import MealPlace
-from models.trip import TripSession, TripParticipant, TripVote
+from models.trip import TripSession, TripParticipant, TripVote, TripInvite, User
 from services.get_f_api_transports import get_transports_f_db_or_api
 from services.get_f_api_meal_places import get_nearby_cuisins_spots
 from services.get_meal_places import get_f_db_meal_places_near_poi
@@ -37,21 +38,35 @@ def create_app(test_config=None):
     
     @app.before_request
     def ensure_participant_joined():
-        session_id = request.args.get("sessionId")
-        if session_id is None:
-            return
-        
-        participant_name = session.get("participant_name")
-        if participant_name is None:
-            return
-        
-        existing_patricipant = TripParticipant.query.filter_by(name=participant_name).first()
-        if existing_patricipant:
-            return
-        else:
-            trip_participant = TripParticipant(name=participant_name, session_id=session_id)
-            db.session.add(trip_participant)
+        if fk_session.get("uuid", None) is None:
+            user_uuid=uuid.uuid4()
+            fk_session["uuid"] = user_uuid
+
+            user = User(uuid=user_uuid)
+            db.session.add(user)
             db.session.commit()
+
+        trip_session_id = request.args.get("sessionId")
+        if trip_session_id is None:
+            return
+
+        user = db.session.get(User, fk_session["uuid"])
+        if user is not None:
+            if (int(trip_session_id) not in [s.session_id for s in user.sessions]
+                 and "join" not in request.url):
+                abort(401)
+        
+        # participant_uuid = fk_session.get("participant_uuid")
+        # if participant_name is None and participant_uuid is None:
+        #     return
+        
+        # existing_patricipant = TripParticipant.query.filter_by(name=participant_name).first()
+        # if existing_patricipant is not None:
+        #     return
+        # else:
+        #     trip_participant = TripParticipant(name=participant_name, session_id=trip_session_id)
+        #     db.session.add(trip_participant)
+        #     db.session.commit()
 
     @app.route('/routes')
     def catalog_routes():
@@ -98,6 +113,7 @@ def create_app(test_config=None):
             abort(404, 'Сессия не найден')
         plan = {
             "session_id":                trip_session.id,
+            "session_uuid":                trip_session.uuid,
             "title":             trip_session.route.title,
             "durations_day":     trip_session.route.duration_days,
             "day_variants": [
@@ -117,23 +133,27 @@ def create_app(test_config=None):
         }
 
         participants = list(TripParticipant.query.filter_by(session_id=session_id))
-        votes = [{
-                    "participant_name": p.name,
-                    "votes": {f"{v.day_order}": f"{v.day_variant.name}" for v in sorted(p.votes, key=lambda v:v.day_order) }
-                } for p in participants if len(p.votes)]
-        
-        day_votes = {}
-        for voter in votes:
-            for day, variant_name in voter["votes"].items():
-                day_votes.setdefault(day, []).append(variant_name)
+        is_completed_vote = False
+        votes = []
+        winner_variants = None
+        if len(participants) != 0:
+            votes = [{
+                        "participant_name": p.user.name,
+                        "votes": {f"{v.day_order}": f"{v.day_variant.name}" for v in sorted(p.votes, key=lambda v:v.day_order) }
+                    } for p in participants if len(p.votes)]
+            day_votes = {}
+            for voter in votes:
+                for day, variant_name in voter["votes"].items():
+                    day_votes.setdefault(day, []).append(variant_name)
 
-        winner_variants = {
-            day: Counter(variant_names).most_common(1)[0][0]
-            for day, variant_names in day_votes.items()
-        }
+            if len(day_votes) != 0:
+                winner_variants = {
+                    day: Counter(variant_names).most_common(1)[0][0]
+                    for day, variant_names in day_votes.items()
+                }
 
-        expected_count_of_vote = len(TripParticipant.query.filter_by(session_id=session_id).all())
-        is_completed_vote = expected_count_of_vote == len(votes)
+                expected_count_of_vote = len(TripParticipant.query.filter_by(session_id=session_id).all())
+                is_completed_vote = expected_count_of_vote == len(votes)
 
         # freq_variants = defaultdict(int)
         # for p in participants:
@@ -141,7 +161,7 @@ def create_app(test_config=None):
         #         for d in range(trip_session.route.duration_days):
         #             freq_variants[f"{p.votes[d].variant_id}"] += 1
         # winner_variants = [max(participants, key=lambda p:p.votes[d]) for d in range(trip_session.route.duration_days) ]
-        show_name_modal = False if session.get("participant_name") else True
+        show_name_modal = False if fk_session.get("user_name") else True
         return render_template('trip-setup.html', show_name_modal=show_name_modal, is_completed_vote=is_completed_vote, votes=votes,
                                winner_variants=winner_variants, plan=plan, today=date.today())
     
@@ -233,26 +253,25 @@ def create_app(test_config=None):
         _ = get_transports_f_db_or_api(session.start_date, route.cities[0].city, session.city)
         return jsonify({"message": "Transport updated "})
     
-    @app.route('/api/session', methods=['POST'])
+    @app.route('/api/session/create_or_get', methods=['POST'])
     def create_session_or_get_exist():
         data = request.json or {}
-        route_id   = data['routeId']
-        departure_city_id   = data['departureCityId']
-        # start_date   = data.get('checkIn')[:10]    # «YYYY-MM-DD»
-        # end_date  = data.get('checkOut')[:10   ]
-        if not (route_id): # and start_date and end_date
-            abort(400, 'Нужно указать routeId') #, checkIn и checkOut
-        exist_session = TripSession.query.filter_by(route_id=route_id).first() #,start_date=start_date,end_date=end_date
-        if exist_session is not None: 
-            return jsonify({"sessionId": exist_session.id})
-        route = db.session.get(Route, route_id) #,start_date=start_date,end_date=end_date
-        # try:
-        #     ci = date.fromisoformat(start_date)
-        #     co = date.fromisoformat(end_date)
-        # except ValueError:
-        #     abort(400, 'Неверный формат даты, ожидаются YYYY-MM-DD')
-        sid = str(uuid.uuid4())
-        session = TripSession(
+        route_id = int(data['routeId'])
+        departure_city_id = int(data['departureCityId'])
+        if not (route_id):
+            abort(400, 'Нужно указать routeId')
+
+        user_uuid = fk_session["uuid"]
+        stmt = select(TripParticipant).where(TripParticipant.user_uuid==user_uuid and TripParticipant.is_admin)
+        sessions_user_admin = db.session.execute(stmt).scalars().all()
+        exist_trip_session = list(filter(lambda s: s.session.route_id == route_id, sessions_user_admin))
+        
+        if len(exist_trip_session) != 0:
+            return jsonify({"sessionId": exist_trip_session[0].session.id})
+        
+        route = db.session.get(Route, route_id)
+        sid = uuid.uuid4()
+        trip_session = TripSession(
             uuid=sid,
             route_id=route_id,
             departure_city_id=departure_city_id,
@@ -260,33 +279,72 @@ def create_app(test_config=None):
             end_date=datetime.datetime.today() + datetime.timedelta(days=route.duration_days),
             choices_json='{}'
         )
-        db.session.add(session)
+        
+        db.session.add(trip_session)
         db.session.commit()
-        return jsonify({"sessionId": session.id})
-    
-    @app.route("/api/session/save_participant_name", methods=["POST"])
-    def save_participant_name():
+        db.session.add(TripParticipant(user_uuid=user_uuid, session_id=trip_session.id, is_admin=True))
+        db.session.commit()
+
+        return jsonify({"sessionId": trip_session.id})
+
+    @app.route("/api/session/add_user_name", methods=["POST"])
+    def add_user_name():
         data = request.json or {}
-        participant_name = data["participant_name"]
-        session_id = data["session_id"]
-        session["participant_name"] = participant_name
-        trip_participant = TripParticipant(name=participant_name, session_id=session_id)
-        db.session.add(trip_participant)
+        user_uuid = fk_session["uuid"]
+
+        user_name = data["user_name"]
+        user = db.session.get(User, user_uuid)
+        user.name = user_name
+        fk_session["user_name"] = user_name
+
+        db.session.add(user)
         db.session.commit()
+
         return jsonify({"message": "participant name added to db"})
 
+    @app.route("/api/session/join_by_token/<uuid:token>")
+    def join_to_session(token):
+        stmt = select(TripInvite).where(TripInvite.uuid==token)
+        invite: TripInvite = db.session.execute(stmt).scalars().first()
+        if invite is None:
+            abort(404, "Приглашение не найдено")
+        if datetime.datetime.now() > invite.expired_at or invite.is_active is False:
+            abort(401, "Срок приглашения истек или им уже воспользовались")
+        invite.is_active = False
+        db.session.commit()
+
+        stmt = select(TripSession).where(TripSession.uuid==invite.session_uuid)
+        session = db.session.execute(stmt).scalars().first()
+
+        trip_participant = TripParticipant(user_uuid=fk_session["uuid"], session_id=session.id)
+        db.session.add(trip_participant)
+        db.session.commit()
+
+        return redirect(url_for("trip_setup", sessionId=session.id))
+    
+    @app.route('/api/session/<uuid:session_uuid>/create_invite', methods=['POST'])
+    def create_trip_invite(session_uuid):
+        stmt = select(TripSession).where(TripSession.uuid==session_uuid)
+        session = db.session.execute(stmt).scalars().first()
+        if session is None:
+            abort(404, "Сессия не найдена")
+        invite = TripInvite(uuid=uuid.uuid4(), session_uuid=session_uuid)
+        db.session.add(invite)
+        db.session.commit()
+        return jsonify({"link": url_for("join_to_session", token=invite.uuid)})
+    
     @app.route("/api/session/vote", methods=["POST"])
     def vote():
         data = request.json or {}
         choices = data["choices"]
         session_id = data["session_id"]
-        participant_name = session.get("participant_name")
-        if participant_name is None:
+        user_uuid = fk_session.get("uuid")
+        if user_uuid is None:
             abort(400, "пользователь не ввел имя")
-        participant = TripParticipant.query.filter_by(name=participant_name).first()
+        participant = TripParticipant.query.filter_by(user_uuid=user_uuid, session_id=session_id).first()
         if participant is None:
             abort(400, "пользователь не найден")
-        exist_participant_votes = TripVote.query.filter_by(participant_id=participant.id).all()
+        exist_participant_votes = TripVote.query.filter_by(participant_id=participant.id, session_id=session_id).all()
         trip_votes_to_add = []
         for choice in choices:
             if exist_participant_votes:

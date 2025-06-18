@@ -9,7 +9,7 @@ import sqlalchemy
 import pytest
 
 from models.models import db as db_from_model, Route, RouteCity, City, Day, DayVariant, Segment, POI
-from models.trip import TripSession, TripParticipant, TripVote
+from models.trip import TripSession, TripParticipant, TripVote, User
 from models.meal_place import MealPlace
 from flaskr import create_app
 
@@ -27,7 +27,10 @@ from flaskr import create_app
 
 @pytest.fixture
 def app():
-    app = create_app({"SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:", "TESTING": True})
+    app = create_app({
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+        "TESTING": True,
+        "SECRET_KEY": 'fg2131asdhj:Dasdaa0s'})
     yield app
 
 def mock_2gis_request(mocker, data, status=200):
@@ -59,6 +62,7 @@ def add_cities(_db):
     c3 = City(name="Москва", lat=22.22, lon=22.22, yandex_code="unknown")
     _db.session.add_all([c1, c2, c3])
     _db.session.commit()
+    yield [c1,c2,c3]
 
 @pytest.fixture
 def session(_db, add_cities) -> list:
@@ -167,7 +171,7 @@ def variants(_db, route):
     yield [[var1_1, var1_2], [var2_1, var2_2], [var3_1, var3_2]]
 
 @pytest.fixture
-def full_route(_db, variants):
+def detail_for_route(_db, variants):
     p1 = POI(name="Казанский кремль", must_see = True, open_time = datetime_p.time.fromisoformat("06:00:00Z"),
               close_time= datetime_p.time.fromisoformat("16:00:00Z"), rating= 4.8, lat = 55.797557, lon = 49.107295)
     p2 = POI(name="Мечеть Кул Шариф", must_see = True, open_time = datetime_p.time.fromisoformat("07:00:00Z"),
@@ -193,7 +197,7 @@ def full_route(_db, variants):
     _db.session.commit()
 
 @pytest.fixture
-def detailed_session(_db, route, full_route):
+def session(_db, route, detail_for_route):
     ses1 = TripSession(
         id=1,
         uuid=uuid.UUID("89151333-7d6a-46fd-bc68-6e69ab9a269e"),
@@ -208,24 +212,75 @@ def detailed_session(_db, route, full_route):
     yield ses1
 
 @pytest.fixture
-def participant_votes(_db, variants, detailed_session):
-    p1 = TripParticipant(name="Кирилл", session_id=detailed_session.id, join_at=datetime_c.fromisoformat("2025-06-09 16:07:35.989"))
-    p2 = TripParticipant(name="Инокентий", session_id=detailed_session.id, join_at=datetime_c.fromisoformat("2025-06-09 16:07:35.989"))
-    p3 = TripParticipant(name="Кен", session_id=detailed_session.id, join_at=datetime_c.fromisoformat("2025-06-09 16:07:35.989"))
+def multiply_sessions(_db, route, session):
+    ses2 = TripSession(
+        id=2,
+        uuid=uuid.UUID("aa773dfa-fac8-4b7a-89dd-3f468a98f87e"),
+        route_id=route.id,
+        departure_city_id=2,
+        start_date=datetime_p.date.fromisoformat('2025-06-01'),
+        end_date=datetime_p.date.fromisoformat('2025-06-03'),
+        choices_json=''
+    )
+    ses3 = TripSession(
+        id=3,
+        uuid=uuid.UUID("7a600248-e0fc-47bd-85a0-1fb518486e81"),
+        route_id=route.id,
+        departure_city_id=2,
+        start_date=datetime_p.date.fromisoformat('2025-06-01'),
+        end_date=datetime_p.date.fromisoformat('2025-06-03'),
+        choices_json=''
+    )
+    _db.session.add_all([ses2, ses3])
+    _db.session.commit()
+    yield [session, ses2, ses3]
+
+@pytest.fixture
+def users(_db):
+    u1 = User(name="Кирилл", uuid=uuid.UUID("16c9ec5e-90a5-4332-8822-d3a6ccd3c87e"))
+    u2 = User(name="Инокентий", uuid=uuid.UUID("35d6f04c-f9d6-4103-8c71-1091f74a6475"))
+    u3 = User(name="Кен", uuid=uuid.UUID("2aee1ad6-5f63-4d9e-99bf-9e88f3039b30"))
+
+    _db.session.add_all([u1, u2, u3])
+    _db.session.commit()
+    yield [u1, u2, u3]
+
+@pytest.fixture
+def participants_different_admin_count(_db, users, multiply_sessions): # where Инокентий нигде не админ
+    p1 = TripParticipant(user_uuid=users[0].uuid, session_id=multiply_sessions[0].id, join_at=datetime_c.fromisoformat("2025-06-09 16:07:35.989"))
+    p2 = TripParticipant(user_uuid=users[1].uuid, session_id=multiply_sessions[0].id, join_at=datetime_c.fromisoformat("2025-06-09 16:07:35.989"))
+    p3 = TripParticipant(user_uuid=users[2].uuid, session_id=multiply_sessions[0].id, join_at=datetime_c.fromisoformat("2025-06-09 16:07:35.989"))
+
+    p4 = TripParticipant(user_uuid=users[0].uuid, session_id=multiply_sessions[1].id, join_at=datetime_c.fromisoformat("2025-06-09 16:07:35.989"))
+    p5 = TripParticipant(user_uuid=users[1].uuid, session_id=multiply_sessions[1].id, join_at=datetime_c.fromisoformat("2025-06-09 16:07:35.989"))
+    p6 = TripParticipant(user_uuid=users[2].uuid, session_id=multiply_sessions[1].id, join_at=datetime_c.fromisoformat("2025-06-09 16:07:35.989"), is_admin=True)
+
+    p7 = TripParticipant(user_uuid=users[1].uuid, session_id=multiply_sessions[2].id, join_at=datetime_c.fromisoformat("2025-06-09 16:07:35.989"))
+    p8 = TripParticipant(user_uuid=users[2].uuid, session_id=multiply_sessions[2].id, join_at=datetime_c.fromisoformat("2025-06-09 16:07:35.989"), is_admin=True)
+
+    _db.session.add_all([p1, p2, p3, p4, p5, p6, p7, p8])
+    _db.session.commit()
+    yield [[p1, p2, p3], [p4, p5, p6], [p7, p8]]
+
+@pytest.fixture
+def participant_votes(_db, variants, session):
+    p1 = TripParticipant(name="Кирилл", session_id=session.id, join_at=datetime_c.fromisoformat("2025-06-09 16:07:35.989"))
+    p2 = TripParticipant(name="Инокентий", session_id=session.id, join_at=datetime_c.fromisoformat("2025-06-09 16:07:35.989"))
+    p3 = TripParticipant(name="Кен", session_id=session.id, join_at=datetime_c.fromisoformat("2025-06-09 16:07:35.989"))
     _db.session.add_all([p1, p2, p3])
     _db.session.commit()
 
-    p1v1 = TripVote(participant_id=p1.id, variant_id=variants[0][0].id, day_order=0, session_id=detailed_session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
-    p1v2 = TripVote(participant_id=p1.id, variant_id=variants[1][0].id, day_order=1, session_id=detailed_session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
-    p1v3 = TripVote(participant_id=p1.id, variant_id=variants[2][0].id, day_order=2, session_id=detailed_session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
+    p1v1 = TripVote(participant_id=p1.id, variant_id=variants[0][0].id, day_order=0, session_id=session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
+    p1v2 = TripVote(participant_id=p1.id, variant_id=variants[1][0].id, day_order=1, session_id=session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
+    p1v3 = TripVote(participant_id=p1.id, variant_id=variants[2][0].id, day_order=2, session_id=session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
 
-    p2v1 = TripVote(participant_id=p2.id, variant_id=variants[0][1].id, day_order=0, session_id=detailed_session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
-    p2v2 = TripVote(participant_id=p2.id, variant_id=variants[1][1].id, day_order=1, session_id=detailed_session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
-    p2v3 = TripVote(participant_id=p2.id, variant_id=variants[2][1].id, day_order=2, session_id=detailed_session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
+    p2v1 = TripVote(participant_id=p2.id, variant_id=variants[0][1].id, day_order=0, session_id=session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
+    p2v2 = TripVote(participant_id=p2.id, variant_id=variants[1][1].id, day_order=1, session_id=session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
+    p2v3 = TripVote(participant_id=p2.id, variant_id=variants[2][1].id, day_order=2, session_id=session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
 
-    p3v1 = TripVote(participant_id=p3.id, variant_id=variants[0][1].id, day_order=0, session_id=detailed_session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
-    p3v2 = TripVote(participant_id=p3.id, variant_id=variants[1][1].id, day_order=1, session_id=detailed_session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
-    p3v3 = TripVote(participant_id=p3.id, variant_id=variants[2][1].id, day_order=2, session_id=detailed_session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
+    p3v1 = TripVote(participant_id=p3.id, variant_id=variants[0][1].id, day_order=0, session_id=session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
+    p3v2 = TripVote(participant_id=p3.id, variant_id=variants[1][1].id, day_order=1, session_id=session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
+    p3v3 = TripVote(participant_id=p3.id, variant_id=variants[2][1].id, day_order=2, session_id=session.id, updated_at=datetime_c.fromisoformat("2025-06-09 23:32:02.161"))
     _db.session.add_all([p1v1, p1v2, p1v3, p2v1, p2v2, p2v3, p3v1, p3v2, p3v3])
     _db.session.commit()
     yield [[p1v1, p1v2, p1v3], [p2v1, p2v2, p2v3], [p3v1, p3v2, p3v3]]

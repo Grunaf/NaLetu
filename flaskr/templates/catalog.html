@@ -57,10 +57,10 @@ Array.from(document.getElementsByClassName("btn-to-itinerary")).forEach(element 
   element.onclick = async() => {
     const departureCityId = checkedCityName.dataset.cityId
     routeId = element.dataset.routeId;
-    const res = await fetch('/api/session', {
+    const res = await fetch('/api/session/create_or_get', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({routeId, departureCityId})
+      body: JSON.stringify({"routeId": routeId, "departureCityId": departureCityId})
     });
     const data = await res.json();
     location.replace(`/trip-setup?sessionId=${data.sessionId}`);
