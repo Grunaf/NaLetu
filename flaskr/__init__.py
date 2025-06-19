@@ -1,8 +1,8 @@
-from collections import defaultdict, Counter
+from collections import defaultdict
 from datetime import date
 import datetime
-import time
 import json, uuid, os
+import functools
 
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
@@ -13,13 +13,11 @@ from models.trip import TripSession, TripParticipant, TripVote, TripInvite, User
 from services.get_f_api_transports import get_transports_f_db_or_api
 from services.get_f_api_meal_places import get_nearby_cuisins_spots
 from services.get_meal_places import get_f_db_meal_places_near_poi
-from .DTOs.segmentDTO import SegmentDTO, POIDTO, MealPlaceDTO, SimularMealPlaceCacheDTO
+from services.session_utils import get_voting_attributes, get_winners_day_variants
+from .DTOs.segmentDTO import SegmentDTO, MealPlaceDTO, SimularMealPlaceCacheDTO
+from .DTOs.tripDTO import TripVoteDTO
 from .utils import format_transports
 
-def get_winners_day_variants(votes, day_count):
-    # winner_variants = [ Counter([v.variant_id for v in d]).most_common(1)[0][0] for d in zip(participant_votes[0], participant_votes[1], participant_votes[2])]
-    winner_days_variant = [ c[0] for c in Counter([v.day_variant for v in votes]).most_common(day_count)]
-    return sorted(winner_days_variant, key=lambda dv: dv.day.day_order)
 
 def create_app(test_config=None):
     app = Flask(__name__)
@@ -38,7 +36,7 @@ def create_app(test_config=None):
     
     @app.before_request
     def ensure_participant_joined():
-        if fk_session.get("uuid", None) is None:
+        if fk_session.get("uuid") is None:
             user_uuid=uuid.uuid4()
             fk_session["uuid"] = user_uuid
 
@@ -46,27 +44,22 @@ def create_app(test_config=None):
             db.session.add(user)
             db.session.commit()
 
-        trip_session_id = request.args.get("sessionId")
-        if trip_session_id is None:
-            return
+    def is_participant_required(view):
+        @functools.wraps(view)
+        def wrapped_view(**kwargs):
+            trip_session_id = request.args.get("sessionId")
+            if trip_session_id is None:
+                abort(405, "Укажите id сессии")
 
-        user = db.session.get(User, fk_session["uuid"])
-        if user is not None:
-            if (int(trip_session_id) not in [s.session_id for s in user.sessions]
-                 and "join" not in request.url):
-                abort(401)
+            user = db.session.get(User, fk_session.get("uuid"))
+            if user is not None:
+                if (int(trip_session_id) not in [s.session_id for s in user.sessions]
+                    and "join" not in request.url):
+                    abort(401)
+
+            return view(**kwargs)
+        return wrapped_view
         
-        # participant_uuid = fk_session.get("participant_uuid")
-        # if participant_name is None and participant_uuid is None:
-        #     return
-        
-        # existing_patricipant = TripParticipant.query.filter_by(name=participant_name).first()
-        # if existing_patricipant is not None:
-        #     return
-        # else:
-        #     trip_participant = TripParticipant(name=participant_name, session_id=trip_session_id)
-        #     db.session.add(trip_participant)
-        #     db.session.commit()
 
     @app.route('/routes')
     def catalog_routes():
@@ -101,8 +94,9 @@ def create_app(test_config=None):
             routes.append(data)
 
         return render_template('catalog.html', routes=routes)
-
+    
     @app.route('/trip-setup/')
+    @is_participant_required
     def trip_setup():
         session_id = request.args.get('sessionId')
         if not session_id:
@@ -131,41 +125,13 @@ def create_app(test_config=None):
                 } for d in sorted(trip_session.route.days, key=lambda d: d.day_order)
             ]
         }
-
-        participants = list(TripParticipant.query.filter_by(session_id=session_id))
-        is_completed_vote = False
-        votes = []
-        winner_variants = None
-        if len(participants) != 0:
-            votes = [{
-                        "participant_name": p.user.name,
-                        "votes": {f"{v.day_order}": f"{v.day_variant.name}" for v in sorted(p.votes, key=lambda v:v.day_order) }
-                    } for p in participants if len(p.votes)]
-            day_votes = {}
-            for voter in votes:
-                for day, variant_name in voter["votes"].items():
-                    day_votes.setdefault(day, []).append(variant_name)
-
-            if len(day_votes) != 0:
-                winner_variants = {
-                    day: Counter(variant_names).most_common(1)[0][0]
-                    for day, variant_names in day_votes.items()
-                }
-
-                expected_count_of_vote = len(TripParticipant.query.filter_by(session_id=session_id).all())
-                is_completed_vote = expected_count_of_vote == len(votes)
-
-        # freq_variants = defaultdict(int)
-        # for p in participants:
-        #     if len(p.votes):
-        #         for d in range(trip_session.route.duration_days):
-        #             freq_variants[f"{p.votes[d].variant_id}"] += 1
-        # winner_variants = [max(participants, key=lambda p:p.votes[d]) for d in range(trip_session.route.duration_days) ]
+        voting_attributes = get_voting_attributes(session_id, trip_session.route.duration_days, True)
         show_name_modal = False if fk_session.get("user_name") else True
-        return render_template('trip-setup.html', show_name_modal=show_name_modal, is_completed_vote=is_completed_vote, votes=votes,
-                               winner_variants=winner_variants, plan=plan, today=date.today())
-    
-    @app.route('/trip-itinerary')
+        return render_template('trip-setup.html', show_name_modal=show_name_modal,
+                                voting_attributes = voting_attributes,
+                                plan=plan, today=date.today())
+    @app.route('/trip-itinerary/')
+    @is_participant_required
     def trip_itinerary():
         session_id = request.args.get('sessionId')
         if not session_id:
@@ -180,10 +146,12 @@ def create_app(test_config=None):
             abort(404)
 
         votes = list(TripVote.query.filter_by(session_id=session_id).all())
-        winner_variants = iter(get_winners_day_variants(votes, session.route.duration_days))
+        winner_variants = get_winners_day_variants(votes, session.route.duration_days)
         days = []
-        for day in route.days:
-            variant = next(winner_variants)
+        if len(winner_variants) != len(route.days):
+            abort(500, "Выбранных вариантов меньше, чем дней в поездке")
+        for day_count, day in enumerate(route.days):
+            variant = winner_variants[day_count]
                 # variant = next(iter_list, None)
                 # if variant:
                     # segmentDTOs = list(map(lambda seg: SegmentDTO.model_validate(seg), sorted(variant.segments, key=lambda s: s.order)))
@@ -234,7 +202,7 @@ def create_app(test_config=None):
             return abort(404, "Городов нет в бд")
         return jsonify(cities)
     
-    @app.route('/api/session/update_transports/', methods=['POST'])
+    @app.route('/api/session/update_transports', methods=['POST'])
     def update_transports_in_db():
         data = request.json or {}
         start_date = data.get('startDate')
@@ -254,15 +222,15 @@ def create_app(test_config=None):
         return jsonify({"message": "Transport updated "})
     
     @app.route('/api/session/create_or_get', methods=['POST'])
-    def create_session_or_get_exist():
+    def create_session_or_get_exist_where_admin():
         data = request.json or {}
         route_id = int(data['routeId'])
         departure_city_id = int(data['departureCityId'])
         if not (route_id):
             abort(400, 'Нужно указать routeId')
 
-        user_uuid = fk_session["uuid"]
-        stmt = select(TripParticipant).where(TripParticipant.user_uuid==user_uuid and TripParticipant.is_admin)
+        user_uuid = fk_session.get("uuid")
+        stmt = select(TripParticipant).where(TripParticipant.user_uuid==user_uuid).where(TripParticipant.is_admin == True)
         sessions_user_admin = db.session.execute(stmt).scalars().all()
         exist_trip_session = list(filter(lambda s: s.session.route_id == route_id, sessions_user_admin))
         
@@ -290,7 +258,7 @@ def create_app(test_config=None):
     @app.route("/api/session/add_user_name", methods=["POST"])
     def add_user_name():
         data = request.json or {}
-        user_uuid = fk_session["uuid"]
+        user_uuid = fk_session.get("uuid")
 
         user_name = data["user_name"]
         user = db.session.get(User, user_uuid)
@@ -306,8 +274,15 @@ def create_app(test_config=None):
     def join_to_session(token):
         stmt = select(TripInvite).where(TripInvite.uuid==token)
         invite: TripInvite = db.session.execute(stmt).scalars().first()
+
         if invite is None:
             abort(404, "Приглашение не найдено")
+            
+        user = db.session.get(User, fk_session.get("uuid"))
+        for trip_participant in user.sessions:
+            if trip_participant.session.uuid == invite.session_uuid:
+                return redirect(url_for("trip_setup", sessionId=trip_participant.session.id))
+
         if datetime.datetime.now() > invite.expired_at or invite.is_active is False:
             abort(401, "Срок приглашения истек или им уже воспользовались")
         invite.is_active = False
@@ -316,7 +291,7 @@ def create_app(test_config=None):
         stmt = select(TripSession).where(TripSession.uuid==invite.session_uuid)
         session = db.session.execute(stmt).scalars().first()
 
-        trip_participant = TripParticipant(user_uuid=fk_session["uuid"], session_id=session.id)
+        trip_participant = TripParticipant(user_uuid=fk_session.get("uuid"), session_id=session.id)
         db.session.add(trip_participant)
         db.session.commit()
 
@@ -331,7 +306,7 @@ def create_app(test_config=None):
         invite = TripInvite(uuid=uuid.uuid4(), session_uuid=session_uuid)
         db.session.add(invite)
         db.session.commit()
-        return jsonify({"link": url_for("join_to_session", token=invite.uuid)})
+        return jsonify({"link": url_for("join_to_session", token=invite.uuid), "token": invite.uuid})
     
     @app.route("/api/session/vote", methods=["POST"])
     def vote():
@@ -340,10 +315,19 @@ def create_app(test_config=None):
         session_id = data["session_id"]
         user_uuid = fk_session.get("uuid")
         if user_uuid is None:
-            abort(400, "пользователь не ввел имя")
+            abort(401, "Пользователь не имеет uuid")
+
         participant = TripParticipant.query.filter_by(user_uuid=user_uuid, session_id=session_id).first()
         if participant is None:
-            abort(400, "пользователь не найден")
+            abort(403, "Пользователь не является участником сессии, в которой голосует")
+
+        stmt = select(TripSession).where(TripSession.id == session_id)
+        session = db.session.execute(stmt).scalars().first()
+
+        voting_attributes = get_voting_attributes(session_id, session.route.duration_days)
+        if voting_attributes["is_completed_vote"]:
+            abort(422, "Голосование завершилось")
+
         exist_participant_votes = TripVote.query.filter_by(participant_id=participant.id, session_id=session_id).all()
         trip_votes_to_add = []
         for choice in choices:
@@ -358,7 +342,8 @@ def create_app(test_config=None):
             
         db.session.add_all(trip_votes_to_add)
         db.session.commit()
-        return jsonify({"message": "choices accepted"})
+
+        return jsonify(votes=[TripVoteDTO.model_validate(vote).model_dump() for vote in trip_votes_to_add])
     
     @app.route("/api/meal_place/<int:meal_place_id>/get_simulars")
     def get_simulars_meal_places(meal_place_id):

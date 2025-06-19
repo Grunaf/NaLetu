@@ -6,9 +6,9 @@
 {% block content %}
 {% if show_name_modal %}
 <div class='enter-name-modal' id='enter-name-modal'>
-  <input type='text' placeholder="Введите имя" name='' id='participant-name' required>
-  <button id='btn-save-participant-name' data-session-id="{{ plan.session_id }}">Сохранить</button>
-</div>
+    <input type='text' placeholder="Введите имя" name='' id='participant-name' required>
+    <button id='btn-save-participant-name' data-session-id="{{ plan.session_id }}">Сохранить</button>
+  </div>
 {%endif%}
 <h1>{{ plan.title }}</h1>
 <div>
@@ -40,19 +40,19 @@
   </div>
 {% endfor %}
 <div class="votes">
-  {% for item in votes %}
+  {% for item in voting_attributes["votes"] %}
     <div class="vote">
       <p>--------------{{item.participant_name}} выбрал</p>
       <div>
-        {%for d, v in item.votes.items() %} <p>{{v}}</p> {% endfor %}
+        {%for d, v in item.items() %} <p>{{v}}</p> {% endfor %}
       </div>
     </div>
   {% endfor%}
 </div>
-{% if is_completed_vote %}
+{% if voting_attributes["is_completed_vote"] %}
 <div id="is-completed-vote">
   Голосование завершено. Все выбрали варианты. Итоговый маршрут:
-  {%for d, v_name in winner_variants.items()%}
+  {%for d, v_name in voting_attributes["winner_variants"].items()%}
     <p>{{d}}: {{v_name}}</p>
   {%endfor%}
 </div>
