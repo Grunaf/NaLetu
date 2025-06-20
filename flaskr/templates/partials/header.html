@@ -1,7 +1,7 @@
 <!-- templates/partials/header.html -->
 <header>
     <div class="logo-container">
-      <a href="{{ url_for('catalog_routes') }}"><img src="/static/img/logo.png" alt="НаЛету" class="logo"></a>
+      <a href="{{ url_for('catalog_routes') }}"><img src="{{url_for('static', filename='img/logo.png')}}" alt="НаЛету" class="logo"></a>
       <span>Сервис планирования маршрутов</span>
     </div>
     <div class="city-location" id="departureCity">

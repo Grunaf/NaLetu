@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}Лету{% endblock %}</title>
-  <link rel="icon" type="image/x-icon" href="/static/img/favicon.png">
+  <link rel="icon" type="image/x-icon" href="{{url_for('static', filename='img/favicon.png')}}">
       <script crossorigin src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
 
   <script src="https://api-maps.yandex.ru/v3?apikey={{ya_map_js_api_key}}&lang=ru_RU" type="text/javascript"></script>
@@ -13,23 +13,23 @@
       data-plugins="transform-modules-umd"
       data-presets="react, typescript"
       type="text/babel"
-      src="static/js/variables.ts"
+      src="{{url_for('static', filename='js/variables.ts')}}"
   ></script>
   <script
       data-plugins="transform-modules-umd"
       data-presets="react, typescript"
       type="text/babel"
-      src="static/js/common.ts"
+      src="{{url_for('static', filename='js/common.ts')}}"
   ></script>
   <script
       data-plugins="transform-modules-umd"
       data-presets="react, typescript"
       type="text/babel"
-      src="static/js/index.ts"
+      src="{{url_for('static', filename='js/index.ts')}}"
   ></script>
-    <link rel="stylesheet" href="static/js/common.css" />
+    <link rel="stylesheet" href="{{url_for('static', filename='js/common.css')}}"/>
 
-  <link rel="stylesheet" href="/static/styles/styles.css">
+  <link rel="stylesheet" href="{{url_for('static', filename='styles/styles.css')}}">
 </head>
 <body class="layout-2col">
   

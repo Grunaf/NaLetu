@@ -1,6 +1,5 @@
-from tests.conftest import capture_template_rendered
-from flaskr import get_winners_day_variants
-from services.session_utils import get_winners_day_variants
+from services.session_utils import get_days_with_winner_variant
+from services.session_utils import DayRead
 
 
 # def test_open_itinerary_page_if_joined(add_cities, routes, users, multiply_sessions, participants_different_admin_count, client):   
@@ -24,27 +23,39 @@ def test_trip_itinerary_bad_request(add_cities, routes, users, multiply_sessions
     with client.session_transaction() as session:
         session["uuid"] = users[2].uuid # устанавливаем uuid пользователя, у которого есть доступ к поездке
 
-    resp = client.get("/trip-itinerary/") # не указываем id сессии
+    resp = client.get("/trip-itinerary/")  # не указываем id сессии
     assert resp.status_code == 400
 
 def test_open_itinerary_if_not_existing_entry(add_cities, routes, users, multiply_sessions, participant_votes, participants_different_admin_count, client):
     """
-    Если указан id не существующей сессии, то возвращаем 404
+    Если указан id не существующей сессии, то вернется 401,
+    так как в личном списке нет запрашиваемой сессии, то есть отказано в доступе
     """
     with client.session_transaction() as session:
-        session["uuid"] = users[2].uuid # устанавливаем uuid пользователя, у которого есть доступ к поездке
+        session["uuid"] = users[2].uuid  # устанавливаем uuid пользователя, у которого есть доступ к поездке
 
-    resp = client.get("/trip-itinerary/", query_string={"sessionId": 10}) # указываем id которого нет
-    assert resp.status_code == 404
+    resp = client.get("/trip-itinerary/", query_string={"sessionId": 10})  # указываем id которого нет
+    assert resp.status_code == 401
     
-def test_get_winner_variants(route, variants, participant_votes, client):
+def test_get_days_with_winner_variant(route, days, variants, participant_votes, client):
     """
-    Если варианты за которые проголосовали не соответсвуют с результатом функции
+    Если варианты за которые проголосовали не соответсвуют результату функции
     """
-    expected_winners = [variants[0][1], variants[1][1], variants[2][1]] # ожидамый результат
-    func_winners = get_winners_day_variants([*participant_votes[0],*participant_votes[1], *participant_votes[2]],
-                                             route.duration_days) # вызов функции с указанием списка голосов и количества дней
-    
+    # ожидамый результат
+    expected_winners = [
+        DayRead(id=days[0].id,
+                day_order=days[0].day_order,
+                variant=variants[0][1]),
+        DayRead(id=days[1].id,
+                day_order=days[1].day_order, variant=variants[1][1]),
+        DayRead(id=days[2].id,
+                day_order=days[2].day_order, variant=variants[2][1])
+    ]
+
+    # вызов функции с указанием списка голосов и количества дней
+    func_winners = get_days_with_winner_variant([*participant_votes[0],*participant_votes[1], *participant_votes[2]],
+                                             route.duration_days)
+
     for expected, result in zip(expected_winners, func_winners):
         assert expected == result
 

@@ -1,13 +1,13 @@
 const sessionId = document.getElementsByClassName("itinerary-left")[0].dataset.sessionId
 const startDateInput = document.getElementById("start-date")
-const startDateValue = startDateInput.value
 
 startDateInput.addEventListener('change', async () => {
-const resp = await fetch('/api/session/update_transports', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({"startDate": startDateValue, sessionId})
-});
+    const startDateValue = startDateInput.value
+    const resp = await fetch('/api/session/update_transports', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({"startDate": startDateValue, sessionId})
+    });
 });
 
 const buttonsShowSimularMPs = document.getElementsByClassName("show-simular-spots");

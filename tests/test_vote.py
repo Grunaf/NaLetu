@@ -5,7 +5,8 @@ from flask.testing import FlaskClient
 def test_vote_if_is_participant(users, participants_different_admin_count: list[list[TripParticipant]],
                                  variants: list[list[DayVariant]], multiply_sessions: list[TripSession], client: FlaskClient):
     """
-    Если пользователь проголосует в поездке, к которой имеет доступ, то 200
+    Если пользователь проголосует в поездке,
+    к которой имеет доступ, то успешно (200)
     """
     with client.session_transaction() as session:
         session["uuid"] = users[0].uuid
@@ -42,7 +43,8 @@ def test_vote_if_is_participant(users, participants_different_admin_count: list[
 def test_vote_if_is_not_participant(users, participants_different_admin_count: list[list[TripParticipant]],
                                  variants: list[list[DayVariant]], multiply_sessions: list[TripSession], client: FlaskClient):
     """
-    Если пользователь проголосует в поездке, к которой не имеет доступа, то отказано в доступе
+    Если пользователь проголосует в поездке,
+    к которой не имеет доступа, то отказано в доступе (403)
     """
     with client.session_transaction() as session:
         session["uuid"] = users[0].uuid
@@ -63,7 +65,7 @@ def test_vote_if_is_not_participant(users, participants_different_admin_count: l
 def test_vote_when_voting_is_finished(users, participant_votes, variants: list[list[DayVariant]],
                                        session, client: FlaskClient):
     """
-    Если пользователь проголосует, когда голосование завершилось, то отказано 422
+    Если пользователь проголосует, когда голосование завершилось, то отказано (422)
     """
     with client.session_transaction() as fk_session:
         fk_session["uuid"] = users[0].uuid

@@ -13,7 +13,13 @@ from models.trip import TripSession, TripParticipant, TripVote, TripInvite, User
 from services.get_f_api_transports import get_transports_f_db_or_api
 from services.get_f_api_meal_places import get_nearby_cuisins_spots
 from services.get_meal_places import get_f_db_meal_places_near_poi
-from services.session_utils import get_voting_attributes, get_winners_day_variants
+from services.session_utils import (
+    get_voting_attributes,
+    get_days_with_winner_variant,
+    get_participants_votes,
+    get_participants_by_session_id,
+    DayRead
+)
 from .DTOs.segmentDTO import SegmentDTO, MealPlaceDTO, SimularMealPlaceCacheDTO
 from .DTOs.tripDTO import TripVoteDTO
 from .utils import format_transports
@@ -21,7 +27,7 @@ from .utils import format_transports
 
 def create_app(test_config=None):
     app = Flask(__name__)
-    app.config["YA_MAP_JS_API_KEY"] = os.getenv("YA_MAP_JS_API_KEY")
+    app.config["YA_MAP_JS_API_KEY"] = os.getenv("YA_MAP_JS_API_KEY") # в config
     app.jinja_env.filters['loads'] = json.loads
     app.jinja_env.trim_blocks = True
     app.jinja_env.lstrip_blocks = True
@@ -49,7 +55,7 @@ def create_app(test_config=None):
         def wrapped_view(**kwargs):
             trip_session_id = request.args.get("sessionId")
             if trip_session_id is None:
-                abort(405, "Укажите id сессии")
+                abort(400, "Укажите id сессии")
 
             user = db.session.get(User, fk_session.get("uuid"))
             if user is not None:
@@ -125,11 +131,20 @@ def create_app(test_config=None):
                 } for d in sorted(trip_session.route.days, key=lambda d: d.day_order)
             ]
         }
-        voting_attributes = get_voting_attributes(session_id, trip_session.route.duration_days, True)
+        voting_attributes = get_voting_attributes(
+                                session_id,
+                                trip_session.route.duration_days)
+
+        participants = get_participants_by_session_id(session_id)
+        participants_votes = get_participants_votes(participants)
+
         show_name_modal = False if fk_session.get("user_name") else True
-        return render_template('trip-setup.html', show_name_modal=show_name_modal,
-                                voting_attributes = voting_attributes,
-                                plan=plan, today=date.today())
+
+        return render_template(
+            'trip-setup.html', show_name_modal=show_name_modal,
+            voting_attributes=voting_attributes,
+            participants_votes=participants_votes, plan=plan, today=date.today())
+
     @app.route('/trip-itinerary/')
     @is_participant_required
     def trip_itinerary():
@@ -146,44 +161,42 @@ def create_app(test_config=None):
             abort(404)
 
         votes = list(TripVote.query.filter_by(session_id=session_id).all())
-        winner_variants = get_winners_day_variants(votes, session.route.duration_days)
+        days_with_winner_variant: list[DayRead] = get_days_with_winner_variant(
+            votes, session.route.duration_days
+            )
         days = []
-        if len(winner_variants) != len(route.days):
+        if len(days_with_winner_variant) != len(route.days):
             abort(500, "Выбранных вариантов меньше, чем дней в поездке")
         for day_count, day in enumerate(route.days):
-            variant = winner_variants[day_count]
-                # variant = next(iter_list, None)
-                # if variant:
-                    # segmentDTOs = list(map(lambda seg: SegmentDTO.model_validate(seg), sorted(variant.segments, key=lambda s: s.order)))
-                    # meal_places =  [ get_f_db_meal_places_near_poi(segments[i-1].poi) for i in range(len(segments)) if segments[i].type == "meal" and i != 0]
-                    # segments = sorted(variant.segments, key=lambda s: s.order)
-            stmt_segments_for_variants = db.select(Segment).options(joinedload(Segment.poi)).where(Segment.variant_id == variant.id).order_by(Segment.order)                           
-            segments_for_variants = db.session.execute(stmt_segments_for_variants).scalars().all()
+            day_with_variant: DayRead = days_with_winner_variant[day_count]
+            variant_id = day_with_variant.variant.id
+
+            stmt = select(Segment) \
+                .options(joinedload(Segment.poi)) \
+                .where(Segment.variant_id == variant_id) \
+                .order_by(Segment.order)
+            segments_for_variants = db.session.execute(stmt).scalars().all()
+            
             segment_dtos = []
             for i in range(len(segments_for_variants)):
                 current_segment = segments_for_variants[i]
                 if current_segment.type == "meal" and i != 0:
-                    meal_places =  ([ MealPlaceDTO.model_validate(i) 
+                    meal_places = ([ MealPlaceDTO.model_validate(i) 
                                     for i in get_f_db_meal_places_near_poi(segments_for_variants[i-1].poi)])
-                    # dict_segment = {"id": current_segment.id, "type": current_segment.type,
-                    #                 "start_time":current_segment.start_time, "end_time": current_segment.end_time,
-                    #                 "meal_places": meal_places}
                     model_dump = SegmentDTO.model_validate(segments_for_variants[i]).model_dump()
                     del model_dump["meal_places"]
                     segment_dtos.append(SegmentDTO(**model_dump, meal_places=meal_places))
                     continue
-                # elif segments[i].type == "poi":
-                    # poi_dto =  POIDTO.model_validate(segments[i].poi)
                 segment_dtos.append(SegmentDTO.model_validate(segments_for_variants[i]))
+
             days.append({
                 "day_order": day.day_order,
-                "variant_id": variant.id,
+                "variant_id": variant_id,
                 "segments": segment_dtos,
-                # "lodgings": variant.lodgings
             })
 
         transports_to_with_data_json = get_transports_f_db_or_api(session.start_date, session.city, route.cities[0].city)
-        transports_from_with_data_json = get_transports_f_db_or_api(session.start_date, route.cities[0].city, session.city)
+        transports_from_with_data_json = get_transports_f_db_or_api(session.end_date, route.cities[0].city, session.city)
         transports_to_json = transports_to_with_data_json.data_json
         transports_from_json = transports_from_with_data_json.data_json
         transports = defaultdict()
@@ -191,7 +204,13 @@ def create_app(test_config=None):
         transports["there"] = [format_transports(t_to) for t_to in transports_to_json] 
         transports["back"] = [format_transports(t_from) for t_from in transports_from_json]
 
-        return render_template("trip-itinerary.html", route=route, session=session, days=days, transports=transports, ya_map_js_api_key = app.config["YA_MAP_JS_API_KEY"])
+        return render_template(
+            "trip-itinerary.html",
+            route=route,
+            session=session,
+            days=days,
+            transports=transports,
+            ya_map_js_api_key=app.config["YA_MAP_JS_API_KEY"])
 
 
     @app.route('/api/session/update_departure_city', methods=['POST'])
@@ -205,7 +224,7 @@ def create_app(test_config=None):
     @app.route('/api/session/update_transports', methods=['POST'])
     def update_transports_in_db():
         data = request.json or {}
-        start_date = data.get('startDate')
+        start_date = date.fromisoformat(data.get('startDate'))
         if start_date is None:
             abort(400, "Отсутствует дата для поиска")
 
@@ -214,11 +233,14 @@ def create_app(test_config=None):
             abort(400, "Отсутствует id session для поиска")
         session = db.session.get(TripSession, session_id)
         session.start_date = start_date
+        session.end_date = start_date + datetime.timedelta(
+            session.route.duration_days
+            )
         db.session.commit()
         route = db.session.get(Route, session.route_id)
 
         _ = get_transports_f_db_or_api(session.start_date, session.city, route.cities[0].city)
-        _ = get_transports_f_db_or_api(session.start_date, route.cities[0].city, session.city)
+        _ = get_transports_f_db_or_api(session.end_date, route.cities[0].city, session.city)
         return jsonify({"message": "Transport updated "})
     
     @app.route('/api/session/create_or_get', methods=['POST'])
@@ -360,6 +382,5 @@ def create_app(test_config=None):
     @app.route('/<path:filename>')
     def static_files(filename):
         return send_from_directory(app.static_folder, filename)
-
 
     return app

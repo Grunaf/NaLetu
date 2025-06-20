@@ -41,7 +41,7 @@ def test_get_existing_session_for_admin(add_cities, routes, users, multiply_sess
 def test_join_to_session_if_have_not_uuid(add_cities, routes, users, multiply_sessions, participants_different_admin_count, trip_invites, client):
     """
     Если пользователь не заходил до этого на сайт, и перешел
-    по пригласительной ссылки, то добавляем
+    по пригласительной ссылки, то добавляем (200)
     """
     with capture_template_rendered(client.application) as template:
         resp = client.get(f"/api/session/join_by_token/{trip_invites[0].uuid}",
@@ -54,8 +54,8 @@ def test_join_to_session_if_have_not_uuid(add_cities, routes, users, multiply_se
 
 def test_join_to_session_if_already_joined(add_cities, routes, users, multiply_sessions, participants_different_admin_count, trip_invites, client):
     """
-    Если пользователь уже присоединился к сессии, но переходит по ссылке снова,
-    то перекидываем на страницу поездки
+    Если пользователь уже присоединился к сессии,
+    но переходит по ссылке снова, то перекидываем на страницу поездки (200)
     """
     with client.session_transaction() as session:
         session["uuid"] = users[2].uuid # устанавливаем uuid пользователя, у которого есть доступ к поездке

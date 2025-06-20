@@ -6,6 +6,7 @@ from models.models import POI
 
 class POIDTO(BaseModel):
     model_config  = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+
     id: int
     name: str
     must_see: bool
@@ -27,6 +28,7 @@ class SimularMealPlaceCacheDTO(BaseModel):
 
 class MealPlaceDTO(BaseModel):
     model_config  = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     coords: str
@@ -37,6 +39,7 @@ class MealPlaceDTO(BaseModel):
 
 class SegmentDTO(BaseModel):
     model_config  = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+
     id: int
     type: str
     start_time: datetime.time
