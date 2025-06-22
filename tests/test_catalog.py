@@ -1,6 +1,6 @@
 from flask.testing import FlaskClient
 
-from models.models import City
+from flaskr.models.city import City
 from tests.conftest import capture_template_rendered
 
 

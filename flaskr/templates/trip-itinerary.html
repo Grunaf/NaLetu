@@ -1,9 +1,40 @@
 <!-- templates/index.html -->
-{% extends 'base-layout-2col.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Главная{% endblock %}
 
-{% block content %}
+{% block script %}
+  <script crossorigin src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
+
+  <script src="https://api-maps.yandex.ru/v3?apikey={{ya_map_js_api_key}}&lang=ru_RU" type="text/javascript"></script>
+  <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp" rel="stylesheet">
+  <script
+      data-plugins="transform-modules-umd"
+      data-presets="react, typescript"
+      type="text/babel"
+      src="{{url_for('static', filename='js/variables.ts')}}"
+  ></script>
+  <script
+      data-plugins="transform-modules-umd"
+      data-presets="react, typescript"
+      type="text/babel"
+      src="{{url_for('static', filename='js/common.ts')}}"
+  ></script>
+  <script
+      data-plugins="transform-modules-umd"
+      data-presets="react, typescript"
+      type="text/babel"
+      src="{{url_for('static', filename='js/index.ts')}}"
+  ></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='js/common.css')}}"/>
+
+    
+<script defer src="{{url_for('static', filename='js/trip-itinerary.js')}}"></script>
+
+{% endblock %}
+
+{% block body %}
+<body class="layout-2col">
 <div class="itinerary-left" data-session-id="{{ session.id }}">
   {% include 'partials/header.html' %}  <!-- Вставка общего header -->
   <div class="itinerary-content">
@@ -105,12 +136,7 @@
 <div class="itinerary-right">
     <div id="map" class="map-box"></div>
 </div>
-
+</body>
 {% endblock %}
 
-{% block script %}
-
-<script src="{{url_for('static', filename='js/trip-itinerary.js')}}"></script>
-
-{% endblock %}
 

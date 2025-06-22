@@ -21,7 +21,7 @@ def upgrade():
     op.create_table('trip_invite',
     sa.Column('uuid', sa.UUID(), nullable=False),
     sa.Column('session_uuid', sa.UUID(), nullable=False),
-    sa.Column('is_expired', sa.Boolean(), nullable=False),
+    sa.Column('is_expired', sa.Boolean(), nullable=True),
     sa.Column('expired_at', sa.DateTime(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['session_uuid'], ['trip_session.uuid'], name=op.f('fk_trip_invite_session_uuid_trip_session')),

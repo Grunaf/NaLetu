@@ -65,3 +65,7 @@ Thumbs.db
 
 # Routes/data (если временные)
 plan_travel.json
+
+.mypy_cache/
+dmypy.json
+mypy-report/

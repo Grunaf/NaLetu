@@ -1,10 +1,10 @@
 from flask.testing import FlaskClient
 
-from conftest import mock_2gis_request
-from models.meal_place import MealPlace
-from models.models import POI
-from services.get_meal_places import get_f_db_meal_places_near_poi
-from services.get_f_api_meal_places import get_nearby_cuisins_spots
+from tests.conftest import mock_2gis_request
+from flaskr.models.meal_place import MealPlace
+from flaskr.models.poi import POI
+from flaskr.services.get_meal_places import get_f_db_meal_places_near_poi
+from flaskr.services.get_meal_places import get_nearby_cuisins_spots
 
 
 def test_get_simular_spots(meal_places: list[MealPlace], mocker):
@@ -43,7 +43,9 @@ def test_get_simular_spots_empty_result(meal_places: list[MealPlace], mocker):
     assert nearby_spots is None
 
 
-def test_get_simular_spots_mupltiply_items(meal_places: list[MealPlace], mocker):
+def test_get_simular_spots_mupltiply_items(
+    meal_places: list[MealPlace], mocker
+):
     mock_2gis_request(
         mocker, '{"result": {"items":[{"address_name": "Камуршинова 45в"}]}}'
     )
@@ -55,10 +57,15 @@ def test_get_simular_spots_mupltiply_items(meal_places: list[MealPlace], mocker)
     expected_spots = (meal_places[0].id, {"address_name": "Камуршинова 45в"})
 
     assert len(nearby_spots) == 1
-    assert (nearby_spots[0].meal_place_id, nearby_spots[0].data_json) == expected_spots
+    assert (
+        nearby_spots[0].meal_place_id,
+        nearby_spots[0].data_json,
+    ) == expected_spots
 
 
-def test_api_get_simular_spots(meal_places: list[MealPlace], client: FlaskClient):
+def test_api_get_simular_spots(
+    meal_places: list[MealPlace], client: FlaskClient
+):
     resp = client.get(f"/api/meal_place/{meal_places[0].id}/get_simulars")
     assert resp.status_code == 200
     assert "simular_meal_places_result" in resp.json
