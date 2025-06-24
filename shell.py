@@ -1,5 +1,4 @@
 from flask import Blueprint
-from flask.cli import with_appcontext
 from flask_migrate import downgrade, upgrade
 from sqlalchemy import text
 
@@ -15,7 +14,6 @@ def seed_db(file_seed: str = "initial_data.sql") -> None:
     db.session.commit()
 
 
-# @with_appcontext
 @mod.cli.command("reset-db")
 def reset_db() -> None:
     print("Dropping all tables")

@@ -1,12 +1,8 @@
 import datetime
 
-from typing import TYPE_CHECKING
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .models import db
-
-if TYPE_CHECKING:
-    from .route import Segment
 
 
 class POI(db.Model):
@@ -19,5 +15,3 @@ class POI(db.Model):
 
     lat: Mapped[float]
     lon: Mapped[float]
-
-    segment: Mapped["Segment"] = relationship(back_populates="poi")

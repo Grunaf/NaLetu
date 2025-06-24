@@ -1,5 +1,6 @@
 import datetime
 from typing import List, Optional
+from flaskr.models.constants import MEAL
 
 from pydantic import BaseModel, ConfigDict
 
@@ -57,7 +58,7 @@ class SegmentDTO(BaseModel):
     )
 
     id: int
-    type: str
+    type: int
     start_time: datetime.time
     end_time: datetime.time
     poi: Optional[POIDTO] = None
@@ -65,7 +66,7 @@ class SegmentDTO(BaseModel):
 
     @property
     def meal_type(self) -> str | None:
-        if self.type == "meal":
+        if self.type == MEAL:
             if (
                 START_BREAKFAST_TIME <= self.start_time
                 and self.start_time < START_LUNCH_TIME

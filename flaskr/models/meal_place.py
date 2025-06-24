@@ -2,7 +2,7 @@ import datetime
 from typing import Optional
 
 from sqlalchemy import JSON, ForeignKey, SmallInteger
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .models import db
 
@@ -10,13 +10,14 @@ from .models import db
 class MealPlace(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
-    type: Mapped[int | None] = mapped_column(SmallInteger, default=None)
     coords: Mapped[str]
-    open_time: Mapped[Optional[datetime.time]]
-    close_time: Mapped[Optional[datetime.time]]
     city_id: Mapped[int] = mapped_column(ForeignKey("city.id"))
 
-    cuisine: Mapped[str]
+    type: Mapped[int | None] = mapped_column(SmallInteger, default=None)
+    open_time: Mapped[Optional[datetime.time]]
+    close_time: Mapped[Optional[datetime.time]]
+
+    cuisine: Mapped[int] = mapped_column(SmallInteger)
     avg_check_rub: Mapped[Optional[int]]
     rating: Mapped[Optional[float]]
     website: Mapped[Optional[str]]
@@ -27,6 +28,8 @@ class MealPlace(db.Model):
     created_at: Mapped[datetime.datetime] = mapped_column(
         default=datetime.datetime.now()
     )
+
+    city: Mapped["City"] = relationship()
 
 
 class SimularMealPlaceCache(db.Model):

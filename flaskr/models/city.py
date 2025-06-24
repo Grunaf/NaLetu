@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 from .models import db
 
 
@@ -8,8 +8,3 @@ class City(db.Model):
     lat: Mapped[float]
     lon: Mapped[float]
     yandex_code: Mapped[str]
-
-    route_cities: Mapped["RouteCity"] = relationship(
-        "RouteCity",
-        back_populates="city"
-        )

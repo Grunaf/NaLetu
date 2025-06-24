@@ -16,7 +16,6 @@ from flaskr.models.user import User
 from flaskr.routes.api.meal_places import mod as mealPlacesModule
 from flaskr.routes.api.sessions import mod as sessionsModule
 from flaskr.routes.views import mod as viewsModule
-# from shell import mod as shellModule
 from shell import reset_db
 
 
@@ -38,7 +37,7 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
     app.register_blueprint(sessionsModule)
     app.register_blueprint(mealPlacesModule)
     app.register_blueprint(viewsModule)
-    # app.register_blueprint(shellModule)
+
     app.cli.add_command(reset_db)
 
     @app.context_processor
@@ -54,6 +53,7 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
             user = User(uuid=user_uuid)
             db.session.add(user)
             db.session.commit()
+        
 
     @app.route("/<path:filename>")
     def static_files(filename: str) -> Response:

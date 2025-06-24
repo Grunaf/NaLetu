@@ -32,7 +32,7 @@ def get_days_with_winner_variant(
         variant_read = DayVariantRead.model_validate(variant)
         days_with_variant.append(
             DayRead(
-                id=variant.day.id,
+                id=variant.day_id,
                 day_order=variant.day.day_order,
                 variant=variant_read,
             )

@@ -8,6 +8,10 @@ from flaskr.models.models import db
 from flaskr.models.route import Segment
 
 
+def get_segment_by_poi(poi_id: int) -> Segment | None:
+    stmt = select(Segment).where(Segment.poi_id == poi_id)
+    return db.session.execute(stmt).scalars().first()
+
 def get_segments_for_variants(variant_id: int) -> List[Segment]:
     stmt = (
         select(Segment)

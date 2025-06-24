@@ -5,10 +5,6 @@ from contextlib import contextmanager
 from datetime import datetime as datetime_c
 from typing import Generator
 
-from pytest_factoryboy import register
-from .factories import UserFactory
-register(UserFactory)
-
 import pytest
 from flask import template_rendered
 from flask_sqlalchemy import SQLAlchemy
@@ -18,18 +14,23 @@ from testcontainers.postgres import PostgresContainer
 from flaskr import create_app
 from flaskr.models.city import City
 from flaskr.models.meal_place import MealPlace, SimularMealPlaceCache
-from flaskr.models.models import (
-    db as db_from_model,
-)
+from flaskr.models.models import db as db_from_model
 from flaskr.models.poi import POI
-from flaskr.models.user import User
 from flaskr.models.route import Day, DayVariant, Route, RouteCity, Segment
 from flaskr.models.transport import TransportCache
 from flaskr.models.trip import (
     TripInvite,
     TripParticipant,
     TripSession,
-    TripVote
+    TripVote,
+)
+from flaskr.models.user import User
+from tests.factories import (
+    # RouteCityFactory,
+    RouteFactory,
+    # TripParticipantFactory,
+    # TripSessionFactory,
+    UserFactory
 )
 
 postgres = PostgresContainer("postgres:16-alpine")
@@ -130,6 +131,13 @@ def mock_2gis_request(mocker, data, status=200):
     mock_get.return_value.text = data
 
 
+# # register(RouteFactory)
+# # register(RouteCityFactory)
+# # register(TripParticipantFactory)
+# # register(TripSessionFactory)
+# register(UserFactory)
+
+
 @pytest.fixture
 def client(app, _db):
     with app.test_client() as client:
@@ -172,8 +180,7 @@ def session(_db, routes, add_cities, detail_for_route):
         route_id=routes[0].id,
         departure_city_id=add_cities[1].id,
         start_date=datetime_p.date.fromisoformat("2025-06-01"),
-        end_date=datetime_p.date.fromisoformat("2025-06-03"),
-        choices_json="",
+        end_date=datetime_p.date.fromisoformat("2025-06-03") 
     )
     _db.session.add(ses1)
     _db.session.commit()
@@ -208,9 +215,9 @@ def routes(_db, route, add_cities):
 
 
 @pytest.fixture
-def sample_routes(_db, add_cities):
+def sample_routes(_db, cities):
     # Insert two routes with one city each
-    r1 = Route(
+    r1 = RouteFactory.create(
         id=1,
         title="Kazan – Kavkaz",
         duration_days=5,
@@ -220,8 +227,7 @@ def sample_routes(_db, add_cities):
     s1 = TripSession(
         id=1,
         uuid=uuid.UUID("ff3251d5-90e0-4f59-b8af-a600fbbb8895"),
-        route_id=1,
-        choices_json="",
+        route_id=1 
         departure_city_id=add_cities[2].id,
         start_date=datetime_p.date(2025, 6, 9),
         end_date=datetime_p.date(2025, 6, 14),
@@ -231,13 +237,12 @@ def sample_routes(_db, add_cities):
     s2 = TripSession(
         id=2,
         uuid=uuid.UUID("663fc292-951c-4dbc-82fe-b393e0d94a1c"),
-        route_id=2,
-        choices_json="",
+        route_id=2 
         departure_city_id=add_cities[0].id,
         start_date=datetime_p.date(2025, 6, 9),
         end_date=datetime_p.date(2025, 6, 14),
     )
-    r2 = Route(
+    r2 = RouteFactory.create_batch(
         id=2,
         title="Sergiev Posad",
         duration_days=1,
@@ -245,9 +250,6 @@ def sample_routes(_db, add_cities):
         img="sergiev_posad.jpg",
     )
     rc2 = RouteCity(id=4, route_id=2, city_id=2, order=1)
-
-    _db.session.add_all([s1, r1, rc1, s2, r2, rc2])
-    _db.session.commit()
 
 
 @pytest.fixture
@@ -503,8 +505,7 @@ def session(_db, routes, add_cities, detail_for_route):
         route_id=routes[0].id,
         departure_city_id=add_cities[1].id,
         start_date=datetime_p.date.fromisoformat("2025-06-01"),
-        end_date=datetime_p.date.fromisoformat("2025-06-03"),
-        choices_json="",
+        end_date=datetime_p.date.fromisoformat("2025-06-03") 
     )
     _db.session.add(ses1)
     _db.session.commit()
@@ -520,16 +521,14 @@ def multiply_sessions(
         route_id=routes[1].id,
         departure_city_id=add_cities[1].id,
         start_date=datetime_p.date.fromisoformat("2025-06-01"),
-        end_date=datetime_p.date.fromisoformat("2025-06-03"),
-        choices_json="",
+        end_date=datetime_p.date.fromisoformat("2025-06-03") 
     )
     ses3 = TripSession(
         uuid=uuid.UUID("7a600248-e0fc-47bd-85a0-1fb518486e81"),
         route_id=routes[2].id,
         departure_city_id=add_cities[1].id,
         start_date=datetime_p.date.fromisoformat("2025-06-01"),
-        end_date=datetime_p.date.fromisoformat("2025-06-03"),
-        choices_json="",
+        end_date=datetime_p.date.fromisoformat("2025-06-03") 
     )
     _db.session.add_all([ses2, ses3])
     _db.session.commit()

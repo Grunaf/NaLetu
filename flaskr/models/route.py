@@ -1,10 +1,10 @@
 from datetime import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from sqlalchemy import Boolean, ForeignKey, Index, SmallInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .models import db
+from flaskr.models.models import db
 
 
 if TYPE_CHECKING:
@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 
 class Route(db.Model):
+    __tablename__ = "route"
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str]
     duration_days: Mapped[int]
@@ -22,17 +23,17 @@ class Route(db.Model):
 
     cities: Mapped[list["RouteCity"]] = relationship(
         order_by="RouteCity.order",
-        back_populates="route",
-        cascade="all, delete-orphan",
+        cascade="all, delete-orphan"
     )
 
 
 class Day(db.Model):
+    __tablename__ = "day"
     id: Mapped[int] = mapped_column(primary_key=True)
     day_order: Mapped[int]
     route_id: Mapped[int] = mapped_column(ForeignKey("route.id"))
+    route: Mapped["Route"] = relationship(back_populates="days")
 
-    route: Mapped["Route"] = relationship()
     default_variant: Mapped["DayVariant"] = relationship(
         primaryjoin="DayVariant.day_id == Day.id and DayVariant.is_default == True",
         overlaps="variants, day",
@@ -46,13 +47,14 @@ class Day(db.Model):
 
 
 class DayVariant(db.Model):
+    __tablename__ = "day_variant"
+
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
     est_budget: Mapped[int]
     day_id: Mapped[int] = mapped_column(ForeignKey("day.id"))
     is_default: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    segments: Mapped["Segment"] = relationship(back_populates="variant")
     day: Mapped["Day"] = relationship(
         back_populates="variants", foreign_keys=[day_id]
     )
@@ -77,11 +79,13 @@ class RouteCity(db.Model):
     order: Mapped[int]
 
     # связь обратно к маршруту
-    city: Mapped["City"] = relationship(back_populates="route_cities")
+    city: Mapped["City"] = relationship()
     route: Mapped["Route"] = relationship(back_populates="cities")
 
 
 class Segment(db.Model):
+    __tablename__ = "segment"
+
     id: Mapped[int] = mapped_column(primary_key=True)
     variant_id: Mapped[int] = mapped_column(ForeignKey("day_variant.id"))
     type: Mapped[int] = mapped_column(SmallInteger)
@@ -89,7 +93,7 @@ class Segment(db.Model):
     start_time: Mapped[time | None]
     end_time: Mapped[time | None]
 
-    variant: Mapped["DayVariant"] = relationship(back_populates="segment")
+    variant: Mapped["DayVariant"] = relationship()
 
     attached_next_segment_id: Mapped[int | None] = mapped_column(
         ForeignKey("segment.id"), default=None
@@ -99,7 +103,7 @@ class Segment(db.Model):
     poi_id: Mapped[int | None] = mapped_column(
         ForeignKey("poi.id"), default=None
     )
-    poi: Mapped["POI"] = relationship(back_populates="segment")
+    poi: Mapped["POI"] = relationship()
 
     lodging_name: Mapped[str | None] = mapped_column(default=None)
 

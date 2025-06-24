@@ -8,6 +8,7 @@ from flaskr.db.segments import get_segments_for_variants
 from config import YA_MAP_API_KEY
 from flaskr.utils import format_transports
 from flaskr.decorators import is_participant_required
+from flaskr.models.constants import POI as POI_TYPE, MEAL as MEAL_TYPE, SEGMENT_TYPE
 from flaskr.models.models import db
 from flaskr.models.poi import POI
 from flaskr.models.route import Day, DayVariant, Route, Segment
@@ -29,15 +30,14 @@ mod = Blueprint("views", __name__)
 @mod.route("/routes")
 def catalog_routes():
     routes = []
-    for r in Route.query.all():
-        # берём первый город как базу
-        start = r.cities[0]
+    for route in Route.query.all():
+        start = route.cities[0]
         data = {
-            "id": r.id,
-            "title": r.title,
-            "duration_days": r.duration_days,
-            "estimated_budget_rub": r.estimated_budget_rub,
-            "img": r.img,
+            "id": route.id,
+            "title": route.title,
+            "duration_days": route.duration_days,
+            "estimated_budget_rub": route.estimated_budget_rub,
+            "img": route.img,
             "start_coords": [start.city.lat, start.city.lon],
         }
 
@@ -45,7 +45,7 @@ def catalog_routes():
             POI.query.join(Segment, POI.id == Segment.poi_id)
             .join(DayVariant, Segment.variant_id == DayVariant.id)
             .join(Day, DayVariant.day_id == Day.id)
-            .filter(Day.route_id == r.id, Segment.type == "poi")
+            .filter(Day.route_id == route.id, Segment.type == POI_TYPE)
             .all()
         )
         # 3) кладём список упрощённых POI
@@ -137,7 +137,7 @@ def trip_itinerary():
         segment_dtos = []
         for i in range(len(segments_for_variants)):
             current_segment = segments_for_variants[i]
-            if current_segment.type == "meal" and i != 0:
+            if current_segment.type == MEAL_TYPE and i != 0:
                 meal_places = [
                     MealPlaceDTO.model_validate(i)
                     for i in get_f_db_meal_places_near_poi(
@@ -148,13 +148,9 @@ def trip_itinerary():
                     segments_for_variants[i]
                 ).model_dump()
                 del model_dump["meal_places"]
-                segment_dtos.append(
-                    SegmentDTO(**model_dump, meal_places=meal_places)
-                )
+                segment_dtos.append(SegmentDTO(**model_dump, meal_places=meal_places))
                 continue
-            segment_dtos.append(
-                SegmentDTO.model_validate(segments_for_variants[i])
-            )
+            segment_dtos.append(SegmentDTO.model_validate(segments_for_variants[i]))
 
         days.append(
             {
@@ -174,12 +170,8 @@ def trip_itinerary():
     transports_from_json = transports_from_with_data_json.data_json
     transports = defaultdict()
 
-    transports["there"] = [
-        format_transports(t_to) for t_to in transports_to_json
-    ]
-    transports["back"] = [
-        format_transports(t_from) for t_from in transports_from_json
-    ]
+    transports["there"] = [format_transports(t_to) for t_to in transports_to_json]
+    transports["back"] = [format_transports(t_from) for t_from in transports_from_json]
 
     return render_template(
         "trip-itinerary.html",
@@ -187,5 +179,7 @@ def trip_itinerary():
         session=session,
         days=days,
         transports=transports,
+        POI_TYPE=POI_TYPE,
+        MEAL_TYPE=MEAL_TYPE,
         ya_map_js_api_key=YA_MAP_API_KEY,
     )

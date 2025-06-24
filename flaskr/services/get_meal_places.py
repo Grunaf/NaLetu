@@ -7,13 +7,15 @@ from geopy.distance import geodesic
 
 from flaskr.db.meal_places import get_meal_place_cache_by_id
 from config import DGIS_API_KEY, DGIS_API_URI
+from flaskr.db.segments import get_segment_by_poi
 from flaskr.models.meal_place import MealPlace, SimularMealPlaceCache
 from flaskr.models.models import db
 from flaskr.models.poi import POI
+from flaskr.models.constants import CUISINE
 
 
 def get_nearby_cuisins_spots(
-    coords: str, cuisine: str, meal_place_id: int
+    coords: str, cuisine: int, meal_place_id: int
 ) -> List[SimularMealPlaceCache] | None:
     existed_simular_spots = get_meal_place_cache_by_id(meal_place_id)
     if existed_simular_spots is not None:
@@ -43,9 +45,9 @@ def get_none_or_result_if_is(response):
     return result
 
 
-
-def fetch_from_api_meal_places_near(cuisine: str, coords: str):
-    query = f"поесть {cuisine[:-2]}ую кухню"
+def fetch_from_api_meal_places_near(cuisine: int, coords: str):
+    cuisine_root = CUISINE[cuisine][:-2]
+    query = f"поесть {cuisine_root}ую кухню"
 
     params = {
         "q": query,
@@ -71,13 +73,18 @@ def add_simular_meal_places_in_db(
     return simular_spots
 
 
-def get_f_db_meal_places_near_poi(poi: POI) -> List[MealPlace]:
+def get_f_db_meal_places_near_poi(
+    poi: POI, radius: float = 0.4
+) -> List[MealPlace | None]:
     meal_city_near = []
-    radius = 0.4
     checked_cities = []
     while len(meal_city_near) <= 6:
+        poi_segment = get_segment_by_poi(poi.id)
+        if poi_segment is None:
+            return []
+
         meal_places_in_city = list(
-            MealPlace.query.filter(MealPlace.city_id == poi.segment[0].city_id)
+            MealPlace.query.filter(MealPlace.city_id == poi_segment.city_id)
             .filter(MealPlace.id.not_in(checked_cities))
             .limit(6)
             .all()

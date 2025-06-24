@@ -26,9 +26,7 @@ class TripSession(db.Model):
     end_date: Mapped[date]
 
     created_at: Mapped[datetime] = mapped_column(default=datetime.now())
-    participants: Mapped[list["TripParticipant"]] = relationship(
-        back_populates="session"
-    )
+
     route: Mapped["Route"] = relationship()
     city: Mapped["City"] = relationship()
 
@@ -44,9 +42,8 @@ class TripParticipant(db.Model):
     join_at: Mapped[datetime] = mapped_column(default=datetime.now())
     is_admin: Mapped[bool] = mapped_column(server_default="False")
 
-    session: Mapped["TripSession"] = relationship(
-        back_populates="participants"
-    )
+#   можно будет удалить когда перейду на uuid с id
+    session: Mapped["TripSession"] = relationship()
     user: Mapped["User"] = relationship(back_populates="sessions")
 
     votes: Mapped[list["TripVote"]] = relationship(
@@ -72,12 +69,11 @@ class TripInvite(db.Model):
         UUID(as_uuid=True), ForeignKey("trip_session.uuid")
     )
     is_active: Mapped[bool] = mapped_column(server_default="True")
+
     expired_at: Mapped[datetime] = mapped_column(
         default=lambda: datetime.now() + timedelta(1)
     )
     created_at: Mapped[datetime] = mapped_column(default=datetime.now())
-
-    session: Mapped[TripSession] = relationship
 
 
 class TripVote(db.Model):

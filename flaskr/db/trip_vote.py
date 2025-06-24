@@ -8,4 +8,4 @@ from flaskr.models.trip import TripVote
 
 def get_trip_votes_by_uuid(session_id: uuid) -> List[TripVote]:
     stmt = select(TripVote).where(TripVote.session_id == session_id)
-    return db.session.execute(stmt).scalars().first()
+    return db.session.execute(stmt).scalars().all()

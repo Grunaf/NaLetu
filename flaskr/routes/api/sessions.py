@@ -9,6 +9,7 @@ from sqlalchemy import select
 
 from flaskr.db.trip_invites import get_trip_invite_by_uuid
 from flaskr.db.trip_sessions import (
+    get_trip_session_by_id,
     get_trip_session_by_uuid,
     get_trip_session_where_user_admin,
 )
@@ -94,7 +95,6 @@ def create_session_or_get_exist_where_admin():
         start_date=datetime.datetime.today(),
         end_date=datetime.datetime.today()
         + datetime.timedelta(days=route.duration_days),
-        choices_json="{}",
     )
 
     db.session.add(trip_session)
@@ -136,7 +136,7 @@ def join_to_session(token):
     for trip_participant in user.sessions:
         if trip_participant.session.uuid == invite.session_uuid:
             return redirect(
-                url_for("trip_setup", sessionId=trip_participant.session.id)
+                url_for("views.trip_setup", sessionId=trip_participant.session.id)
             )
 
     if (
@@ -155,7 +155,7 @@ def join_to_session(token):
     db.session.add(trip_participant)
     db.session.commit()
 
-    return redirect(url_for("trip_setup", sessionId=session.id))
+    return redirect(url_for("views.trip_setup", sessionId=session.id))
 
 
 @mod.route("/<uuid:session_uuid>/create_invite", methods=["POST"])
@@ -169,7 +169,7 @@ def create_trip_invite(session_uuid):
     db.session.commit()
     return jsonify(
         {
-            "link": url_for("join_to_session", token=invite.uuid),
+            "link": url_for("api/session.join_to_session", token=invite.uuid),
             "token": invite.uuid,
         }
     )
@@ -193,7 +193,7 @@ def vote():
             "Пользователь не является участником сессии, в которой голосует",
         )
 
-    session = get_trip_session_by_uuid(session_id)
+    session = get_trip_session_by_id(session_id)
 
     voting_attributes = get_voting_attributes(
         session_id, session.route.duration_days
