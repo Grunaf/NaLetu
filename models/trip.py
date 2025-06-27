@@ -71,9 +71,8 @@ class Staff(UserMixin, db.Model):
     @property
     def is_authenticated(self):
         return self.role == ADMIN or (
-            self.role == MODERATOR and
-            self.request.status == APPROVED
-            )
+            self.role == MODERATOR and self.request.status == APPROVED
+        )
 
     @property
     def is_active(self):

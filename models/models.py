@@ -93,6 +93,7 @@ class RouteCity(db.Model):
     city = relationship("City", back_populates="route_cities")
     route = relationship("Route", back_populates="cities")
 
+
 class Segment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     variant_id = db.Column(db.Integer, ForeignKey("day_variant.id"))

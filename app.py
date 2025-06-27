@@ -1,21 +1,23 @@
 import json
 import os
 
-import flask_admin as admin
 import flask_login as login
-from flask import abort, redirect, render_template, request, url_for
-from flask_admin import Admin, BaseView, expose, helpers
-from flask_admin.contrib.sqla import ModelView
+from flask_admin import Admin
 from flask_migrate import Migrate, downgrade, upgrade
+from flask_swagger_ui import get_swaggerui_blueprint
 from sqlalchemy import select, text
-from werkzeug.security import generate_password_hash
 
 from flaskr import create_app
+from flaskr.admin.views import (
+    AdminModelView,
+    AssembleRouteView,
+    MyAdminIndexView,
+    MyModeratorIndexView,
+    TravelerView,
+)
 from models.meal_place import MealPlace, SimularMealPlaceCache
-from models.models import POI, City, Day, DayVariant, PriceEntry, Route, Segment, db
+from models.models import POI, Day, DayVariant, PriceEntry, Route, Segment, db
 from models.trip import (
-    ADMIN,
-    MODERATOR,
     AdditionRequest,
     Staff,
     Traveler,
@@ -25,8 +27,6 @@ from models.trip import (
     TripVote,
 )
 from routes.hotels import hotels_bp
-from services.admin import LoginForm, RegistrationForm
-from flask_swagger_ui import get_swaggerui_blueprint
 
 DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
@@ -93,137 +93,6 @@ def reset_db():
     seed_db()
 
 
-# class TripParticipantView(ModelView):
-#     form_columns = ["id","is_admin","join_at"]
-
-
-def is_authenticated_and_have_permission(role: int):
-    return login.current_user.is_authenticated and login.current_user.role == role
-
-
-class AdminModelView(ModelView):
-    def is_accessible(self):
-        return is_authenticated_and_have_permission(ADMIN)
-
-
-class ModeratorView(BaseView):
-    def is_accessible(self):
-        return is_authenticated_and_have_permission(MODERATOR)
-
-
-class TravelerView(AdminModelView):
-    form_columns = ["uuid", "name"]
-
-class AssembleDayView(ModeratorView):
-    @expose("/", methods=["GET"])
-    def index(self):
-        stmt = select(Route)
-        routes = db.session.execute(stmt).scalars().all()
-
-        return self.render("admin/assemble_route.html")
-
-
-class AuthIndexView(admin.AdminIndexView):
-
-    # @expose("/")
-    # def index(self):
-    #     if not login.current_user.is_authenticated:
-    #         return redirect(url_for(".login_view"))
-
-    #     if login.current_user.role == ADMIN and request.path.startswith("/moderator"):
-    #         abort(403)
-    #     if login.current_user.role == MODERATOR and request.path.startswith("/admin"):
-    #         abort(403)
-
-    #     return super().index()
-
-    @expose("/login/", methods=("GET", "POST"))
-    def login_view(self, link=None):
-        form = LoginForm(request.form)
-        if helpers.validate_form_on_submit(form):
-            staff = form.get_user()
-            login.login_user(staff)
-
-        if login.current_user.is_authenticated:
-            return redirect(url_for(".index"))
-        if link is None:
-            link = (
-                'Вы гид? <a href="'
-                + url_for("moderator.login_view")
-                + '">Click here</a>'
-            )
-        self._template_args["form"] = form
-        self._template_args["link"] = link
-        return super().index()
-
-    @expose("logout")
-    def logout_view(self):
-        login.logout_user()
-        return redirect(url_for(".index"))
-
-
-class MyModeratorIndexView(AuthIndexView):
-    @expose("/")
-    def index(self):
-        if not login.current_user.is_authenticated:
-            return redirect(url_for(".login_view"))
-
-        # if login.current_user.role == ADMIN and request.path.startswith("/moderator"):
-        #     abort(403)
-        # if login.current_user.role == MODERATOR and request.path.startswith("/admin"):
-        #     abort(403)
-
-        return super().index()
-
-    @expose("/login/", methods=("GET", "POST"))
-    def login_view(self):
-        link = 'Вы админ? <a href="' + url_for("admin.login_view") + '">Click here</a>'
-        return super().login_view(link)
-
-    @expose("/register/", methods=["GET", "POST"])
-    def register_view(self):
-        form = RegistrationForm(request.form)
-
-        if helpers.validate_form_on_submit(form):
-            staff = Staff()
-
-            form.populate_obj(staff)
-            staff.password = generate_password_hash(form.password.data)
-
-            addition_request = AdditionRequest(staff=staff)
-            db.session.add(staff)
-            db.session.add(addition_request)
-            db.session.commit()
-
-            print("Пользователь отправил заявку на регистрацию")
-            import traceback
-
-            try:
-                return redirect(url_for(".index"))
-            except Exception as e:
-                traceback.print_exc()
-                raise
-
-        link = 'Уже есть акканут? <a href="' + url_for(".login_view") + '">Click here</a>'
-
-        self._template_args["form"] = form
-        self._template_args["link"] = link
-
-        return super().index()
-
-
-class MyAdminIndexView(AuthIndexView):
-    @expose("/")
-    def index(self):
-        if login.current_user.role == MODERATOR and request.path.startswith("/admin"):
-            abort(403)
-
-        if not login.current_user.is_authenticated:
-            return redirect(url_for("admin.login_view"))
-
-        return super().index()
-
-
 def init_login():
     login_manager = login.LoginManager()
     login_manager.init_app(app)
@@ -270,7 +139,7 @@ admin.add_view(AdminModelView(TripVote, db.session, category="Trip"))
 
 
 moderator.add_view(
-    AssembleDayView(name="Добавить маршрут на день", endpoint="assemble_route")
+    AssembleRouteView(name="Добавить маршрут на день", endpoint="assemble_route")
 )
 swaggerui_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL, API_URL, config={"app_name": "Test application"}

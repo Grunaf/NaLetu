@@ -357,8 +357,9 @@ def create_app(test_config=None):
             route_id=route_id,
             departure_city_id=departure_city_id,
             start_date=datetime.datetime.today(),
-            end_date=datetime.datetime.today() + datetime.timedelta(days=route.duration_days),
-            choices_json='{}'
+            end_date=datetime.datetime.today()
+            + datetime.timedelta(days=route.duration_days),
+            choices_json="{}",
         )
 
         db.session.add(trip_session)
