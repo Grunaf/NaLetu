@@ -13,9 +13,11 @@ metadata = MetaData(
         "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
         "ix": "ix_%(table_name)s_%(column_0_name)s",
         "uq": "uq_%(table_name)s_%(column_0_name)s",
-        "ck": "ck_%(table_name)s_%(constraint_name)s"
-})
+        "ck": "ck_%(table_name)s_%(constraint_name)s",
+    }
+)
 db = SQLAlchemy(metadata=metadata)
+
 
 class Route(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -25,9 +27,7 @@ class Route(db.Model):
 
     days: Mapped[list["Day"]] = relationship(back_populates="route")
     cities: Mapped[list["RouteCity"]] = relationship(
-      order_by="RouteCity.order",
-      back_populates="route",
-      cascade="all, delete-orphan"
+        order_by="RouteCity.order", back_populates="route", cascade="all, delete-orphan"
     )
     img: Mapped[str]
 
@@ -37,11 +37,17 @@ class Day(db.Model):
     day_order = db.Column(db.Integer)
     route_id: Mapped[int] = mapped_column(ForeignKey("route.id"))
 
-    route: Mapped["Route"] = relationship() 
-    default_variant: Mapped["DayVariant"] = relationship(primaryjoin="DayVariant.day_id == Day.id"
-                                    " and DayVariant.is_default == True", overlaps="variants, day")
-    variants: Mapped[list["DayVariant"]] = relationship(order_by="DayVariant.id", back_populates="day",
-                            primaryjoin="DayVariant.day_id == Day.id", cascade="all, delete-orphan")
+    route: Mapped["Route"] = relationship()
+    default_variant: Mapped["DayVariant"] = relationship(
+        primaryjoin="DayVariant.day_id == Day.id and DayVariant.is_default == True",
+        overlaps="variants, day",
+    )
+    variants: Mapped[list["DayVariant"]] = relationship(
+        order_by="DayVariant.id",
+        back_populates="day",
+        primaryjoin="DayVariant.day_id == Day.id",
+        cascade="all, delete-orphan",
+    )
 
 
 class DayVariant(db.Model):
@@ -55,8 +61,15 @@ class DayVariant(db.Model):
     # lodgings = relationship("LodgingOption", backref="variant")
     day = relationship("Day", back_populates="variants", foreign_keys=[day_id])
     __table_args__ = (
-        Index("only_one_default_variant", day_id, is_default, unique=True, postgresql_where=("is_default"))
-    ,)
+        Index(
+            "only_one_default_variant",
+            day_id,
+            is_default,
+            unique=True,
+            postgresql_where=("is_default"),
+        ),
+    )
+
 
 class City(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -65,19 +78,19 @@ class City(db.Model):
     lon = db.Column(db.Float)
     yandex_code = db.Column(db.String, nullable=False)
 
-    route_cities = relationship("RouteCity", back_populates="city") 
+    route_cities = relationship("RouteCity", back_populates="city")
 
 
 class RouteCity(db.Model):
     __tablename__ = "route_city"
 
-    id           = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     route_id: Mapped[int] = mapped_column(ForeignKey("route.id"))
-    city_id      = db.Column(db.Integer, ForeignKey("city.id"), nullable=False)
-    order        = db.Column(db.Integer, nullable=False)
+    city_id = db.Column(db.Integer, ForeignKey("city.id"), nullable=False)
+    order = db.Column(db.Integer, nullable=False)
 
     # связь обратно к маршруту
-    city =  relationship("City", back_populates="route_cities")
+    city = relationship("City", back_populates="route_cities")
     route = relationship("Route", back_populates="cities")
 
 class Segment(db.Model):
@@ -89,7 +102,7 @@ class Segment(db.Model):
     attached_next_segment = relationship("Segment")
 
     start_time = db.Column(db.Time, nullable=True)
-    end_time   = db.Column(db.Time, nullable=True)
+    end_time = db.Column(db.Time, nullable=True)
 
     poi_id = db.Column(db.Integer, ForeignKey("poi.id"))
     poi = relationship("POI", back_populates="segment")
@@ -97,30 +110,32 @@ class Segment(db.Model):
     # Lodging
     lodging_name = db.Column(db.String)
 
-    city_id   = db.Column(db.Integer, ForeignKey("route_city.id"))
-    city      = relationship("RouteCity")
+    city_id = db.Column(db.Integer, ForeignKey("route_city.id"))
+    city = relationship("RouteCity")
+
 
 class POI(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    dgis_id: Mapped[str] = mapped_column(unique=True)
     name = db.Column(db.String)
     must_see = db.Column(db.Boolean)
     open_time = db.Column(db.Time)
     close_time = db.Column(db.Time)
     rating = db.Column(db.Float)
-    
+
     lat = db.Column(db.Float)
     lon = db.Column(db.Float)
 
     segment = relationship("Segment", back_populates="poi")
 
-class TransitionOption(db.Model):
-    id            = db.Column(db.Integer, primary_key=True)
-    mode          = db.Column(db.String, nullable=False)   # пешком, автобус, такси…
-    time_min      = db.Column(db.Integer, nullable=False)
-    cost_rub      = db.Column(db.Integer, nullable=True)
-    is_default    = db.Column(db.Boolean, default=False)
-    segment_id    = db.Column(db.Integer, ForeignKey("segment.id"), nullable=False)
 
+class TransitionOption(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    mode = db.Column(db.String, nullable=False)  # пешком, автобус, такси…
+    time_min = db.Column(db.Integer, nullable=False)
+    cost_rub = db.Column(db.Integer, nullable=True)
+    is_default = db.Column(db.Boolean, default=False)
+    segment_id = db.Column(db.Integer, ForeignKey("segment.id"), nullable=False)
 
 
 class PriceEntry(db.Model):
@@ -128,4 +143,6 @@ class PriceEntry(db.Model):
     object_type: Mapped[str]
     object_id: Mapped[int]
     price: Mapped[int]
-    updated_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now(), onupdate=datetime.datetime.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        default=datetime.datetime.now(), onupdate=datetime.datetime.now()
+    )

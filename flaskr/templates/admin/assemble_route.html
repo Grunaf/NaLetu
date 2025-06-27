@@ -1,0 +1,21 @@
+<h2>Создать маршрут</h2>
+<label>Укажите название:</label>
+<input type="text" class="route_title" id="route_title">
+<label>Укажите url картинки:</label>
+<input type="text" class="route_img" id="route_img">
+<label>Выберите город:</label>
+<select id="city">
+  {% for city in cities %}
+    <option value="{{ city.id }}" data-coords="{{city.lat}},{{city.lon}}">{{ city.name }}</option>
+  {% endfor %}
+</select>
+
+<br><br>
+<div class="route" id="route">
+<div class="days" id="days"></div>
+
+</div>
+
+<br><br>
+<button id="btn-create-route">Создать маршрут</button>
+<script deffer src="{{url_for('static', filename='js/admin/assemble_route.js')}}"></script>

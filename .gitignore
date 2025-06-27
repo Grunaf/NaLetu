@@ -30,8 +30,6 @@ instance/
 *.db
 *.bak
 
-# PostgreSQL dumps (если вдруг)
-*.sql
 
 # Pytest / coverage
 .coverage
@@ -65,3 +63,7 @@ Thumbs.db
 
 # Routes/data (если временные)
 plan_travel.json
+
+.mypy_cache/
+dmypy.json
+mypy-report/

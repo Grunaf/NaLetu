@@ -12,7 +12,7 @@ class POIDTO(BaseModel):
     must_see: bool
     open_time: datetime.time
     close_time: datetime.time
-    rating: float
+    rating: float | None = None
     lat: float
     lon: float
 
