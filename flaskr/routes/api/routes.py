@@ -10,7 +10,7 @@ from flaskr.schemas.segment import (
     RouteCreate,
     SegmentCreate,
 )
-from flaskr.services.api_object import create_or_get_poi
+from flaskr.services.get_f_api_poi import create_or_get_poi
 
 mod = Blueprint("api/route", __name__, url_prefix="/api/route")
 
