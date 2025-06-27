@@ -1,0 +1,11 @@
+from typing import List
+import uuid
+
+from sqlalchemy import select
+from flaskr.models.models import db
+from flaskr.models.trip import TripVote
+
+
+def get_trip_votes_by_uuid(session_id: uuid) -> List[TripVote]:
+    stmt = select(TripVote).where(TripVote.session_id == session_id)
+    return db.session.execute(stmt).scalars().all()

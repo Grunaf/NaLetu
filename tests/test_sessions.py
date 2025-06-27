@@ -1,8 +1,10 @@
 from flask.testing import FlaskClient
 
 from conftest import capture_template_rendered
-from models.models import City, Route
-from models.trip import TripInvite, TripParticipant, TripSession, User
+from flaskr.models.route import Route
+from flaskr.models.city import City
+from flaskr.models.user import User
+from flaskr.models.trip import TripInvite, TripParticipant, TripSession
 
 
 def test_create_session_when_none_exists(

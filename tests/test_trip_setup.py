@@ -1,6 +1,8 @@
 from flask.testing import FlaskClient
-from models.models import City, Route
-from models.trip import TripParticipant, TripSession, User
+from flaskr.models.route import Route
+from flaskr.models.city import City
+from flaskr.models.user import User
+from flaskr.models.trip import TripParticipant, TripSession
 
 
 def test_status_code_voting_page(

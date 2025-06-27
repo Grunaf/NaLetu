@@ -14,12 +14,10 @@ Array.from(document.getElementsByClassName("poi")).forEach(element =>{
 });
 const centerLats = totalLats / POIS.length;
 const centerLons = totalLons / POIS.length;
-console.log(totalLats, POIS.length)
 export const LOCATION: YMapLocationRequest = {
   center: [centerLons, centerLats], // starting position [lng, lat]
   zoom: 14 // starting zoom
 };
-console.log(POIS);
 export const TRANSLATIONS = {
   infoText: 'Нажмите иконку «Парк Стрелка»',
   balloonTitle: 'Парк «Стрелка»',

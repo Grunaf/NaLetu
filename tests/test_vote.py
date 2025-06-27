@@ -1,7 +1,8 @@
 from flask.testing import FlaskClient
 
-from models.models import DayVariant
-from models.trip import TripParticipant, TripSession, TripVote, User
+from flaskr.models.route import DayVariant
+from flaskr.models.user import User
+from flaskr.models.trip import TripParticipant, TripSession, TripVote
 
 
 def test_vote_if_is_participant(

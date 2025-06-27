@@ -9,6 +9,7 @@ from models.trip import Staff
 
 from werkzeug.security import check_password_hash
 
+
 class LoginForm(form.Form):
     login = fields.StringField(validators=[validators.InputRequired()])
     password = fields.PasswordField(validators=[validators.InputRequired()])

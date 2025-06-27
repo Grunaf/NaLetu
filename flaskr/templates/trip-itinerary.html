@@ -1,9 +1,39 @@
 <!-- templates/index.html -->
-{% extends 'base-layout-2col.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Главная{% endblock %}
 
-{% block content %}
+{% block script %}
+  <script crossorigin src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
+
+  <script src="https://api-maps.yandex.ru/v3?apikey={{ya_map_js_api_key}}&lang=ru_RU" type="text/javascript"></script>
+  <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp" rel="stylesheet">
+  <script
+      data-plugins="transform-modules-umd"
+      data-presets="react, typescript"
+      type="text/babel"
+      src="{{url_for('static', filename='js/variables.ts')}}"
+  ></script>
+  <script
+      data-plugins="transform-modules-umd"
+      data-presets="react, typescript"
+      type="text/babel"
+      src="{{url_for('static', filename='js/common.ts')}}"
+  ></script>
+  <script
+      data-plugins="transform-modules-umd"
+      data-presets="react, typescript"
+      type="text/babel"
+      src="{{url_for('static', filename='js/index.ts')}}"
+  ></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='js/common.css')}}"/>
+
+    
+  <script defer src="{{url_for('static', filename='js/trip-itinerary.js')}}"></script>
+{% endblock %}
+
+{% block body %}
+<body class="layout-2col">
 <div class="itinerary-left" data-session-id="{{ session.id }}">
   {% include 'partials/header.html' %}  <!-- Вставка общего header -->
   <div class="itinerary-content">
@@ -57,38 +87,39 @@
     </div>
     
     <div class="box">
-      {% for d in days %}
-        <h3 class="section-title">День {{ d.day_order }}</h3>
+      {% for day in days %}
+        <h3 class="section-title">День {{ day.day_order }}</h3>
         <div class="segments">
-        {% for s in d.segments %}
-          {% if s.type == 'poi' %}
-            <div class="poi" data-lat="{{s.poi.lat}}" data-lon="{{s.poi.lon}}" data-name="{{s.poi.name}}">
-                <p><b>{{ s.poi.name }}</b> — с {{ s.poi.open_time }} до {{ s.poi.close_time }} (Рейтинг: {{ s.poi.rating }})</p>
+
+        {% for segment in day.segments %}
+          {% if segment.type == POI_TYPE %}
+            <div class="poi" data-lat="{{segment.poi.lat}}" data-lon="{{segment.poi.lon}}" data-name="{{segment.poi.name}}">
+                <p><b>{{ segment.poi.name }}</b> — с {{ segment.poi.open_time }} до {{ segment.poi.close_time }} (Рейтинг: {{ segment.poi.rating }})</p>
               </div>
-            {% elif s.type == 'meal' %}
-            {% set meal_type = s.meal_type %}
-            <p>{{ meal_type }}</p>
-              <ul>
-                {% for meal_p in s.meal_places %}
-                <div class="meal-place">
-                  <label>
-                    <input onchange="updateBudget()" type="radio" name="meal" value="{{ meal_p.id }}" data-cost="{{ meal_p.avg_check_rub }}">
-                      {{ meal_p.name }} — {{ meal_p.avg_check_rub }}₽
-                  </label><br>
-                  <button class="show-simular-spots" data-meal-place-name="{{ meal_p.name }}" data-meal-place-id="{{meal_p.id}}">Показать похожие места</button>
-                </div>
-                {% endfor %}
-              </ul>
-              <div class="block-simular-spots" style="display:none;">
-                <div class="header">Места похожие на </div>
-                <div class="items"></div>
+          {% elif segment.type == MEAL_TYPE %}
+          {% set meal_type = segment.meal_type %}
+          <p>{{ meal_type }}</p>
+            <ul>
+              {% for meal_p in segment.meal_places %}
+              <div class="meal-place">
+                <label>
+                  <input onchange="updateBudget()" type="radio" name="meal" value="{{ meal_p.id }}" data-cost="{{ meal_p.avg_check_rub }}">
+                    {{ meal_p.name }} — {{ meal_p.avg_check_rub }}₽
+                </label><br>
+                <button class="show-simular-spots" data-meal-place-name="{{ meal_p.name }}" data-meal-place-id="{{meal_p.id}}">Показать похожие места</button>
               </div>
+              {% endfor %}
+            </ul>
+            <div class="block-simular-spots" style="display:none;">
+              <div class="header">Места похожие на </div>
+              <div class="items"></div>
+            </div>
             {% endif %}
           {% endfor %}
         </div>
-        {% if not loop.last and d.lodgings %}
+        {% if not loop.last and day.lodgings %}
         <p>Ночлег:</p>
-          {% for l in d.lodgings %}
+          {% for l in day.lodgings %}
             <label>
               <input onchange="updateBudget()" type="radio" name="lodgings"> {{l.type}} - {{ l.name }} {{l.distance_km }} км от центра
             </label>
@@ -105,12 +136,7 @@
 <div class="itinerary-right">
     <div id="map" class="map-box"></div>
 </div>
-
+</body>
 {% endblock %}
 
-{% block script %}
-
-<script src="{{url_for('static', filename='js/trip-itinerary.js')}}"></script>
-
-{% endblock %}
 

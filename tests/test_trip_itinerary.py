@@ -1,8 +1,11 @@
 from flask.testing import FlaskClient
-from models.models import City, Day, DayVariant, Route
-from models.trip import TripParticipant, TripSession, TripVote, User
-from services.session_utils import get_days_with_winner_variant
-from services.session_utils import DayRead
+
+from flaskr.models.city import City
+from flaskr.models.user import User
+from flaskr.models.route import Day, DayVariant, Route
+from flaskr.models.trip import TripParticipant, TripSession, TripVote
+from flaskr.schemas.route import DayRead
+from flaskr.services.session_utils import get_days_with_winner_variant
 
 
 def test_status_code_itinerary_page(

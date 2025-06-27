@@ -1,0 +1,7 @@
+[tool.ruff]
+line-length = 79
+
+[tool.mypy]
+exclude = ^tests/
+plugins = ["sqlalchemy.ext.mypy.plugin"]
+strict = true

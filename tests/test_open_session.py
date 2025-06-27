@@ -1,7 +1,9 @@
 from flask.testing import FlaskClient
 
-from models.trip import TripParticipant, TripSession, User
-from models.models import City, Route
+from flaskr.models.trip import TripParticipant, TripSession
+from flaskr.models.user import User
+from flaskr.models.city import City
+from flaskr.models.route import Route
 
 
 def test_block_open_session_page_if_not_joined_and_have_not_uuid(

@@ -44,7 +44,7 @@ def downgrade():
         batch_op.create_unique_constraint(batch_op.f('uq_trip_session_uuid_admin'), ['uuid_admin'], postgresql_nulls_not_distinct=False)
 
     with op.batch_alter_table('trip_participant', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('name', sa.VARCHAR(), autoincrement=False, nullable=False))
+        batch_op.add_column(sa.Column('name', sa.VARCHAR(), autoincrement=False, nullable=True))
         batch_op.add_column(sa.Column('uuid', sa.UUID(), autoincrement=False, nullable=True))
         batch_op.drop_constraint(batch_op.f('fk_trip_participant_user_uuid_user'), type_='foreignkey')
         batch_op.create_unique_constraint(batch_op.f('uq_trip_participant_uuid'), ['uuid'], postgresql_nulls_not_distinct=False)

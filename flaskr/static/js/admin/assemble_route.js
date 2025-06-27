@@ -110,7 +110,7 @@ async function fetchHint(query, inputPOIName) {
     const selectedCityElement = selectCityElement.options[selectCityElement.selectedIndex];
     const cityCoords = selectedCityElement.dataset.coords;
 
-    const resp = await fetch("/api/poi_hints?q=" + encodeURIComponent(query) + "&location=" + encodeURIComponent(cityCoords))
+    const resp = await fetch("/api/poi/hints?q=" + encodeURIComponent(query) + "&location=" + encodeURIComponent(cityCoords))
     const data = await resp.json()
     if (resp.status == 200) {
         hintBox.innerHTML = data.map(poi => `<div onclick="selectHint(this, '${poi.name}', '${poi.id}')">${poi.name}</div>`).join("")
@@ -189,7 +189,7 @@ function assembleSegment(segment_block) {
 }
 document.getElementById("btn-create-route").addEventListener("click", async() => {
     const assembledRoute = assembleRoute();
-    const resp = await fetch("/api/route/create", {
+    const resp = await fetch("/api/route/", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(assembledRoute)
