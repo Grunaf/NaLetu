@@ -35,7 +35,7 @@ class TripSession(db.Model):
 class TripParticipant(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_uuid: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("user.uuid"), default=module_uuid.uuid4()
+        UUID(as_uuid=True), ForeignKey("traveler.uuid"), default=module_uuid.uuid4()
     )
     session_id: Mapped[int] = mapped_column(ForeignKey("trip_session.id"))
     join_at: Mapped[datetime] = mapped_column(default=datetime.now())

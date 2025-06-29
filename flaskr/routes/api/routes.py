@@ -2,6 +2,7 @@ from flask import Blueprint, abort, jsonify, request
 from pydantic import ValidationError
 
 from flaskr.db.route import add_route_db
+from flaskr.models.constants import REVERSED_SEGMENT_TYPE
 from flaskr.models.route import Day, DayVariant, Route, RouteCity, Segment
 from flaskr.schemas.segment import (
     DayCreate,
@@ -80,7 +81,7 @@ def from_route_create_to_route(route_create: RouteCreate) -> Route:
 def parse_segments(variant):
     return [
         SegmentCreate(
-            type=segment.get("type"),
+            type=REVERSED_SEGMENT_TYPE.get(segment.get("type").lower()),
             order=index,
             start_time=segment.get("start_time"),
             end_time=segment.get("end_time"),
@@ -135,8 +136,8 @@ def parse_route_data(data):
 def create_route():
     try:
         route_create = parse_route_data(request.json)
-    except ValidationError:
-        abort(400, "Данные не проходят валидацию")
+    except ValidationError as error:
+        abort(400, f"Данные не прошли валидацию {error.errors()}")
 
     route = from_route_create_to_route(route_create)
     add_route_db(route)

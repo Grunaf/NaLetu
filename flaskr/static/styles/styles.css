@@ -106,7 +106,6 @@ main > div {
 }
 
 h1 {
-  margin: 32px 0 24px 0;
   font-size: 40px;
   font-weight: 700;
 }
@@ -117,7 +116,7 @@ h1 {
 
 h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 26px;
 }
 
 header {
@@ -154,12 +153,6 @@ header .city-location {
   padding: 24px;
   background: #fff;
   overflow-y: auto;
-}
-
-.itinerary-content {
-  flex: 1;
-  overflow-y: auto;
-  padding-top: 24px;
 }
 
 .itinerary-right {

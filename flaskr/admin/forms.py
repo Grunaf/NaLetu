@@ -3,8 +3,8 @@ from wtforms import form
 from wtforms import validators
 
 from sqlalchemy import select
-from models.models import db
-from models.trip import Staff
+from flaskr.models.models import db
+from flaskr.models.user import Staff
 
 
 from werkzeug.security import check_password_hash

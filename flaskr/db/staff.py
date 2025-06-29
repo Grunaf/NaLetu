@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 
 from flaskr.models.models import db
-from flaskr.models.trip import Staff
+from flaskr.models.user import Staff
 
 
 def get_staff(uuid: UUID):

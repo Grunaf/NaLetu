@@ -2,6 +2,7 @@ MEAL = 0
 POI = 1
 
 SEGMENT_TYPE = {MEAL: "meal", POI: "poi"}
+REVERSED_SEGMENT_TYPE = {v.lower(): k for k, v in SEGMENT_TYPE.items()}
 
 CANTEEN = 0
 CAFE = 1

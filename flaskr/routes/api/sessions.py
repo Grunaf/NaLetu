@@ -23,7 +23,7 @@ from flaskr.models.trip import (
     TripSession,
     TripVote,
 )
-from flaskr.models.user import User
+from flaskr.models.user import Traveler
 from flaskr.schemas.segment import SimularMealPlaceCacheDTO
 from flaskr.schemas.trip import TripVoteDTO
 from flaskr.services.get_f_api_transports import get_transports_f_db_or_api
@@ -115,7 +115,7 @@ def add_user_name():
     user_uuid = fk_session.get("uuid")
 
     user_name = data["user_name"]
-    user = db.session.get(User, user_uuid)
+    user = db.session.get(Traveler, user_uuid)
     user.name = user_name
     fk_session["user_name"] = user_name
 
@@ -132,7 +132,7 @@ def join_to_session(token):
     if invite is None:
         abort(404, "Приглашение не найдено")
 
-    user = db.session.get(User, fk_session.get("uuid"))
+    user = db.session.get(Traveler, fk_session.get("uuid"))
     for trip_participant in user.sessions:
         if trip_participant.session.uuid == invite.session_uuid:
             return redirect(

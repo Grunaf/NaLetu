@@ -3,7 +3,8 @@ from typing import Any, List
 
 from flaskr.db.participants import get_participants_by_session_id
 from flaskr.db.trip_vote import get_trip_votes_by_uuid
-from flaskr.schemas.route import DayRead, DayVariantRead, ParticipantVotesDTO
+from flaskr.schemas.route import DayRead, DayVariantRead
+from flaskr.schemas.trip import ParticipantVotesDTO
 
 from flaskr.models.trip import TripParticipant, TripVote
 

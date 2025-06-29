@@ -4,7 +4,6 @@ from flask import Blueprint, abort, jsonify, request
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from app import app
 from flaskr.services.get_f_api_poi import (
     create_or_get_poi,
     fetch_poi_from_dgis,
@@ -12,12 +11,12 @@ from flaskr.services.get_f_api_poi import (
     parse_poi_data,
 )
 
-limiter = Limiter(get_remote_address, app=app)
+limiter = Limiter(get_remote_address)
 
 mod = Blueprint("api/poi", __name__, url_prefix="/api/poi")
 
 
-@app.route("/hints")
+@mod.route("/hints")
 @limiter.limit("10 per minute")
 def get_poi_hints():
     object_name = unquote(request.args.get("q"))
@@ -34,7 +33,7 @@ def get_poi_hints():
     return jsonify(hints_object)
 
 
-@app.route("/create_or_get", methods=["POST"])
+@mod.route("/create_or_get", methods=["POST"])
 def create_poi_by_dgis_id():
     data = request.json or {}
     dgis_id = data.get("dgis_id")

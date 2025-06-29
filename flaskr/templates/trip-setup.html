@@ -1,68 +1,73 @@
 <!-- templates/index.html -->
 {% extends 'base.html' %}
-
 {% block title %}Главная{% endblock %}
-
-{% block script %}
-  <script defer src="{{ url_for('static', filename='js/trip-setup.js')}}"></script>
-{% endblock %}
-
+{% block script %}<script defer src="{{ url_for('static', filename='js/trip-setup.js')}}"></script>{% endblock %}
 {% block content %}
-{% if show_name_modal %}
-<div class='enter-name-modal' id='enter-name-modal'>
-    <input type='text' placeholder="Введите имя" name='' id='participant-name' required>
-    <button id='btn-save-participant-name' data-session-id="{{ plan.session_id }}">Сохранить</button>
-  </div>
-{%endif%}
-<h1>{{ plan.title }}</h1>
-<div>
-  <div id="liveAlertPlaceholder"></div>
-  <button id='create-invite' class='btn' data-session-uuid='{{plan.session_uuid}}'>
-    Создать ссылку-приглашение
-  </button>
-  <span id="invite-link-text"></span>
-</div>
-<h3>Выберите вариант маршрута для поездки</h3>
-<input type='date' id='start-date' value='{{ today }}' class='data-picker'>
-{% for day_block in plan.day_variants %}
-  <div class='card'>
-    <div class='card-header'>День {{ day_block.day }}</div>
-    <div class='list'>
-      {% for v in day_block.variants %}
-        <div class='list-item'>
-          <label>
-            <input type='radio'
-                    name='day{{ day_block.day }}'
-                    value='{{ v.id }}'
-                    data-day-number="{{ day_block.day }}"
-                    {% if loop.first %}checked{% endif %}>
-            <strong>{{ v.name }}</strong> — {% if v.is_default != True%} +{{ day_block.budget_for_default - v.est_budget }}  {% else %} {{v.est_budget}} {%endif%} ₽
-          </label>
-        </div>
-      {% endfor %}
+  {% if show_name_modal %}
+    <div class='enter-name-modal' id='enter-name-modal'>
+      <input type='text'
+             placeholder="Введите имя"
+             name=''
+             id='participant-name'
+             required>
+      <button id='btn-save-participant-name'
+              data-session-id="{{ plan.session_id }}">Сохранить</button>
     </div>
+  {% endif %}
+  <h1>{{ plan.title }}</h1>
+  <div>
+    <div id="liveAlertPlaceholder"></div>
+    <button id='create-invite'
+            class='btn'
+            data-session-uuid='{{ plan.session_uuid }}'>Создать ссылку-приглашение</button>
+    <span id="invite-link-text"></span>
   </div>
-{% endfor %}
-<div class="votes">
-  {% for participant_votes in participants_votes %}
-    <div class="vote">
-      <p>--------------{{participant_votes.name}} выбрал</p>
-      <div>
-        {%for day in participant_votes.days_with_variant %} <p>{{day.day_order}} - {{day.variant.name}}</p> {% endfor %}
+  <h3>Выберите вариант маршрута для поездки</h3>
+  <input type='date' id='start-date' value='{{ today }}' class='data-picker'>
+  {% for day_block in plan.day_variants %}
+    <div class='card'>
+      <div class='card-header'>День {{ day_block.day }}</div>
+      <div class='list'>
+        {% for v in day_block.variants %}
+          <div class='list-item'>
+            <label>
+              <input type='radio'
+                     name='day{{ day_block.day }}'
+                     value='{{ v.id }}'
+                     data-day-number="{{ day_block.day }}"
+                     {% if loop.first %}checked{% endif %}>
+              <strong>{{ v.name }}</strong> —
+              {% if v.is_default != True %}
+                +{{ day_block.budget_for_default - v.est_budget }}
+              {% else %}
+                {{ v.est_budget }}
+              {% endif %}
+              ₽
+            </label>
+          </div>
+        {% endfor %}
       </div>
     </div>
-  {% endfor%}
-</div>
-{% if voting_attributes["is_completed_vote"] %}
-<div id="is-completed-vote">
-  Голосование завершено. Все выбрали варианты. Итоговый маршрут:
-  {%for day in voting_attributes["days_with_winner_variant"]%}
-    <p>{{day.day_order}}: {{day.variant.name}}</p>
-  {%endfor%}
-</div>
-{%endif%}
-<button id='vote-and-to-itinerary' class='btn' data-session-id='{{plan.session_id}}'>
-  → Проголосовать
-</button>
-
+  {% endfor %}
+  <div class="votes">
+    {% for participant_votes in participants_votes %}
+      <div class="vote">
+        <p>--------------{{ participant_votes.name }} выбрал</p>
+        <div>
+          {% for day in participant_votes.days_with_variant %}<p>{{ day.day_order }} - {{ day.variant.name }}</p>{% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% if voting_attributes["is_completed_vote"] %}
+    <div id="is-completed-vote">
+      Голосование завершено. Все выбрали варианты. Итоговый маршрут:
+      {% for day in voting_attributes["days_with_winner_variant"] %}
+        <p>{{ day.day_order }}: {{ day.variant.name }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <button id='vote-and-to-itinerary'
+          class='btn'
+          data-session-id='{{ plan.session_id }}'>→ Проголосовать</button>
 {% endblock %}

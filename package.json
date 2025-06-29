@@ -93,5 +93,14 @@
     "word-wrap": "^1.2.5",
     "yocto-queue": "^0.1.0"
   },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "printWidth": 100,
+    "tabWidth": 2,
+    "useTabs": false,
+    "bracketSpacing": true,
+    "htmlWhitespaceSensitivity": "ignore"
+  },
   "description": ""
 }

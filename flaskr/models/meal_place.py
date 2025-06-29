@@ -4,10 +4,10 @@ from typing import Optional
 from sqlalchemy import JSON, ForeignKey, SmallInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .models import db
+from .models import DataEntryMixin, db
 
 
-class MealPlace(db.Model):
+class MealPlace(DataEntryMixin, db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
     coords: Mapped[str]
@@ -22,24 +22,10 @@ class MealPlace(db.Model):
     rating: Mapped[Optional[float]]
     website: Mapped[Optional[str]]
 
-    updated_at: Mapped[datetime.datetime] = mapped_column(
-        onupdate=datetime.datetime.now()
-    )
-    created_at: Mapped[datetime.datetime] = mapped_column(
-        default=datetime.datetime.now()
-    )
-
     city: Mapped["City"] = relationship()
 
 
-class SimularMealPlaceCache(db.Model):
+class SimularMealPlaceCache(DataEntryMixin, db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     meal_place_id: Mapped[int] = mapped_column(ForeignKey("meal_place.id"))
     data_json: Mapped[JSON] = mapped_column(type_=JSON)
-
-    updated_at: Mapped[datetime.datetime] = mapped_column(
-        default=datetime.datetime.now(), onupdate=datetime.datetime.now()
-    )
-    created_at: Mapped[datetime.datetime] = mapped_column(
-        default=datetime.datetime.now()
-    )

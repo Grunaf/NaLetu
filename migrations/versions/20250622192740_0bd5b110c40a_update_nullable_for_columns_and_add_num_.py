@@ -44,7 +44,13 @@ def upgrade():
                nullable=False)
 
     with op.batch_alter_table('meal_place', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('created_at', sa.DateTime(), nullable=False))
+        batch_op.add_column(sa.Column('created_at', sa.DateTime(), nullable=True))
+
+    op.execute("UPDATE meal_place SET created_at = '2025-05-05 05:05:05.555' WHERE created_at IS NULL")
+
+    with op.batch_alter_table('meal_place', schema=None) as batch_op:
+        batch_op.alter_column('created_at', nullable=False)
+
 
     with op.batch_alter_table('poi', schema=None) as batch_op:
         batch_op.alter_column('name',
@@ -64,6 +70,10 @@ def upgrade():
         batch_op.alter_column('variant_id',
                existing_type=sa.INTEGER(),
                nullable=False)
+
+    op.execute("UPDATE segment SET city_id = 1 WHERE city_id is NULL")
+
+    with op.batch_alter_table('segment', schema=None) as batch_op:
         batch_op.alter_column('city_id',
                existing_type=sa.INTEGER(),
                nullable=False)

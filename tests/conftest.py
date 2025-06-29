@@ -15,7 +15,7 @@ from flaskr import create_app
 from flaskr.models.city import City
 from flaskr.models.meal_place import MealPlace, SimularMealPlaceCache
 from flaskr.models.models import db as db_from_model
-from flaskr.models.poi import POI
+from flaskr.models.route import POI
 from flaskr.models.route import Day, DayVariant, Route, RouteCity, Segment
 from flaskr.models.transport import TransportCache
 from flaskr.models.trip import (

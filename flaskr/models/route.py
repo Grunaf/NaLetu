@@ -1,4 +1,5 @@
 from datetime import time
+import datetime
 from typing import TYPE_CHECKING, List
 
 from sqlalchemy import Boolean, ForeignKey, Index, SmallInteger
@@ -9,7 +10,7 @@ from flaskr.models.models import db
 
 if TYPE_CHECKING:
     from .city import City
-    from .poi import POI
+    from .route import POI
 
 
 class Route(db.Model):
@@ -22,8 +23,7 @@ class Route(db.Model):
     img: Mapped[str]
 
     cities: Mapped[list["RouteCity"]] = relationship(
-        order_by="RouteCity.order",
-        cascade="all, delete-orphan"
+        order_by="RouteCity.order", cascade="all, delete-orphan"
     )
 
 
@@ -55,6 +55,9 @@ class DayVariant(db.Model):
     day_id: Mapped[int] = mapped_column(ForeignKey("day.id"))
     is_default: Mapped[bool] = mapped_column(Boolean, default=True)
 
+    segments: Mapped[List["Segment"]] = relationship(
+        back_populates="variant", cascade="all, delete-orphan"
+    )
     day: Mapped["Day"] = relationship(
         back_populates="variants", foreign_keys=[day_id]
     )
@@ -109,3 +112,20 @@ class Segment(db.Model):
 
     city_id: Mapped[int] = mapped_column(ForeignKey("route_city.id"))
     city: Mapped["RouteCity"] = relationship()
+
+
+class POI(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    dgis_id: Mapped[str] = mapped_column(unique=True)
+    name: Mapped[str]
+    must_see: Mapped[bool] = mapped_column(default=False)
+    open_time: Mapped[datetime.time | None] = mapped_column(default=None)
+    close_time: Mapped[datetime.time | None] = mapped_column(default=None)
+    rating: Mapped[float | None] = mapped_column(default=None)
+
+    lat: Mapped[float]
+    lon: Mapped[float]
+
+    @property
+    def get_coords(self) -> tuple:
+        return (self.lat, self.lon)

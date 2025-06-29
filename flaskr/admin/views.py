@@ -7,8 +7,8 @@ from flask_admin.contrib.sqla import ModelView
 from werkzeug.security import generate_password_hash
 
 from flaskr.admin.forms import LoginForm, RegistrationForm
-from models.models import db
-from models.trip import ADMIN, MODERATOR, AdditionRequest, Staff
+from flaskr.models.models import db
+from flaskr.models.user import ADMIN, MODERATOR, AdditionRequest, Staff
 
 
 def is_authenticated_and_have_permission(role: int):
@@ -43,6 +43,7 @@ class AuthIndexView(admin.AdminIndexView):
         if helpers.validate_form_on_submit(form):
             staff = form.get_user()
             login.login_user(staff)
+            return redirect(url_for(".index"))
 
         if login.current_user.is_authenticated:
             return redirect(url_for(".index"))
@@ -56,7 +57,7 @@ class AuthIndexView(admin.AdminIndexView):
         self._template_args["link"] = link
         return super().index()
 
-    @expose("logout")
+    @expose("/logout")
     def logout_view(self):
         login.logout_user()
         return redirect(url_for(".index"))
@@ -67,11 +68,16 @@ class MyModeratorIndexView(AuthIndexView):
     def index(self):
         if not login.current_user.is_authenticated:
             return redirect(url_for(".login_view"))
+
+        if not login.current_user.is_moderator:
+            abort(403)
+
         return super().index()
 
     @expose("/login/", methods=("GET", "POST"))
     def login_view(self):
-        link = 'Вы админ? <a href="' + url_for("admin.login_view") + '">Click here</a>'
+        link = 'Вы админ? <a href="' + url_for("admin.login_view") + '">Click here</a><br>' \
+            'Хотите присоединиться к гидам? <a href="' + url_for(".register_view") + '">Click here</a>'
         return super().login_view(link)
 
     @expose("/register/", methods=["GET", "POST"])
@@ -111,10 +117,10 @@ class MyModeratorIndexView(AuthIndexView):
 class MyAdminIndexView(AuthIndexView):
     @expose("/")
     def index(self):
-        if login.current_user.role == MODERATOR and request.path.startswith("/admin"):
-            abort(403)
-
         if not login.current_user.is_authenticated:
             return redirect(url_for("admin.login_view"))
+
+        if not login.current_user.is_admin:
+            abort(403)
 
         return super().index()

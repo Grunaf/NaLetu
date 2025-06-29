@@ -3,7 +3,7 @@ import functools
 from flask import abort, request, session as fk_session
 
 from flaskr.models.models import db
-from flaskr.models.user import User
+from flaskr.models.user import Traveler
 
 
 def is_participant_required(view):
@@ -13,11 +13,10 @@ def is_participant_required(view):
         if trip_session_id is None:
             abort(400, "Укажите id сессии")
 
-        user = db.session.get(User, fk_session.get("uuid"))
+        user = db.session.get(Traveler, fk_session.get("uuid"))
         if user is not None:
             if (
-                int(trip_session_id)
-                not in [s.session_id for s in user.sessions]
+                int(trip_session_id) not in [s.session_id for s in user.sessions]
                 and "join" not in request.url
             ):
                 abort(401)

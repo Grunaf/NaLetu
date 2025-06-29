@@ -85,7 +85,7 @@ class SegmentDTO(BaseModel):
 
 
 class SegmentCreate(BaseModel):
-    type: str
+    type: int
     order: int
     start_time: datetime.time
     end_time: datetime.time

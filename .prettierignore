@@ -1,0 +1,6 @@
+# .prettierignore
+
+templates/*
+*.jinja
+*.j2
+*.html

@@ -4,11 +4,12 @@ import os
 from typing import List
 
 import requests
-from models.models import POI, db
+from flaskr.models.models import db
 from pydantic import BaseModel
 from sqlalchemy import select
 
 from config import DGIS_API_URI_GET_BY_ID, DGIS_API_URI_HINT
+from flaskr.models.route import POI
 
 fields_for_poi = "items.point,items.reviews,items.schedule,items.reviews"
 dgis_params = {"key": os.getenv("DGIS_API_KEY"), "locale": "ru_RU"}

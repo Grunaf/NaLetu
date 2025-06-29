@@ -35,9 +35,17 @@ class Staff(UserMixin, db.Model):
     request: Mapped["AdditionRequest"] = relationship(back_populates="staff")
 
     @property
+    def is_admin(self):
+        return self.role == ADMIN
+
+    @property
+    def is_moderator(self):
+        return self.role == MODERATOR
+
+    @property
     def is_authenticated(self):
-        return self.role == ADMIN or (
-            self.role == MODERATOR and self.request.status == APPROVED
+        return self.is_admin or (
+            self.is_moderator and self.request.status == APPROVED
         )
 
     @property
@@ -47,7 +55,6 @@ class Staff(UserMixin, db.Model):
     @property
     def is_anonymous(self):
         return False
-
     def get_id(self):
         return self.uuid
 

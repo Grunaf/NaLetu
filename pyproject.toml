@@ -1,7 +1,13 @@
 [tool.ruff]
-line-length = 79
+line-length = 88
+
 
 [tool.mypy]
-exclude = ^tests/
+exclude = ["venv", ".venv", "migrations", "tests"]
 plugins = ["sqlalchemy.ext.mypy.plugin"]
 strict = true
+
+[tool.djlint]
+profile = "jinja"
+indent = 2
+preserve_blank_lines = true

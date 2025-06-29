@@ -6,16 +6,16 @@
 <label>Выберите город:</label>
 <select id="city">
   {% for city in cities %}
-    <option value="{{ city.id }}" data-coords="{{city.lat}},{{city.lon}}">{{ city.name }}</option>
+    <option value="{{ city.id }}" data-coords="{{ city.lat }},{{ city.lon }}">{{ city.name }}</option>
   {% endfor %}
 </select>
-
-<br><br>
+<br>
+<br>
 <div class="route" id="route">
-<div class="days" id="days"></div>
-
+  <div class="days" id="days"></div>
 </div>
-
-<br><br>
+<br>
+<br>
 <button id="btn-create-route">Создать маршрут</button>
-<script deffer src="{{url_for('static', filename='js/admin/assemble_route.js')}}"></script>
+<script deffer
+        src="{{url_for('static', filename='js/admin/assemble_route.js')}}"></script>

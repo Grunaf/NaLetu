@@ -1,17 +1,18 @@
 <!-- templates/partials/header.html -->
 <header>
   <div class="logo-container">
-    <a href="{{ url_for('views.catalog_routes') }}"><img src="{{url_for('static', filename='img/logo.png')}}"
-        alt="НаЛету" class="logo"></a>
+    <a href="{{ url_for('views.catalog_routes') }}">
+      <img src="{{ url_for('static', filename='img/logo.png') }}"
+           alt="НаЛету"
+           class="logo">
+    </a>
     <span>Сервис планирования маршрутов</span>
   </div>
   <div class="city-location" id="departureCity">
     <i class="material-icons-round">location_on</i>
-    <span id="cityName" data-city-id="{{cities[2].id}}">{{cities[2].name}}</span>
+    <span id="cityName" data-city-id="{{ cities[2].id }}">{{ cities[2].name }}</span>
   </div>
   <div class="cities-modal" style="display: none;">
-    {% for c in cities %}
-    <div class="item" data-city-id="{{c.id}}">{{c.name}}</div>
-    {% endfor %}
+    {% for c in cities %}<div class="item" data-city-id="{{ c.id }}">{{ c.name }}</div>{% endfor %}
   </div>
 </header>

@@ -128,7 +128,11 @@ INSERT INTO public.segment (variant_id,"order", "type",start_time,end_time,lodgi
 INSERT INTO public.trip_session (uuid,route_id,created_at,departure_city_id,start_date,end_date) VALUES
 	 ('0b90c068-fead-4c3b-8c79-7738f7713ea2',1,'2025-06-09 10:30:35.78945',3,'2025-06-09','2025-06-14'),
 	 ('e388f4df-8b44-4f92-833d-127b16c3ae4a',1,'2025-06-09 10:34:10.581608',3,'2025-06-09','2025-06-14');
-INSERT INTO public.user (uuid,"name") VALUES
+
+INSERT INTO public.staff (uuid, first_name,last_name,login,email,password,role) VALUES
+	 ('9dff5eb8-4ee6-4c46-898e-ba4fd9071d63','Admin', 'Admin', 'Admin', 'Admin@',  'scrypt:32768:8:1$vWwIAi9OZckc0SHM$16fb474ef49894eb533283f1703194e85d14a2cfb9190d908f52d1ee0f4dfa813eec826e785a2715956e01d9bea5900d75859809876e3f6ebb228761b66d88cf', 0);
+
+INSERT INTO public.traveler (uuid,name) VALUES
 	 ('9dff5eb8-4ee6-4c46-898e-ba4fd9071d63', NULL),
 	 ('78c869ee-e4c3-41d1-aeb6-456dac90c3f4', NULL),
 	 ('22f6c02f-8e17-4e83-84c1-9921386c5c9c', NULL);

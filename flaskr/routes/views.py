@@ -10,7 +10,7 @@ from flaskr.decorators import is_participant_required
 from flaskr.models.constants import MEAL as MEAL_TYPE
 from flaskr.models.constants import POI as POI_TYPE
 from flaskr.models.models import db
-from flaskr.models.poi import POI
+from flaskr.models.route import POI
 from flaskr.models.route import Day, DayVariant, Route, Segment
 from flaskr.models.trip import TripSession, TripVote
 from flaskr.schemas.route import DayRead
@@ -28,6 +28,7 @@ from flaskr.utils import format_transports
 mod = Blueprint("views", __name__)
 
 
+@mod.route("/")
 @mod.route("/routes")
 def catalog_routes():
     routes = []

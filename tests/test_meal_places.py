@@ -2,7 +2,7 @@ from flask.testing import FlaskClient
 
 from tests.conftest import mock_2gis_request
 from flaskr.models.meal_place import MealPlace
-from flaskr.models.poi import POI
+from flaskr.models.route import POI
 from flaskr.services.get_meal_places import get_f_db_meal_places_near_poi
 from flaskr.services.get_meal_places import get_nearby_cuisins_spots
 from tests.factories import MealPlaceFactory, POIFactory
