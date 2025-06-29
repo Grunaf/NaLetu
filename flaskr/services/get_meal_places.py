@@ -29,9 +29,7 @@ def get_nearby_cuisins_spots(
         return existed_simular_spots
 
     replaced_lat_lon = f"{coords.split(',')[1]},{coords.split(',')[0]}"
-    responce_meal_places = fetch_from_api_cuisine_meal_places(
-        cuisine, replaced_lat_lon
-    )
+    responce_meal_places = fetch_from_api_cuisine_meal_places(cuisine, replaced_lat_lon)
 
     result = get_none_or_result_if_is(responce_meal_places)
     if result is None:
@@ -78,9 +76,7 @@ def add_simular_meal_places_in_db(
     simular_spots = []
     for meal_place in items_json:
         simular_spots.append(
-            SimularMealPlaceCache(
-                meal_place_id=meal_place_id, data_json=meal_place
-            )
+            SimularMealPlaceCache(meal_place_id=meal_place_id, data_json=meal_place)
         )
         db.session.add(simular_spots[-1])
     db.session.commit()
@@ -88,7 +84,7 @@ def add_simular_meal_places_in_db(
 
 
 def is_in_radius(poi1: tuple, poi2: tuple, radius) -> bool:
-    distance = geodesic((poi1[0], poi1[1]), tuple(poi2[0], poi2[1]))
+    distance = geodesic((poi1[0], poi1[1]), (poi2[0], poi2[1]))
     return distance.kilometers < radius
 
 
@@ -98,36 +94,29 @@ def get_f_db_meal_places_near_poi(
     meal_city_near = []
     checked_cities = []
     while len(meal_city_near) <= 6:
-        # poi_segment = get_segment_by_poi(poi.id)
-        # if poi_segment is None:
-        #     return []
+        poi_segment = get_segment_by_poi(poi.id)
+        if poi_segment is None:
+            return []
 
-        # meal_places_in_city = list(
-        #     MealPlace.query.filter(MealPlace.city_id == poi_segment.city_id)
-        #     .filter(MealPlace.id.not_in(checked_cities))
-        #     .limit(6)
-        #     .all()
-        # )
-
-        responce_meal_places = fetch_from_api_meal_places(
-            poi.get_coords, radius
+        meal_places_in_city = list(
+            MealPlace.query.filter(MealPlace.city_id == poi_segment.city_id)
+            .filter(MealPlace.id.not_in(checked_cities))
+            .limit(6)
+            .all()
         )
-        result = get_none_or_result_if_is(responce_meal_places)
-        if result is None:
-            return None
+
+        # responce_meal_places = fetch_from_api_meal_places(poi.get_coords, radius)
+        # result = get_none_or_result_if_is(responce_meal_places)
+        # if result is None:
+        #     return None
 
         if len(meal_places_in_city) == 0:
             break
-        checked_cities.extend(
-            meal_spot.id for meal_spot in meal_places_in_city
-        )
-        is_in_radius = ()
+        checked_cities.extend(meal_spot.id for meal_spot in meal_places_in_city)
         meal_city_near = [
             meal_spot
             for meal_spot in meal_places_in_city
-            if is_in_radius(
-                poi.get_coords, meal_spot.coords.split(","), radius
-            )
+            if is_in_radius(poi.get_coords, meal_spot.coords.split(","), radius)
         ]
 
     return meal_city_near
