@@ -30,7 +30,7 @@ from tests.factories import (
     RouteFactory,
     # TripParticipantFactory,
     # TripSessionFactory,
-    UserFactory
+    UserFactory,
 )
 
 postgres = PostgresContainer("postgres:16-alpine")
@@ -89,14 +89,10 @@ def _db(app):
 
 def delete_entries(table, tableNameUnderscore="", update_seq=True):
     stmt = delete(table)
-    db_from_model.session.execute(
-        stmt.execution_options(synchronize_session=False)
-    )
+    db_from_model.session.execute(stmt.execution_options(synchronize_session=False))
 
     if update_seq:
-        stmt = text(
-            f"ALTER SEQUENCE {tableNameUnderscore}_id_seq RESTART WITH 1"
-        )
+        stmt = text(f"ALTER SEQUENCE {tableNameUnderscore}_id_seq RESTART WITH 1")
         db_from_model.session.execute(stmt)
 
     db_from_model.session.expunge_all()
@@ -147,9 +143,7 @@ def client(app, _db):
 @pytest.fixture()
 def add_cities(_db):
     c1 = City(name="Казань", lat=55.7944, lon=49.111, yandex_code="c43")
-    c2 = City(
-        name="Сергиев Посад", lat=56.3, lon=38.1333, yandex_code="c10752"
-    )
+    c2 = City(name="Сергиев Посад", lat=56.3, lon=38.1333, yandex_code="c10752")
     c3 = City(name="Москва", lat=22.22, lon=22.22, yandex_code="unknown")
     _db.session.add_all([c1, c2, c3])
     _db.session.commit()
@@ -180,7 +174,7 @@ def session(_db, routes, add_cities, detail_for_route):
         route_id=routes[0].id,
         departure_city_id=add_cities[1].id,
         start_date=datetime_p.date.fromisoformat("2025-06-01"),
-        end_date=datetime_p.date.fromisoformat("2025-06-03") 
+        end_date=datetime_p.date.fromisoformat("2025-06-03"),
     )
     _db.session.add(ses1)
     _db.session.commit()
@@ -227,7 +221,7 @@ def sample_routes(_db, cities):
     s1 = TripSession(
         id=1,
         uuid=uuid.UUID("ff3251d5-90e0-4f59-b8af-a600fbbb8895"),
-        route_id=1 
+        route_id=1,
         departure_city_id=add_cities[2].id,
         start_date=datetime_p.date(2025, 6, 9),
         end_date=datetime_p.date(2025, 6, 14),
@@ -237,7 +231,7 @@ def sample_routes(_db, cities):
     s2 = TripSession(
         id=2,
         uuid=uuid.UUID("663fc292-951c-4dbc-82fe-b393e0d94a1c"),
-        route_id=2 
+        route_id=2,
         departure_city_id=add_cities[0].id,
         start_date=datetime_p.date(2025, 6, 9),
         end_date=datetime_p.date(2025, 6, 14),
@@ -321,9 +315,7 @@ def meal_places(_db, poi):
         open_time=datetime_p.time.fromisoformat("10:00"),
         close_time=datetime_p.time.fromisoformat("20:00"),
         rating=4.2,
-        updated_at=datetime_p.datetime.fromisoformat(
-            "2025-06-11 16:44:15.375"
-        ),
+        updated_at=datetime_p.datetime.fromisoformat("2025-06-11 16:44:15.375"),
         city_id=2,
     )
     m2 = MealPlace(
@@ -335,9 +327,7 @@ def meal_places(_db, poi):
         open_time=datetime_p.time.fromisoformat("10:00"),
         close_time=datetime_p.time.fromisoformat("20:00"),
         rating=4.1,
-        updated_at=datetime_p.datetime.fromisoformat(
-            "2025-06-11 16:44:15.375"
-        ),
+        updated_at=datetime_p.datetime.fromisoformat("2025-06-11 16:44:15.375"),
         city_id=2,
     )
     m3 = MealPlace(
@@ -349,9 +339,7 @@ def meal_places(_db, poi):
         open_time=datetime_p.time.fromisoformat("10:00"),
         close_time=datetime_p.time.fromisoformat("20:00"),
         rating=4.5,
-        updated_at=datetime_p.datetime.fromisoformat(
-            "2025-06-11 16:44:15.375"
-        ),
+        updated_at=datetime_p.datetime.fromisoformat("2025-06-11 16:44:15.375"),
         city_id=2,
     )
     m4 = MealPlace(
@@ -363,9 +351,7 @@ def meal_places(_db, poi):
         open_time=datetime_p.time.fromisoformat("10:00"),
         close_time=datetime_p.time.fromisoformat("20:00"),
         rating=4.3,
-        updated_at=datetime_p.datetime.fromisoformat(
-            "2025-06-11 16:44:15.375"
-        ),
+        updated_at=datetime_p.datetime.fromisoformat("2025-06-11 16:44:15.375"),
         city_id=2,
     )  # another_city
     m5 = MealPlace(
@@ -377,9 +363,7 @@ def meal_places(_db, poi):
         open_time=datetime_p.time.fromisoformat("10:00"),
         close_time=datetime_p.time.fromisoformat("20:00"),
         rating=4.6,
-        updated_at=datetime_p.datetime.fromisoformat(
-            "2025-06-11 16:44:15.375"
-        ),
+        updated_at=datetime_p.datetime.fromisoformat("2025-06-11 16:44:15.375"),
         city_id=1,
     )  # 1.3
     m6 = MealPlace(
@@ -391,9 +375,7 @@ def meal_places(_db, poi):
         open_time=datetime_p.time.fromisoformat("10:00"),
         close_time=datetime_p.time.fromisoformat("20:00"),
         rating=4.4,
-        updated_at=datetime_p.datetime.fromisoformat(
-            "2025-06-11 16:44:15.375"
-        ),
+        updated_at=datetime_p.datetime.fromisoformat("2025-06-11 16:44:15.375"),
         city_id=1,
     )  # 0.2
     m7 = MealPlace(
@@ -405,9 +387,7 @@ def meal_places(_db, poi):
         open_time=datetime_p.time.fromisoformat("10:00"),
         close_time=datetime_p.time.fromisoformat("20:00"),
         rating=4.3,
-        updated_at=datetime_p.datetime.fromisoformat(
-            "2025-06-11 16:44:15.375"
-        ),
+        updated_at=datetime_p.datetime.fromisoformat("2025-06-11 16:44:15.375"),
         city_id=1,
     )  # .2
     m8 = MealPlace(
@@ -419,9 +399,7 @@ def meal_places(_db, poi):
         open_time=datetime_p.time.fromisoformat("10:00"),
         close_time=datetime_p.time.fromisoformat("20:00"),
         rating=4.7,
-        updated_at=datetime_p.datetime.fromisoformat(
-            "2025-06-11 16:44:15.375"
-        ),
+        updated_at=datetime_p.datetime.fromisoformat("2025-06-11 16:44:15.375"),
         city_id=1,
     )  # .3 km
     m9 = MealPlace(
@@ -433,9 +411,7 @@ def meal_places(_db, poi):
         open_time=datetime_p.time.fromisoformat("10:00"),
         close_time=datetime_p.time.fromisoformat("20:00"),
         rating=4.5,
-        updated_at=datetime_p.datetime.fromisoformat(
-            "2025-06-11 16:44:15.375"
-        ),
+        updated_at=datetime_p.datetime.fromisoformat("2025-06-11 16:44:15.375"),
         city_id=1,
     )  # .5
 
@@ -505,7 +481,7 @@ def session(_db, routes, add_cities, detail_for_route):
         route_id=routes[0].id,
         departure_city_id=add_cities[1].id,
         start_date=datetime_p.date.fromisoformat("2025-06-01"),
-        end_date=datetime_p.date.fromisoformat("2025-06-03") 
+        end_date=datetime_p.date.fromisoformat("2025-06-03"),
     )
     _db.session.add(ses1)
     _db.session.commit()
@@ -521,14 +497,14 @@ def multiply_sessions(
         route_id=routes[1].id,
         departure_city_id=add_cities[1].id,
         start_date=datetime_p.date.fromisoformat("2025-06-01"),
-        end_date=datetime_p.date.fromisoformat("2025-06-03") 
+        end_date=datetime_p.date.fromisoformat("2025-06-03"),
     )
     ses3 = TripSession(
         uuid=uuid.UUID("7a600248-e0fc-47bd-85a0-1fb518486e81"),
         route_id=routes[2].id,
         departure_city_id=add_cities[1].id,
         start_date=datetime_p.date.fromisoformat("2025-06-01"),
-        end_date=datetime_p.date.fromisoformat("2025-06-03") 
+        end_date=datetime_p.date.fromisoformat("2025-06-03"),
     )
     _db.session.add_all([ses2, ses3])
     _db.session.commit()
@@ -537,19 +513,13 @@ def multiply_sessions(
 
 @pytest.fixture
 def users(_db):
-    u1 = User(
-        name="Кирилл", uuid=uuid.UUID("16c9ec5e-90a5-4332-8822-d3a6ccd3c87e")
-    )
+    u1 = User(name="Кирилл", uuid=uuid.UUID("16c9ec5e-90a5-4332-8822-d3a6ccd3c87e"))
     u2 = User(
         name="Инокентий",
         uuid=uuid.UUID("35d6f04c-f9d6-4103-8c71-1091f74a6475"),
     )
-    u3 = User(
-        name="Кен", uuid=uuid.UUID("2aee1ad6-5f63-4d9e-99bf-9e88f3039b30")
-    )
-    u4 = User(
-        name="Кенилана", uuid=uuid.UUID("2dc89be5-8167-4894-922c-005b09a6ebc1")
-    )
+    u3 = User(name="Кен", uuid=uuid.UUID("2aee1ad6-5f63-4d9e-99bf-9e88f3039b30"))
+    u4 = User(name="Кенилана", uuid=uuid.UUID("2dc89be5-8167-4894-922c-005b09a6ebc1"))
 
     _db.session.add_all([u1, u2, u3, u4])
     _db.session.commit()

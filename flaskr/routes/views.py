@@ -4,11 +4,10 @@ from datetime import date
 from flask import Blueprint, abort, render_template, request
 from flask import session as fk_session
 
-from config import YA_MAP_API_KEY
+from config import Config
 from flaskr.db.segments import get_segments_for_variants
 from flaskr.decorators import is_participant_required
-from flaskr.models.constants import MEAL as MEAL_TYPE
-from flaskr.models.constants import POI as POI_TYPE
+from flaskr.models.constants import MEAL as MEAL_TYPE, POI as POI_TYPE
 from flaskr.models.models import db
 from flaskr.models.route import POI
 from flaskr.models.route import Day, DayVariant, Route, Segment
@@ -24,6 +23,8 @@ from flaskr.services.session_utils import (
     get_voting_attributes,
 )
 from flaskr.utils import format_transports
+
+YA_MAP_API_KEY = Config.YA_MAP_API_KEY
 
 mod = Blueprint("views", __name__)
 

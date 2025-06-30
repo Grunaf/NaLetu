@@ -8,11 +8,15 @@ from flaskr.models.models import db
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from config import DGIS_API_URI_GET_BY_ID, DGIS_API_URI_HINT
+from config import Config
 from flaskr.models.route import POI
 
+DGIS_API_URI_GET_BY_ID = Config.DGIS_API_URI_GET_BY_ID
+DGIS_API_URI_HINT = Config.DGIS_API_URI_HINT
+DGIS_API_KEY = Config.DGIS_API_KEY
+
 fields_for_poi = "items.point,items.reviews,items.schedule,items.reviews"
-dgis_params = {"key": os.getenv("DGIS_API_KEY"), "locale": "ru_RU"}
+dgis_params = {"key": DGIS_API_KEY, "locale": "ru_RU"}
 
 
 def get_hints_object(object_name: str, location: str):

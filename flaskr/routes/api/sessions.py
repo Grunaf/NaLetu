@@ -3,7 +3,7 @@ import json
 import uuid
 from datetime import date
 
-from flask import Blueprint, abort, jsonify, redirect, request, url_for
+from flask import Blueprint, Response, abort, jsonify, redirect, request, url_for
 from flask import session as fk_session
 from sqlalchemy import select
 
@@ -31,12 +31,13 @@ from flaskr.schemas.trip import TripVoteDTO
 from flaskr.services.get_f_api_transports import get_transports_f_db_or_api
 from flaskr.services.get_meal_places import get_nearby_cuisins_spots
 from flaskr.services.session_utils import get_voting_attributes
+from flaskr.services.travelers import get_or_create_traveler, get_uuid_traveler
 
 mod = Blueprint("api/session", __name__, url_prefix="/api/session")
 
 
 @mod.route("/update_departure_city", methods=["POST"])
-def get_cities():
+def get_cities() -> Response:
     cities = City.query.all()
     if cities is None:
         return abort(404, "Городов нет в бд")
@@ -44,7 +45,7 @@ def get_cities():
 
 
 @mod.route("/update_transports", methods=["POST"])
-def update_transports_in_db():
+def update_transports_in_db() -> Response:
     data = request.json or {}
     start_date = date.fromisoformat(data.get("startDate"))
     if start_date is None:
@@ -67,7 +68,7 @@ def update_transports_in_db():
 
 
 @mod.route("/create_or_get", methods=["POST"])
-def create_session_or_get_exist_where_admin():
+def create_session_or_get_exist_where_admin() -> Response:
     data = request.json or {}
     route_id = int(data["routeId"])
     if not (route_id):
@@ -77,7 +78,9 @@ def create_session_or_get_exist_where_admin():
     fk_session["user_city"] = CityRead.model_validate(
         get_city(departure_city_id)
     ).model_dump()
-    user_uuid = fk_session.get("uuid")
+
+    user_uuid = get_uuid_traveler()
+    _ = get_or_create_traveler(user_uuid)
 
     sessions_user_admin = get_trip_session_where_user_admin(user_uuid)
     exist_trip_session = list(
@@ -109,23 +112,24 @@ def create_session_or_get_exist_where_admin():
 
 
 @mod.route("/add_user_name", methods=["POST"])
-def add_user_name():
+def add_user_name() -> Response:
     data = request.json or {}
-    user_uuid = fk_session.get("uuid")
+    user_uuid = get_uuid_traveler()
 
     user_name = data["user_name"]
-    user = db.session.get(Traveler, user_uuid)
-    user.name = user_name
+
+    traveler = get_or_create_traveler(user_uuid)
+    traveler.name = user_name
     fk_session["user_name"] = user_name
 
-    db.session.add(user)
+    db.session.add(traveler)
     db.session.commit()
 
     return jsonify({"message": "participant name added to db"})
 
 
 @mod.route("/join_by_token/<uuid:token>")
-def join_to_session(token):
+def join_to_session(token: uuid.UUID) -> Response:
     invite: TripInvite = get_trip_invite_by_uuid(token)
 
     if invite is None:
@@ -144,10 +148,9 @@ def join_to_session(token):
     db.session.commit()
 
     session = get_trip_session_by_uuid(invite.session_uuid)
+    user_uuid = get_uuid_traveler()
 
-    trip_participant = TripParticipant(
-        user_uuid=fk_session.get("uuid"), session_id=session.id
-    )
+    trip_participant = TripParticipant(user_uuid=user_uuid, session_id=session.id)
     db.session.add(trip_participant)
     db.session.commit()
 
@@ -155,7 +158,7 @@ def join_to_session(token):
 
 
 @mod.route("/<uuid:session_uuid>/create_invite", methods=["POST"])
-def create_trip_invite(session_uuid):
+def create_trip_invite(session_uuid: uuid.UUID) -> Response:
     stmt = select(TripSession).where(TripSession.uuid == session_uuid)
     session = db.session.execute(stmt).scalars().first()
     if session is None:
@@ -172,13 +175,11 @@ def create_trip_invite(session_uuid):
 
 
 @mod.route("/vote", methods=["POST"])
-def vote():
+def vote() -> Response:
     data = request.json or {}
     choices = data["choices"]
     session_id = data["session_id"]
-    user_uuid = fk_session.get("uuid")
-    if user_uuid is None:
-        abort(401, "Пользователь не имеет uuid")
+    user_uuid = get_uuid_traveler()
 
     participant = TripParticipant.query.filter_by(
         user_uuid=user_uuid, session_id=session_id

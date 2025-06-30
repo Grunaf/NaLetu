@@ -6,12 +6,15 @@ from flaskr.constants import FIELDS_FOR_MEAL_PLACE
 from geopy.distance import geodesic
 
 from flaskr.db.meal_places import get_meal_place_cache_by_id
-from config import DGIS_API_KEY, DGIS_API_URI_ITEMS
+from config import Config
 from flaskr.db.segments import get_segment_by_poi
 from flaskr.models.meal_place import MealPlace, SimularMealPlaceCache
 from flaskr.models.models import db
 from flaskr.models.route import POI
 from flaskr.models.constants import CUISINE
+
+DGIS_API_KEY = Config.DGIS_API_KEY
+DGIS_API_URI_ITEMS = Config.DGIS_API_URI_ITEMS
 
 dgis_params = {
     "fields": FIELDS_FOR_MEAL_PLACE,

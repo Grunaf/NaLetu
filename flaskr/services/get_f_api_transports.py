@@ -3,9 +3,12 @@ import json
 
 import requests
 
-from config import YA_RASP_API_KEY, YA_RASP_API_URI
+from config import Config
 from flaskr.models.models import db
 from flaskr.models.transport import TransportCache
+
+YA_RASP_API_KEY = Config.YA_RASP_API_KEY
+YA_RASP_API_URI = Config.YA_RASP_API_URI
 
 
 def get_transports_f_db_or_api(date, from_city, to_city):

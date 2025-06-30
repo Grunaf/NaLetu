@@ -1,4 +1,5 @@
 import json
+import os
 import uuid
 from typing import Any, Dict
 
@@ -8,16 +9,17 @@ from flask import session as fk_session
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_babel import Babel
 
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 
-from config import DEFAULT_TIMEZONE, SWAGGER_API_URL
+from config import Config
+from flaskr.db.travelers import create_traveler_db
 from shell import reset_db
 
 from flaskr.constants import ENDPOINTS
 from flaskr.db.cities import get_all_cities
 from flaskr.db.staff import get_staff
 
-from flaskr.models.models import db
-from flaskr.models.user import Traveler
 from flaskr.schemas.city import City as CityRead
 
 from flaskr.admin import setup_admin
@@ -26,6 +28,10 @@ from flaskr.routes.api.pois import mod as poisModule, limiter
 from flaskr.routes.api.routes import mod as routesModule
 from flaskr.routes.api.sessions import mod as sessionsModule
 from flaskr.routes.views import mod as viewsModule
+
+DEFAULT_TIMEZONE = Config.DEFAULT_TIMEZONE
+SWAGGER_API_URL = Config.SWAGGER_API_URL
+SENTRY_DSN = Config.SENTRY_DSN
 
 
 def configure_jinja(app: Flask) -> None:
@@ -37,17 +43,24 @@ def configure_jinja(app: Flask) -> None:
 babel = Babel()
 
 
+def configure_app(app, test_config):
+    if len(test_config) == 0:
+        env = os.getenv("FLASK_ENV", "dev")
+        if env == "prod":
+            app.config.from_object("config.ProdConfig")
+        else:
+            app.config.from_object("config.DevConfig")
+    else:
+        app.config.from_mapping(test_config)
+
+
 def create_app(test_config: Dict[str, Any] = {}) -> Flask:
     app = Flask(__name__)
     app.config["BABEL_DEFAULT_LOCALE"] = "ru"
     babel.init_app(app, default_timezone=DEFAULT_TIMEZONE)
 
     configure_jinja(app)
-
-    if len(test_config) == 0:
-        app.config.from_pyfile("flask_config.py", silent=False)
-    else:
-        app.config.from_mapping(test_config)
+    configure_app(app, test_config)
 
     app.register_blueprint(sessionsModule)
     app.register_blueprint(mealPlacesModule)
@@ -71,6 +84,7 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
         SWAGGER_API_URL,
         config={"app_name": "Test application"},
     )
+    sentry_sdk.init(SENTRY_DSN, integrations=[FlaskIntegration()])
 
     app.register_blueprint(swaggerui_blueprint)
 
@@ -89,11 +103,9 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
     def ensure_participant_joined() -> None:
         if fk_session.get("uuid") is None:
             user_uuid = uuid.uuid4()
-            fk_session["uuid"] = user_uuid
+            fk_session["uuid"] = str(user_uuid)
 
-            user = Traveler(uuid=user_uuid)
-            db.session.add(user)
-            db.session.commit()
+            create_traveler_db(user_uuid)
 
     @app.errorhandler(404)
     def page_not_found(e):
