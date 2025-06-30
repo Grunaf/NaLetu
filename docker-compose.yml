@@ -12,6 +12,11 @@ services:
     depends_on:
       - db
     command: ["python3", "-m", "flask", "run", "--host=0.0.0.0"]
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
 
   db:
     image: postgres:16
@@ -22,6 +27,11 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
 
 volumes:
   pgdata:
