@@ -11,9 +11,6 @@ body {
   padding: 20px;
   max-width: 858px;
 }
-main > div {
-  margin-bottom: 32px;
-}
 
 h1 {
   font-size: 40px;
@@ -121,7 +118,6 @@ input{
   background: v.$white;
   border-radius: v.$border-radius-m;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin: 12px 0;
   display: flex;
   align-items: flex-start;
   height: 266px;
@@ -167,7 +163,6 @@ input{
     }
     span {
       display: flex;
-      align-items: flex-end;
       margin-right: 6px;
     }
   }
@@ -178,12 +173,6 @@ input{
     flex: 1;
     height: 56px;
     width: 100%;
-    word-break: break-word;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    -webkit-line-clamp: 2; /* ← Сколько строк оставить */
-    line-clamp: 2;          /* для современных браузеров */
     margin-bottom: 34px;
   }
 
@@ -307,12 +296,6 @@ input[type="radio"]:checked + span {
   color:v.$white;
   padding: 12px;
   font-size: 18px;
-}
-
-.section-title {
-  margin: 16px 12px 8px;
-  font-size: 16px;
-  font-weight: bold;
 }
 
 .list {

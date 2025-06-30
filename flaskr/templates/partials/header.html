@@ -8,11 +8,26 @@
     </a>
     <span>Сервис планирования маршрутов</span>
   </div>
-  <div class="city-location" id="departureCity">
-    <i class="material-icons-round">location_on</i>
-    <span id="cityName" data-city-id="{{ cities[2].id }}">{{ cities[2].name }}</span>
-  </div>
-  <div class="cities-modal" style="display: none;">
-    {% for c in cities %}<div class="item" data-city-id="{{ c.id }}">{{ c.name }}</div>{% endfor %}
+  <div class="relative">
+    {% macro choosed_city(city) %}
+      <div class="city-location" id="departureCity">
+        <i class="material-icons-round">location_on</i>
+        <span id="cityName"
+              data-city-id="{{ city.id }}"
+              data-coords="{{ city.lat }},{{ city.lon }}">{{ city.name }}</span>
+      </div>
+    {% endmacro %}
+    {% if user_city %}
+      {{ choosed_city(user_city) }}
+    {% else %}
+      {{ choosed_city(cities[2]) }}
+    {% endif %}
+    <div class="cities-modal flex flex-col gap-2 absolute right-0 mt-2 p-3 w-48 top-full origin-top-right rounded-xl bg-white shadow-lg z-50 hidden">
+      {% for city in cities %}
+        <div class="item"
+             data-city-id="{{ city.id }}"
+             data-coords="{{ city.lat }},{{ city.lon }}">{{ city.name }}</div>
+      {% endfor %}
+    </div>
   </div>
 </header>

@@ -25,7 +25,7 @@ def get_nearby_cuisins_spots(
     coords: str, cuisine: int, meal_place_id: int
 ) -> List[SimularMealPlaceCache] | None:
     existed_simular_spots = get_meal_place_cache_by_id(meal_place_id)
-    if existed_simular_spots is not None:
+    if len(existed_simular_spots) != 0:
         return existed_simular_spots
 
     replaced_lat_lon = f"{coords.split(',')[1]},{coords.split(',')[0]}"
@@ -43,13 +43,10 @@ def get_nearby_cuisins_spots(
 
 def get_none_or_result_if_is(response):
     if response.status_code != 200:
-        data = json.loads(response.text)
-        if result := data.get("result") is None:
-            return None
-
         return None
 
-    return result
+    data = json.loads(response.text)
+    return data.get("result")
 
 
 def fetch_from_api_meal_places(coords: str):

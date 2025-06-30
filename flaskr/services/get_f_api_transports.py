@@ -29,7 +29,7 @@ def get_transports_f_db_or_api(date, from_city, to_city):
 
     resp = requests.get(YA_RASP_API_URI, params)
     if resp.status_code == 200:
-        transport_data = json.loads(resp.text)
+        transport_data = resp.json()
         transport_segments = transport_data.get("segments")
         if exist_transport_cache is None:
             transport_cache = TransportCache(
@@ -48,3 +48,5 @@ def get_transports_f_db_or_api(date, from_city, to_city):
         return (
             transport_cache if exist_transport_cache is None else exist_transport_cache
         )
+    else:
+        return resp.status_code, resp.json().get("error").get("text")

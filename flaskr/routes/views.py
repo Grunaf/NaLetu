@@ -34,11 +34,16 @@ def catalog_routes():
     routes = []
     for route in Route.query.all():
         start = route.cities[0]
+        est_budget_rub = (
+            route.estimated_budget_rub
+            if route.estimated_budget_rub != 0
+            else "Цена не указана"
+        )
         data = {
             "id": route.id,
             "title": route.title,
             "duration_days": route.duration_days,
-            "estimated_budget_rub": route.estimated_budget_rub,
+            "estimated_budget_rub": est_budget_rub,
             "img": route.img,
             "start_coords": [start.city.lat, start.city.lon],
         }
@@ -59,7 +64,7 @@ def catalog_routes():
 
 @mod.route("/trip-setup/")
 @is_participant_required
-def trip_setup():
+def trip_setup() -> str:
     session_id = request.args.get("sessionId")
     if not session_id:
         abort(400, "sessionId обязателен")
@@ -110,7 +115,7 @@ def trip_setup():
 
 @mod.route("/trip-itinerary/")
 @is_participant_required
-def trip_itinerary():
+def trip_itinerary() -> str:
     session_id = request.args.get("sessionId")
     if not session_id:
         abort(400)
@@ -161,19 +166,28 @@ def trip_itinerary():
                 "segments": segment_dtos,
             }
         )
+    if session.departure_city_id != route.cities[0].city_id:
+        transports_to_with_data_json = get_transports_f_db_or_api(
+            session.start_date, session.city, route.cities[0].city
+        )
+        transports_from_with_data_json = get_transports_f_db_or_api(
+            session.end_date, route.cities[0].city, session.city
+        )
+        if (
+            transports_from_with_data_json is None
+            or transports_to_with_data_json is None
+        ):
+            abort(500, "Проблема с получением рейсов")
+        transports_to_json = transports_to_with_data_json.data_json
+        transports_from_json = transports_from_with_data_json.data_json
+        transports = defaultdict()
 
-    transports_to_with_data_json = get_transports_f_db_or_api(
-        session.start_date, session.city, route.cities[0].city
-    )
-    transports_from_with_data_json = get_transports_f_db_or_api(
-        session.end_date, route.cities[0].city, session.city
-    )
-    transports_to_json = transports_to_with_data_json.data_json
-    transports_from_json = transports_from_with_data_json.data_json
-    transports = defaultdict()
-
-    transports["there"] = [format_transports(t_to) for t_to in transports_to_json]
-    transports["back"] = [format_transports(t_from) for t_from in transports_from_json]
+        transports["there"] = [format_transports(t_to) for t_to in transports_to_json]
+        transports["back"] = [
+            format_transports(t_from) for t_from in transports_from_json
+        ]
+    else:
+        transports = None
 
     return render_template(
         "trip-itinerary.html",

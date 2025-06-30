@@ -7,6 +7,7 @@ from flask import Blueprint, abort, jsonify, redirect, request, url_for
 from flask import session as fk_session
 from sqlalchemy import select
 
+from flaskr.db.cities import get_city
 from flaskr.db.trip_invites import get_trip_invite_by_uuid
 from flaskr.db.trip_sessions import (
     get_trip_session_by_id,
@@ -25,6 +26,7 @@ from flaskr.models.trip import (
 )
 from flaskr.models.user import Traveler
 from flaskr.schemas.segment import SimularMealPlaceCacheDTO
+from flaskr.schemas.city import City as CityRead
 from flaskr.schemas.trip import TripVoteDTO
 from flaskr.services.get_f_api_transports import get_transports_f_db_or_api
 from flaskr.services.get_meal_places import get_nearby_cuisins_spots
@@ -53,18 +55,14 @@ def update_transports_in_db():
         abort(400, "Отсутствует id session для поиска")
     session = db.session.get(TripSession, session_id)
     session.start_date = start_date
-    session.end_date = start_date + datetime.timedelta(
-        session.route.duration_days
-    )
+    session.end_date = start_date + datetime.timedelta(session.route.duration_days)
     db.session.commit()
     route = db.session.get(Route, session.route_id)
 
     _ = get_transports_f_db_or_api(
         session.start_date, session.city, route.cities[0].city
     )
-    _ = get_transports_f_db_or_api(
-        session.end_date, route.cities[0].city, session.city
-    )
+    _ = get_transports_f_db_or_api(session.end_date, route.cities[0].city, session.city)
     return jsonify({"message": "Transport updated "})
 
 
@@ -72,10 +70,13 @@ def update_transports_in_db():
 def create_session_or_get_exist_where_admin():
     data = request.json or {}
     route_id = int(data["routeId"])
-    departure_city_id = int(data["departureCityId"])
     if not (route_id):
         abort(400, "Нужно указать routeId")
 
+    departure_city_id = int(data["departureCityId"])
+    fk_session["user_city"] = CityRead.model_validate(
+        get_city(departure_city_id)
+    ).model_dump()
     user_uuid = fk_session.get("uuid")
 
     sessions_user_admin = get_trip_session_where_user_admin(user_uuid)
@@ -100,9 +101,7 @@ def create_session_or_get_exist_where_admin():
     db.session.add(trip_session)
     db.session.commit()
     db.session.add(
-        TripParticipant(
-            user_uuid=user_uuid, session_id=trip_session.id, is_admin=True
-        )
+        TripParticipant(user_uuid=user_uuid, session_id=trip_session.id, is_admin=True)
     )
     db.session.commit()
 
@@ -139,10 +138,7 @@ def join_to_session(token):
                 url_for("views.trip_setup", sessionId=trip_participant.session.id)
             )
 
-    if (
-        datetime.datetime.now() > invite.expired_at
-        or invite.is_active is False
-    ):
+    if datetime.datetime.now() > invite.expired_at or invite.is_active is False:
         abort(401, "Срок приглашения истек или им уже воспользовались")
     invite.is_active = False
     db.session.commit()
@@ -195,9 +191,7 @@ def vote():
 
     session = get_trip_session_by_id(session_id)
 
-    voting_attributes = get_voting_attributes(
-        session_id, session.route.duration_days
-    )
+    voting_attributes = get_voting_attributes(session_id, session.route.duration_days)
     if voting_attributes["is_completed_vote"]:
         abort(422, "Голосование завершилось")
 
@@ -209,9 +203,9 @@ def vote():
         if exist_participant_votes:
             for v_id, day_order in choice.items():
                 for vote in exist_participant_votes:
-                    if vote.day_order == int(
-                        day_order
-                    ) and vote.variant_id != int(v_id):
+                    if vote.day_order == int(day_order) and vote.variant_id != int(
+                        v_id
+                    ):
                         vote.variant_id = int(v_id)
         else:
             for v_id, day_order in choice.items():
@@ -229,31 +223,6 @@ def vote():
 
     return jsonify(
         votes=[
-            TripVoteDTO.model_validate(vote).model_dump()
-            for vote in trip_votes_to_add
+            TripVoteDTO.model_validate(vote).model_dump() for vote in trip_votes_to_add
         ]
-    )
-
-
-@mod.route("/api/meal_place/<int:meal_place_id>/get_simulars")
-def get_simulars_meal_places(meal_place_id):
-    meal_place = db.session.get(MealPlace, meal_place_id)
-    if meal_place is None:
-        abort(404)
-    simular_meal_places_result = get_nearby_cuisins_spots(
-        coords=meal_place.coords,
-        cuisine=meal_place.cuisine,
-        meal_place_id=meal_place_id,
-    )
-    if simular_meal_places_result is None:
-        return ("", 204)
-    return jsonify(
-        {
-            "simular_meal_places_result": json.dumps(
-                [
-                    SimularMealPlaceCacheDTO.model_validate(spot).to_dict()
-                    for spot in simular_meal_places_result[:4]
-                ]
-            )
-        }
     )

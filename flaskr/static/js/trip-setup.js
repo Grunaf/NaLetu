@@ -1,12 +1,18 @@
 
 const btnVoteAndToIniterary = document.getElementById('vote-and-to-itinerary');
 const sessionId = btnVoteAndToIniterary.dataset.sessionId;
-participantNameModal = document.getElementById("enter-name-modal");
+const participantNameModal = document.getElementById("enter-name-modal");
 if(participantNameModal) {
-    btnVoteAndToIniterary.setAttribute("disabled",true);
-    participantNameInput = document.querySelector("input[id='participant-name']");
-    btnSaveParticipantName = document.getElementById('btn-save-participant-name');
+    btnVoteAndToIniterary.setAttribute("disabled", true);
+    const participantNameInput = document.querySelector("input[id='participant-name']");
+    const errorMsg = document.getElementById("error-msg-name-modal")
+    const btnSaveParticipantName = document.getElementById('btn-save-participant-name');
     btnSaveParticipantName.onclick = async () => {
+      if (!participantNameInput.value) {
+        errorMsg.textContent = "Поле обязательно для заполнения"
+        errorMsg.classList.remove("hidden");
+        return;
+      }
       participantNameModal.style["display"] = "none";
       const resp = await fetch(`/api/session/add_user_name`, {
         method:"POST",
@@ -16,19 +22,7 @@ if(participantNameModal) {
       btnVoteAndToIniterary.removeAttribute("disabled");
     }
 }
-const alertPlaceholder = document.getElementById('liveAlertPlaceholder')
 
-const alert = (message, type) => {
-  const wrapper = document.createElement('div')
-  wrapper.innerHTML = [
-    `<div class="alert alert-${type} alert-dismissible" role="alert">`,
-    `   <div>${message}</div>`,
-    '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
-    '</div>'
-  ].join('')
-
-  alertPlaceholder.append(wrapper)
-}
 const btnCreateInvite = document.getElementById("create-invite");
 const inviteLinkText = document.getElementById("invite-link-text");
 btnCreateInvite.addEventListener("click", async() => {
@@ -38,13 +32,14 @@ btnCreateInvite.addEventListener("click", async() => {
     headers: {"Content-Type": "application/json"}
   })
   if (resp.status != 200) {    
-      alert(resp.status, "danger");
-      return
+      alert("Ошибка на сервере, попробуйте позже.", "red");
+      return;
   }
   const data = await resp.json()
   inviteLinkText.innerHTML = data.link
 });
 if (document.getElementById("is-completed-vote")) {
+  btnVoteAndToIniterary.textContent = "Перейти к маршруту"
   btnVoteAndToIniterary.onclick = async() => {
     window.location = `/trip-itinerary?sessionId=${sessionId}`;
   }
@@ -63,10 +58,16 @@ else {
     const checkIn = new Date(startDateInput.value);
     const checkOut = new Date(checkIn.getDate()+'{{ plan.day_variants|length }}');
 
-    await fetch(`/api/session/vote`, {
+    const resp = await fetch(`/api/session/vote`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({"choices":choices, "session_id": sessionId})
     });
+    if (resp.status == 200) {
+      location.reload();
+    }
+    else {
+        alert(SERVER_ERROR.message, SERVER_ERROR.color);
+    }
   });
 }

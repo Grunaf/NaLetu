@@ -1,15 +1,15 @@
 import json
 import uuid
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import Any, Dict
 
 import flask_login as login
-from flask import Flask, Response, send_from_directory
+from flask import Flask, Response, render_template, send_from_directory
 from flask import session as fk_session
 from flask_swagger_ui import get_swaggerui_blueprint
-from flask_babel import Babel, format_datetime
+from flask_babel import Babel
 
 
-from config import SWAGGER_API_URL
+from config import DEFAULT_TIMEZONE, SWAGGER_API_URL
 from shell import reset_db
 
 from flaskr.constants import ENDPOINTS
@@ -18,6 +18,7 @@ from flaskr.db.staff import get_staff
 
 from flaskr.models.models import db
 from flaskr.models.user import Traveler
+from flaskr.schemas.city import City as CityRead
 
 from flaskr.admin import setup_admin
 from flaskr.routes.api.meal_places import mod as mealPlacesModule
@@ -25,10 +26,6 @@ from flaskr.routes.api.pois import mod as poisModule, limiter
 from flaskr.routes.api.routes import mod as routesModule
 from flaskr.routes.api.sessions import mod as sessionsModule
 from flaskr.routes.views import mod as viewsModule
-
-
-if TYPE_CHECKING:
-    from flaskr.models.city import City
 
 
 def configure_jinja(app: Flask) -> None:
@@ -43,7 +40,7 @@ babel = Babel()
 def create_app(test_config: Dict[str, Any] = {}) -> Flask:
     app = Flask(__name__)
     app.config["BABEL_DEFAULT_LOCALE"] = "ru"
-    babel.init_app(app)
+    babel.init_app(app, default_timezone=DEFAULT_TIMEZONE)
 
     configure_jinja(app)
 
@@ -80,8 +77,13 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
     app.cli.add_command(reset_db)
 
     @app.context_processor
-    def inject_common_vars() -> Dict[str, List["City"]]:
-        return {"cities": get_all_cities()}
+    def inject_common_vars() -> Dict[str, Any]:
+        user_city = (
+            CityRead.model_validate(fk_session.get("user_city")).model_dump()
+            if fk_session.get("user_city")
+            else None
+        )
+        return {"cities": get_all_cities(), "user_city": user_city}
 
     @app.before_request
     def ensure_participant_joined() -> None:
@@ -92,6 +94,10 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
             user = Traveler(uuid=user_uuid)
             db.session.add(user)
             db.session.commit()
+
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template("errors/404.html"), 404
 
     @app.route("/<path:filename>")
     def static_files(filename: str) -> Response:

@@ -4,9 +4,8 @@ from pydantic import ValidationError
 from flaskr.db.route import add_route_db
 from flaskr.models.constants import REVERSED_SEGMENT_TYPE
 from flaskr.models.route import Day, DayVariant, Route, RouteCity, Segment
+from flaskr.schemas.route import DayCreate, DayVariantCreate
 from flaskr.schemas.segment import (
-    DayCreate,
-    DayVariantCreate,
     RouteCityCreate,
     RouteCreate,
     SegmentCreate,

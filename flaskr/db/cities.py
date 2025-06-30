@@ -6,5 +6,8 @@ from flaskr.models.city import City
 
 
 def get_all_cities() -> List[City]:
-    stmt = select(City)
-    return list(db.session.execute(stmt).scalars().all())
+    return list(db.session.execute(select(City)).scalars().all())
+
+
+def get_city(id: int) -> City | None:
+    return db.session.get(City, id)

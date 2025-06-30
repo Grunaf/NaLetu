@@ -1,8 +1,8 @@
 import datetime
 
 FIELDS_FOR_MEAL_PLACE = (
-    "items.schedule, items.external_content, "
-    "items.reviews, items.description, "
+    "items.schedule,items.external_content,"
+    "items.reviews,items.description,"
     "items.attribute_groups"
 )
 START_BREAKFAST_TIME = datetime.time(7)

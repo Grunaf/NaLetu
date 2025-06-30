@@ -9,12 +9,11 @@ from flaskr.constants import (
     START_DINNER_TIME,
     START_LUNCH_TIME,
 )
+from flaskr.schemas.route import DayCreate
 
 
 class POIDTO(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True, arbitrary_types_allowed=True
-    )
+    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
     id: int
     name: str
@@ -53,9 +52,7 @@ class MealPlaceDTO(BaseModel):
 
 
 class SegmentDTO(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True, arbitrary_types_allowed=True
-    )
+    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
     id: int
     type: int
@@ -82,8 +79,6 @@ class SegmentDTO(BaseModel):
         return None
 
 
-
-
 class SegmentCreate(BaseModel):
     type: int
     order: int
@@ -91,18 +86,6 @@ class SegmentCreate(BaseModel):
     end_time: datetime.time
     poi_dgis_id: str | None = None
     city_id: int
-
-
-class DayVariantCreate(BaseModel):
-    name: str
-    est_budget: int
-    is_default: bool
-    segments: List[SegmentCreate]
-
-
-class DayCreate(BaseModel):
-    day_order: int
-    day_variants: List[DayVariantCreate]
 
 
 class RouteCityCreate(BaseModel):
@@ -117,4 +100,3 @@ class RouteCreate(BaseModel):
     img: str
     city: RouteCityCreate
     days: List[DayCreate]
-

@@ -1,13 +1,18 @@
 const checkedCityName = document.getElementById("cityName")
 const citiesModal = document.getElementsByClassName("cities-modal")[0]
 document.getElementById("departureCity").addEventListener('click', async() => {
-  citiesModal.style.display = "block";
+  citiesModal.classList.remove("hidden");
 });
 Array.from(citiesModal.children).forEach(element => {
   element.onclick = async () => {
     const cityId = element.dataset.cityId;
     checkedCityName.innerText = element.innerText;
     checkedCityName.dataset.cityId = cityId;
+
+    const coords = element.dataset.coords;
+    checkedCityName.dataset.coords = coords;
+    citiesModal.classList.add("hidden");
+    updateDistances();
   }; 
 });
 
@@ -54,6 +59,7 @@ function haversine(lat1, lon1, lat2, lon2) {
 }
 // 3) для каждой карточки берём data-атрибуты
 function updateDistances() {
+  const userCoords = checkedCityName.dataset.coords.split(",");
   document.querySelectorAll('.route-card').forEach(card => {
     const lat = parseFloat(card.dataset.startLat);
     const lon = parseFloat(card.dataset.startLon);

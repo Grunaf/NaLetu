@@ -1,28 +1,43 @@
-<!-- templates/base.html -->
 <!DOCTYPE html>
 <html lang="ru">
   <head>
     <meta charset="UTF-8">
     <title>
-      {% block title %}Лету{% endblock %}
+      {% block title %}
+        Лету
+      {% endblock title %}
     </title>
     <link rel="icon"
           type="image/x-icon"
           href="{{ url_for('static', filename='img/favicon.png') }}">
     <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp"
           rel="stylesheet">
-    {% block script %}{% endblock %}
+    <script defer
+            type="module"
+            src="{{ url_for('static', filename='js/main.js')}}"></script>
+    <script defer
+            type="module"
+            src="{{ url_for('static', filename='js/constants.js')}}"></script>
+    {% block script %}
+    {% endblock script %}
     <link rel="stylesheet"
           href="{{ url_for('static', filename='styles/styles.css') }}">
-    {% block styles %}{% endblock %}
+    {% block styles %}
+    {% endblock styles %}
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   </head>
+  {% macro alert() %}
+    <div class="absolute full-top left-1/2 transform -translate-x-1/2 mt-4 z-50"
+         id="alert-placeholder"></div>
+  {% endmacro %}
   {% block body %}
     <body>
-      {% include 'partials/header.html' %}
-      <main>
-        {% block content %}{% endblock %}
+      {{ alert() }}
+      {% include "partials/header.html" %}
+      <main class="flex flex-col gap-8">
+        {% block content %}
+        {% endblock content %}
       </main>
     </body>
-  {% endblock %}
+  {% endblock body %}
 </html>

@@ -1,5 +1,7 @@
 import datetime
 
+import flask_babel
+
 
 def human_readeble_duration(duration: datetime.timedelta):
     total_minutes = int(duration.total_seconds() // 60)
@@ -42,8 +44,14 @@ def format_transports(t):
     )
     departure = datetime.datetime.fromisoformat(t.get("departure"))
     arrival = datetime.datetime.fromisoformat(t.get("arrival"))
-    formated_transports = {
+
+    departure = flask_babel.to_user_timezone(departure)
+    arrival = flask_babel.to_user_timezone(arrival)
+
+    return {
         "uid": thread.get("uid"),
+        "carrier": thread.get("carrier"),
+        "number": thread.get("number"),
         "title": thread.get("title"),
         "from_title": from_title,
         "to_title": to_title,
@@ -53,4 +61,3 @@ def format_transports(t):
         "start_cost_rub": start_cost_rub,
         "duration": formatted_duration,
     }
-    return formated_transports

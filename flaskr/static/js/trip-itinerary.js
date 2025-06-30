@@ -1,3 +1,6 @@
+import { alert } from './main.js'
+import { SERVER_ERROR } from './constants.js'
+
 const sessionId = document.getElementsByClassName("itinerary-left")[0].dataset.sessionId
 const startDateInput = document.getElementById("start-date")
 
@@ -8,18 +11,25 @@ startDateInput.addEventListener('change', async () => {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({"startDate": startDateValue, sessionId})
     });
+    if (resp.status == 200) {
+        location.reload();
+    }
+    else {
+        alert(SERVER_ERROR.message, SERVER_ERROR.color);
+    }
 });
+document.addEventListener("DOMContentLoaded", () =>{
+    const buttonsShowSimularMPs = document.getElementsByClassName("show-simular-spots");
 
-const buttonsShowSimularMPs = document.getElementsByClassName("show-simular-spots");
-
-for (let i in buttonsShowSimularMPs) {
-    buttonsShowSimularMPs[i].addEventListener("click", showSimularMealPlaces);
-}
-
+    for (let i in buttonsShowSimularMPs) {
+        buttonsShowSimularMPs[i].addEventListener("click", showSimularMealPlaces);
+    }
+});
 async function showSimularMealPlaces() {
     const mealPlaceId = this.dataset.mealPlaceId;
-    const blockSimularMealPlaces = this.parentNode.parentNode.nextElementSibling;
-    blockSimularMealPlaces.style.display = "flex";
+    const dayOrderMealType = this.dataset.dayOrderMealType;
+    const blockSimularMealPlaces = document.getElementById(`simular_spots_${dayOrderMealType}`);
+    blockSimularMealPlaces.classList.remove("hidden");
     const resp = await fetch(`/api/meal_place/${mealPlaceId}/get_simulars`, {
         method: "GET",
         headers: {"Content-type": "application/json"}
