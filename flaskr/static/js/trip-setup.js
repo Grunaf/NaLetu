@@ -24,6 +24,7 @@ if(participantNameModal) {
 }
 
 const btnCreateInvite = document.getElementById("create-invite");
+const blockInviteLink = document.getElementById("block-invite-link");
 const inviteLinkText = document.getElementById("invite-link-text");
 btnCreateInvite.addEventListener("click", async() => {
   const sessionUuid = btnCreateInvite.dataset.sessionUuid;
@@ -36,6 +37,7 @@ btnCreateInvite.addEventListener("click", async() => {
       return;
   }
   const data = await resp.json()
+  blockInviteLink.classList.remove("hidden")
   inviteLinkText.innerHTML = data.link
 });
 if (document.getElementById("is-completed-vote")) {

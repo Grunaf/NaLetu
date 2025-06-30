@@ -1,0 +1,13 @@
+{% extends 'errors/base.html' %}
+{% block title %}Доступ ограничен{% endblock title %}
+
+{% block content %}
+<h1 class="text-5xl font-bold text-red-600 mb-4">Доступ закрыт</h1>
+<h2 class="text-2xl text-gray-800 mb-2">Кажется, у вас нет прав на эту страницу</h2>
+<p class="w-xl text-gray-600 mb-6">
+Иногда такое случается: вы можете быть неавторизованы, или у вас просто нет нужных прав. 
+Если вы уверены, что доступ должен быть — напишите в поддержку на почту podderzki-poka-net@mail.ru.
+</p>
+<a href="{{ url_for('views.catalog_routes') }}"
+   class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Вернуться на главную</a>
+{% endblock %}

@@ -18,7 +18,7 @@ def is_participant_required(view):
             int(trip_session_id) not in [s.session_id for s in user.sessions]
             and "join" not in request.url
         ):
-            abort(401)
+            abort(403)
 
         return view(**kwargs)
 

@@ -128,35 +128,6 @@ def add_user_name() -> Response:
     return jsonify({"message": "participant name added to db"})
 
 
-@mod.route("/join_by_token/<uuid:token>")
-def join_to_session(token: uuid.UUID) -> Response:
-    invite: TripInvite = get_trip_invite_by_uuid(token)
-
-    if invite is None:
-        abort(404, "Приглашение не найдено")
-
-    user = db.session.get(Traveler, fk_session.get("uuid"))
-    for trip_participant in user.sessions:
-        if trip_participant.session.uuid == invite.session_uuid:
-            return redirect(
-                url_for("views.trip_setup", sessionId=trip_participant.session.id)
-            )
-
-    if datetime.datetime.now() > invite.expired_at or invite.is_active is False:
-        abort(401, "Срок приглашения истек или им уже воспользовались")
-    invite.is_active = False
-    db.session.commit()
-
-    session = get_trip_session_by_uuid(invite.session_uuid)
-    user_uuid = get_uuid_traveler()
-
-    trip_participant = TripParticipant(user_uuid=user_uuid, session_id=session.id)
-    db.session.add(trip_participant)
-    db.session.commit()
-
-    return redirect(url_for("views.trip_setup", sessionId=session.id))
-
-
 @mod.route("/<uuid:session_uuid>/create_invite", methods=["POST"])
 def create_trip_invite(session_uuid: uuid.UUID) -> Response:
     stmt = select(TripSession).where(TripSession.uuid == session_uuid)
@@ -168,7 +139,7 @@ def create_trip_invite(session_uuid: uuid.UUID) -> Response:
     db.session.commit()
     return jsonify(
         {
-            "link": url_for("api/session.join_to_session", token=invite.uuid),
+            "link": url_for("views.join_to_session", token=invite.uuid, _external=True),
             "token": invite.uuid,
         }
     )

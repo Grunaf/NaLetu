@@ -1,22 +1,13 @@
-<!DOCTYPE html>
-<html lang="ru">
-  <head>
-    <meta charset="utf-8">
-    <title>Страница не найдена</title>
-    <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      margin-top: 10vh;
-    }
-    </style>
-  </head>
-  <body>
-    <div class="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-      <h1 class="text-6xl font-bold text-red-600 mb-4">404</h1>
-      <h2 class="text-2xl font-semibold text-gray-800 mb-2">Страница не найдена</h2>
-      <p class="text-gray-600 mb-6">Извините, страница не найдена.</p>
-      <a href="{{ url_for('views.catalog_routes') }}"
-         class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Вернуться к маршрутам</a>
-    </div>
-  </body>
+{% extends 'errors/base.html' %}
+{% block title %}Такой страницы нет{% endblock title %}
+
+{% block content %}
+<h1 class="text-5xl font-bold text-blue-500 mb-4">Мы не нашли эту страницу</h1>
+<h2 class="text-2xl text-gray-800 mb-2">Возможно, вы попали не туда</h2>
+<p class="w-xl text-gray-600 mb-6">
+Страница, которую вы ищете, не существует — или её уже нет. 
+Проверьте адрес, или просто начните с главной. Такое бывает.
+</p>
+<a href="{{ url_for('views.catalog_routes') }}"
+   class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">На главную</a>
+{% endblock %}

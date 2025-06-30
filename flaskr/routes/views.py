@@ -1,17 +1,30 @@
+import datetime
+import uuid
 from collections import defaultdict
 from datetime import date
 
-from flask import Blueprint, abort, render_template, request
+from flask import (
+    Blueprint,
+    Response,
+    abort,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask import session as fk_session
 
 from config import Config
 from flaskr.db.segments import get_segments_for_variants
+from flaskr.db.trip_invites import get_trip_invite_by_uuid
+from flaskr.db.trip_sessions import get_trip_session_by_uuid
 from flaskr.decorators import is_participant_required
-from flaskr.models.constants import MEAL as MEAL_TYPE, POI as POI_TYPE
+from flaskr.models.constants import MEAL as MEAL_TYPE
+from flaskr.models.constants import POI as POI_TYPE
 from flaskr.models.models import db
-from flaskr.models.route import POI
-from flaskr.models.route import Day, DayVariant, Route, Segment
-from flaskr.models.trip import TripSession, TripVote
+from flaskr.models.route import POI, Day, DayVariant, Route, Segment
+from flaskr.models.trip import TripInvite, TripParticipant, TripSession, TripVote
+from flaskr.models.user import Traveler
 from flaskr.schemas.route import DayRead
 from flaskr.schemas.segment import MealPlaceDTO, SegmentDTO
 from flaskr.services.get_f_api_transports import get_transports_f_db_or_api
@@ -22,6 +35,7 @@ from flaskr.services.session_utils import (
     get_participants_votes,
     get_voting_attributes,
 )
+from flaskr.services.travelers import get_uuid_traveler
 from flaskr.utils import format_transports
 
 YA_MAP_API_KEY = Config.YA_MAP_API_KEY
@@ -200,3 +214,31 @@ def trip_itinerary() -> str:
         MEAL_TYPE=MEAL_TYPE,
         ya_map_js_api_key=YA_MAP_API_KEY,
     )
+
+
+@mod.route("/join/<uuid:token>")
+def join_to_session(token: uuid.UUID) -> Response:
+    invite: TripInvite = get_trip_invite_by_uuid(token)
+
+    if invite is None:
+        abort(404, "Приглашение не найдено")
+
+    user = db.session.get(Traveler, fk_session.get("uuid"))
+    for trip_participant in user.sessions:
+        if trip_participant.session.uuid == invite.session_uuid:
+            return redirect(
+                url_for("views.trip_setup", sessionId=trip_participant.session.id)
+            )
+
+    if datetime.datetime.now() > invite.expired_at or invite.is_active is False:
+        abort(410, "Срок приглашения истек или им уже воспользовались")
+
+    session = get_trip_session_by_uuid(invite.session_uuid)
+    user_uuid = get_uuid_traveler()
+
+    trip_participant = TripParticipant(user_uuid=user_uuid, session_id=session.id)
+    invite.is_active = False
+    db.session.add(trip_participant)
+    db.session.commit()
+
+    return redirect(url_for("views.trip_setup", sessionId=session.id))

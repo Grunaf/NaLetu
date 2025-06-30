@@ -27,13 +27,13 @@
       <span class="text-3xl font-semibold mt-4">Настройте поездку</span>
       <span class="text-2xl text-gray-600 font-medium">{{ plan.title }}</span>
     </div>
-    <div class="flex">
+    <div class="flex flex-col gap-3">
       <button id='create-invite'
               class='btn-secondary btn-with-icon'
               data-session-uuid='{{ plan.session_uuid }}'>
         <i class="material-icons-round">person_add</i>Создать ссылку-приглашение
       </button>
-      <span id="invite-link-text"></span>
+      <div class="flex flex-col bg-neutral-100 p-4 rounded-xl gap-1 hidden" id="block-invite-link"><span class="font-medium">Ссылка для приглашения:</span><span class="text-gray-800 w-lg" id="invite-link-text"></span></div>
     </div>
   </div>
   <div class="flex flex-col gap-2">
@@ -91,8 +91,7 @@
       </div>
     </div>
   {% else %}
-    <div class="shadow-xl rounded-xl p-4 flex flex-col gap-3"
-         id="is-completed-vote">
+      <div class="shadow-xl rounded-xl p-4 flex flex-col gap-3" id="is-completed-vote">
       <div class="text-lg font-medium">Голосование завершено. Итоговый маршрут:</div>
       <div class="flex flex-col gap-1">
         {% for day in voting_attributes["days_with_winner_variant"] %}
