@@ -1,9 +1,10 @@
 import datetime
-import json
 
 import requests
 
 from config import Config
+from flaskr.db.transports import create_transport_cache, get_transport_cache
+from flaskr.models.city import City
 from flaskr.models.models import db
 from flaskr.models.transport import TransportCache
 
@@ -11,45 +12,44 @@ YA_RASP_API_KEY = Config.YA_RASP_API_KEY
 YA_RASP_API_URI = Config.YA_RASP_API_URI
 
 
-def get_transports_f_db_or_api(date, from_city, to_city):
+def fetch_transport_from_api(
+    date: datetime.date, from_ya_code: str, to_ya_code: str
+) -> requests.Response:
+    params = {
+        "apikey": YA_RASP_API_KEY,
+        "from": from_ya_code,
+        "to": to_ya_code,
+        "date": date,
+        "lang": "ru_RU",
+    }
+
+    return requests.get(YA_RASP_API_URI, params)
+
+
+def get_transports(
+    date: datetime.date, from_city: City, to_city: City
+) -> TransportCache | None:
     cache_duration = datetime.timedelta(minutes=60)
-    exist_transport_cache = TransportCache.query.filter_by(
-        date_at=date, start_city_id=from_city.id, end_city_id=to_city.id
-    ).first()
+    exist_transport_cache = get_transport_cache(date, from_city.id, to_city.id)
     if (
         exist_transport_cache
         and datetime.datetime.now() - exist_transport_cache.updated_at < cache_duration
     ):
         return exist_transport_cache
 
-    params = {
-        "apikey": YA_RASP_API_KEY,
-        "from": from_city.yandex_code,
-        "to": to_city.yandex_code,
-        "date": date,
-        "lang": "ru_RU",
-    }
+    resp = fetch_transport_from_api(date, from_city.yandex_code, to_city.yandex_code)
+    if resp.status_code != 200:
+        return None
 
-    resp = requests.get(YA_RASP_API_URI, params)
-    if resp.status_code == 200:
-        transport_data = resp.json()
-        transport_segments = transport_data.get("segments")
-        if exist_transport_cache is None:
-            transport_cache = TransportCache(
-                start_city_id=from_city.id,
-                end_city_id=to_city.id,
-                data_json=transport_segments,
-                date_at=date,
-                updated_at=datetime.datetime.now(),
-            )
-            db.session.add(transport_cache)
-        else:
-            exist_transport_cache.updated_at = datetime.datetime.now()
-            exist_transport_cache.data_json = transport_segments
-
-        db.session.commit()
-        return (
-            transport_cache if exist_transport_cache is None else exist_transport_cache
+    transport_data = resp.json()
+    transport_segments = transport_data.get("segments")
+    if exist_transport_cache is None:
+        transport_cache = create_transport_cache(
+            date, from_city.id, to_city.id, transport_segments
         )
+        return transport_cache
     else:
-        return resp.status_code, resp.json().get("error").get("text")
+        exist_transport_cache.updated_at = datetime.datetime.now()
+        exist_transport_cache.data_json = transport_segments
+        db.session.commit()
+        return exist_transport_cache

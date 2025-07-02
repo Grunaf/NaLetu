@@ -14,6 +14,7 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 
 from config import Config
 from flaskr.db.travelers import create_traveler_db
+from flaskr.jinja_filters import setup_filters
 from shell import reset_db
 
 from flaskr.constants import ENDPOINTS
@@ -76,6 +77,7 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
         return get_staff(user_id)
 
     setup_admin(app)
+    setup_filters(app)
 
     limiter.init_app(app)
 
@@ -113,6 +115,7 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
 
     @app.errorhandler(500)
     def server_error(e):
+        sentry_sdk.capture_event(e)
         return render_template("errors/500.html"), 500
 
     @app.errorhandler(403)

@@ -5,7 +5,7 @@ from flaskr.models.user import User
 from flaskr.models.route import Day, DayVariant, Route
 from flaskr.models.trip import TripParticipant, TripSession, TripVote
 from flaskr.schemas.route import DayRead
-from flaskr.services.session_utils import get_days_with_winner_variant
+from flaskr.services.voting import get_days_with_winner_variant
 
 
 def test_status_code_itinerary_page(
@@ -87,12 +87,9 @@ def test_get_days_with_winner_variant(
     """
     # ожидамый результат
     expected_winners = [
-        DayRead(id=days[0].id, day_order=days[0].day_order,
-                variant=variants[0][1]),
-        DayRead(id=days[1].id, day_order=days[1].day_order,
-                variant=variants[1][1]),
-        DayRead(id=days[2].id, day_order=days[2].day_order,
-                variant=variants[2][1]),
+        DayRead(id=days[0].id, day_order=days[0].day_order, variant=variants[0][1]),
+        DayRead(id=days[1].id, day_order=days[1].day_order, variant=variants[1][1]),
+        DayRead(id=days[2].id, day_order=days[2].day_order, variant=variants[2][1]),
     ]
 
     # вызов функции с указанием списка голосов и количества дней

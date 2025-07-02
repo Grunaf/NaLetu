@@ -45,9 +45,6 @@ def format_transports(t):
     departure = datetime.datetime.fromisoformat(t.get("departure"))
     arrival = datetime.datetime.fromisoformat(t.get("arrival"))
 
-    departure = flask_babel.to_user_timezone(departure)
-    arrival = flask_babel.to_user_timezone(arrival)
-
     return {
         "uid": thread.get("uid"),
         "carrier": thread.get("carrier"),

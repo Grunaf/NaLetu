@@ -1,23 +1,29 @@
 <!-- templates/index.html -->
-{% extends 'base.html' %}
-{% block title %}Главная{% endblock %}
-{% block script %}<script defer src="{{ url_for('static', filename='js/trip-setup.js')}}"></script>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Выбрать маршрут{% endblock title %}
+{% block script %}
+  <script defer
+          type="module"
+          src="{{ url_for('static', filename='js/trip-setup.js')}}"></script>
+{% endblock script %}
+{% block dataset_main %}
+  data-session-uuid="{{ plan.session_uuid }}" data-count-other-participants="{{ participants | length }}" data-is-voting-completed="{{ voting_attributes["is_voting_completed"] }}"
+{% endblock dataset_main %}
 {% block content %}
   {% if show_name_modal %}
-    <div class='fixed inset-0 bg-black/50 z-40 flex items-center justify-center'
-         id='enter-name-modal'>
-      <div class='flex flex-col justify-center bg-white rounded-3xl shadow-lg p-10 w-full gap-2 max-w-lg z-50'>
+    <div class="fixed inset-0 bg-black/50 z-40 flex items-center justify-center"
+         id="enter-name-modal">
+      <div class="flex flex-col justify-center bg-white rounded-3xl shadow-lg p-10 w-full gap-2 max-w-lg z-50">
         <span class="text-xl font-semibold">Добро пожаловать, представьтесь пожалуйста</span>
         <span class="text-gray-700 mb-4">Это нужно, чтобы другие участники видели ваше имя</span>
         <div class="hidden text-red-500" id="error-msg-name-modal"></div>
         <div class="flex gap-2">
-          <input type='text'
+          <input type="text"
                  placeholder="Иван"
-                 name=''
+                 name=""
                  class="w-full"
-                 id='participant-name'>
-          <button id='btn-save-participant-name'
-                  data-session-id="{{ plan.session_id }}">Продолжить</button>
+                 id="participant-name">
+          <button id="btn-save-participant-name">Продолжить</button>
         </div>
       </div>
     </div>
@@ -27,45 +33,55 @@
       <span class="text-3xl font-semibold mt-4">Настройте поездку</span>
       <span class="text-2xl text-gray-600 font-medium">{{ plan.title }}</span>
     </div>
-    <div class="flex flex-col gap-3">
-      <button id='create-invite'
-              class='btn-secondary btn-with-icon'
-              data-session-uuid='{{ plan.session_uuid }}'>
-        <i class="material-icons-round">person_add</i>Создать ссылку-приглашение
-      </button>
-      <div class="flex flex-col bg-neutral-100 p-4 rounded-xl gap-1 hidden" id="block-invite-link"><span class="font-medium">Ссылка для приглашения:</span><span class="text-gray-800 w-lg" id="invite-link-text"></span></div>
+    <div class="flex flex-col gap-2">
+      {% if participants %}
+        <div class="flex gap-2 text-gray-700">
+          Остальные участники поездки:
+          {% for participant in participants %}{{ participant.name }}{% endfor %}
+        </div>
+      {% endif %}
+      <div class="flex flex-col gap-3">
+        <button id="create-invite" class="btn-secondary btn-with-icon">
+          <i class="material-icons-round">person_add</i>Создать ссылку-приглашение
+        </button>
+        <div class="flex flex-col bg-neutral-100 p-4 rounded-xl gap-1 hidden"
+             id="block-invite-link">
+          <span class="font-medium">Ссылка для приглашения:</span><span class="text-gray-800 w-lg" id="invite-link-text"></span>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="flex flex-col gap-2">
-    <span class="text-xl">Выберите день поездки</span>
-    <input type='date'
-           id='start-date'
-           value='{{ today }}'
-           class='data-picker w-3xs'>
   </div>
   <div class="flex flex-col gap-3">
     <span class="text-xl">Выберите варианты дня</span>
     <div class="flex flex-col gap-4">
       {% for day_block in plan.day_variants %}
-        <div class='shadow-md overflow-hidden rounded-2xl'>
-          <div class='px-4 py-3 text-base font-medium bg-neutral-200'>День {{ day_block.day }}</div>
-          <div class='px-6 py-3'>
-            {% for v in day_block.variants %}
+        <div class="shadow-md overflow-hidden rounded-2xl">
+          <div class="px-4 py-3 text-base font-medium bg-neutral-200">День {{ day_block.day }}</div>
+          <div class="px-6 py-3">
+            {% for variant in day_block.variants %}
               <label class="flex max-h-[34px] items-center gap-4">
-                <input type='radio'
-                       name='day{{ day_block.day }}'
-                       value='{{ v.id }}'
+                <input type="radio"
+                       name="day{{ day_block.day }}"
+                       value="{{ variant.id }}"
                        class=""
                        data-day-number="{{ day_block.day }}"
                        {% if loop.first %}checked{% endif %}>
-                <div class=' '>
-                  <strong>{{ v.name }}</strong> —
-                  {% if v.is_default != True %}
-                    +{{ day_block.budget_for_default - v.est_budget }}
-                  {% else %}
-                    {{ v.est_budget }}
-                  {% endif %}
-                  ₽
+                <div class="flex gap-4">
+                  <div>
+                    <strong>{{ variant.name }}</strong> —
+                    {% if variant.is_default != True %}
+                      +{{ day_block.budget_for_default - variant.est_budget }}
+                    {% else %}
+                      {{ variant.est_budget }}
+                    {% endif %}
+                    ₽
+                  </div>
+                  <div class="flex gap-2 text-gray-600">
+                    {% if  variant.travelers_choosed | length > 0 %}
+                      Выбрал:
+                      {% for participant in variant.travelers_choosed %}<span>{{ participant.name }}</span>{% endfor %}
+                    {% endif %}
+                  </div>
                 </div>
               </label>
             {% endfor %}
@@ -74,24 +90,9 @@
       {% endfor %}
     </div>
   </div>
-  {% if not voting_attributes["is_completed_vote"] %}
-    <div class="votes">
-      <span class="text-lg font-medium">Голосование идет</span>
-      <div class="flex gap-3">
-        {% for participant_votes in participants_votes %}
-          <div class="vote shadow-md rounded-xl p-3">
-            <span class="font-medium">{{ participant_votes.name }} выбрал</span>
-            <div>
-              {% for day in participant_votes.days_with_variant %}
-                <p>{{ day.day_order }} день - {{ day.variant.name }}</p>
-              {% endfor %}
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    </div>
-  {% else %}
-      <div class="shadow-xl rounded-xl p-4 flex flex-col gap-3" id="is-completed-vote">
+  {% if voting_attributes["is_voting_completed"] and participants | length != 0 %}
+    <div class="shadow-xl rounded-xl p-4 flex flex-col gap-3"
+         id="is-completed-vote">
       <div class="text-lg font-medium">Голосование завершено. Итоговый маршрут:</div>
       <div class="flex flex-col gap-1">
         {% for day in voting_attributes["days_with_winner_variant"] %}
@@ -100,7 +101,5 @@
       </div>
     </div>
   {% endif %}
-  <button id='vote-and-to-itinerary'
-          class='btn'
-          data-session-id='{{ plan.session_id }}'>Проголосовать</button>
-{% endblock %}
+  <button id="vote-and-to-itinerary" class="btn">Проголосовать</button>
+{% endblock content %}

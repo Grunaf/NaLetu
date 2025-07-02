@@ -1,11 +1,10 @@
 import datetime
-import uuid
-from collections import defaultdict
 from datetime import date
 
+import shortuuid
+from werkzeug.wrappers.response import Response
 from flask import (
     Blueprint,
-    Response,
     abort,
     redirect,
     render_template,
@@ -15,27 +14,35 @@ from flask import (
 from flask import session as fk_session
 
 from config import Config
+from flaskr.constants import (
+    INVALID_INVITE,
+    INVITE_NOT_FOUND,
+    PARTIAL_VOTES,
+    SESSION_NOT_FOUND,
+    SESSION_UUID_REQUIRED,
+    TRANSPORTS_NOT_FOUND,
+)
+from flaskr.db.participants import create_participant, get_named_participants
 from flaskr.db.segments import get_segments_for_variants
-from flaskr.db.trip_invites import get_trip_invite_by_uuid
+from flaskr.db.trip_invites import deactivate_trip_invite, get_trip_invite_by_uuid
 from flaskr.db.trip_sessions import get_trip_session_by_uuid
 from flaskr.decorators import is_participant_required
 from flaskr.models.constants import MEAL as MEAL_TYPE
 from flaskr.models.constants import POI as POI_TYPE
 from flaskr.models.models import db
 from flaskr.models.route import POI, Day, DayVariant, Route, Segment
-from flaskr.models.trip import TripInvite, TripParticipant, TripSession, TripVote
-from flaskr.models.user import Traveler
+from flaskr.models.trip import TripInvite, TripVote
 from flaskr.schemas.route import DayRead
 from flaskr.schemas.segment import MealPlaceDTO, SegmentDTO
-from flaskr.services.get_f_api_transports import get_transports_f_db_or_api
+from flaskr.schemas.users import Traveler as TravelerRead
+from flaskr.services.get_f_api_transports import get_transports
 from flaskr.services.get_meal_places import get_f_db_meal_places_near_poi
-from flaskr.services.session_utils import (
+from flaskr.services.travelers import get_uuid_traveler, is_traveler_in_session
+from flaskr.services.voting import (
     get_days_with_winner_variant,
-    get_participants_by_session_id,
-    get_participants_votes,
+    get_travelers_choosed_variant,
     get_voting_attributes,
 )
-from flaskr.services.travelers import get_uuid_traveler
 from flaskr.utils import format_transports
 
 YA_MAP_API_KEY = Config.YA_MAP_API_KEY
@@ -45,7 +52,7 @@ mod = Blueprint("views", __name__)
 
 @mod.route("/")
 @mod.route("/routes")
-def catalog_routes():
+def catalog_routes() -> str:
     routes = []
     for route in Route.query.all():
         start = route.cities[0]
@@ -80,16 +87,16 @@ def catalog_routes():
 @mod.route("/trip-setup/")
 @is_participant_required
 def trip_setup() -> str:
-    session_id = request.args.get("sessionId")
-    if not session_id:
-        abort(400, "sessionId обязателен")
+    short_uuid = request.args.get("session_uuid")
+    if not short_uuid:
+        abort(400, SESSION_UUID_REQUIRED)
 
-    trip_session = db.session.get(TripSession, session_id)
+    session_uuid = shortuuid.decode(short_uuid)
+    trip_session = get_trip_session_by_uuid(session_uuid)
     if not trip_session:
-        abort(404, "Сессия не найден")
+        abort(404, SESSION_NOT_FOUND)
     plan = {
-        "session_id": trip_session.id,
-        "session_uuid": trip_session.uuid,
+        "session_uuid": short_uuid,
         "title": trip_session.route.title,
         "durations_day": trip_session.route.duration_days,
         "day_variants": [
@@ -102,6 +109,9 @@ def trip_setup() -> str:
                         "name": v.name,
                         "est_budget": v.est_budget,
                         "is_default": v.is_default,
+                        "travelers_choosed": get_travelers_choosed_variant(
+                            v.id, trip_session.id
+                        ),
                     }
                     for v in d.variants
                 ],
@@ -110,19 +120,23 @@ def trip_setup() -> str:
         ],
     }
     voting_attributes = get_voting_attributes(
-        session_id, trip_session.route.duration_days
+        trip_session.id, trip_session.route.duration_days
     )
 
-    participants = get_participants_by_session_id(session_id)
-    participants_votes = get_participants_votes(participants)
-
+    participants = get_named_participants(trip_session.id)
+    user_uuid = get_uuid_traveler()
+    other_travelers = [
+        TravelerRead.model_validate(participant.user)
+        for participant in participants
+        if participant.user_uuid != user_uuid
+    ]
     show_name_modal = False if fk_session.get("user_name") else True
 
     return render_template(
         "trip-setup.html",
         show_name_modal=show_name_modal,
         voting_attributes=voting_attributes,
-        participants_votes=participants_votes,
+        participants=other_travelers,
         plan=plan,
         today=date.today(),
     )
@@ -131,11 +145,12 @@ def trip_setup() -> str:
 @mod.route("/trip-itinerary/")
 @is_participant_required
 def trip_itinerary() -> str:
-    session_id = request.args.get("sessionId")
-    if not session_id:
-        abort(400)
+    short_uuid = request.args.get("session_uuid")
+    if not short_uuid:
+        abort(400, SESSION_UUID_REQUIRED)
 
-    session = db.session.get(TripSession, session_id)
+    session_uuid = shortuuid.decode(short_uuid)
+    session = get_trip_session_by_uuid(session_uuid)
     if not session:
         abort(404)
 
@@ -143,13 +158,13 @@ def trip_itinerary() -> str:
     if not route:
         abort(404)
 
-    votes = list(TripVote.query.filter_by(session_id=session_id).all())
+    votes = list(TripVote.query.filter_by(session_id=session.id).all())
     days_with_winner_variant: list[DayRead] = get_days_with_winner_variant(
         votes, session.route.duration_days
     )
     days = []
     if len(days_with_winner_variant) != len(route.days):
-        abort(500, "Выбранных вариантов меньше, чем дней в поездке")
+        abort(500, PARTIAL_VOTES)
     for day_count, day in enumerate(route.days):
         day_with_variant: DayRead = days_with_winner_variant[day_count]
         variant_id = day_with_variant.variant.id
@@ -182,20 +197,20 @@ def trip_itinerary() -> str:
             }
         )
     if session.departure_city_id != route.cities[0].city_id:
-        transports_to_with_data_json = get_transports_f_db_or_api(
+        transports_to_with_data_json = get_transports(
             session.start_date, session.city, route.cities[0].city
         )
-        transports_from_with_data_json = get_transports_f_db_or_api(
+        transports_from_with_data_json = get_transports(
             session.end_date, route.cities[0].city, session.city
         )
         if (
             transports_from_with_data_json is None
             or transports_to_with_data_json is None
         ):
-            abort(500, "Проблема с получением рейсов")
+            abort(500, TRANSPORTS_NOT_FOUND)
         transports_to_json = transports_to_with_data_json.data_json
         transports_from_json = transports_from_with_data_json.data_json
-        transports = defaultdict()
+        transports = {}
 
         transports["there"] = [format_transports(t_to) for t_to in transports_to_json]
         transports["back"] = [
@@ -216,29 +231,27 @@ def trip_itinerary() -> str:
     )
 
 
-@mod.route("/join/<uuid:token>")
-def join_to_session(token: uuid.UUID) -> Response:
-    invite: TripInvite = get_trip_invite_by_uuid(token)
+@mod.route("/join/<short_invite_uuid>")
+def join_to_session(short_invite_uuid: str) -> Response:
+    invite_uuid = shortuuid.decode(short_invite_uuid)
+    invite: TripInvite = get_trip_invite_by_uuid(invite_uuid)
 
     if invite is None:
-        abort(404, "Приглашение не найдено")
+        abort(404, INVITE_NOT_FOUND)
 
-    user = db.session.get(Traveler, fk_session.get("uuid"))
-    for trip_participant in user.sessions:
-        if trip_participant.session.uuid == invite.session_uuid:
-            return redirect(
-                url_for("views.trip_setup", sessionId=trip_participant.session.id)
-            )
-
-    if datetime.datetime.now() > invite.expired_at or invite.is_active is False:
-        abort(410, "Срок приглашения истек или им уже воспользовались")
-
-    session = get_trip_session_by_uuid(invite.session_uuid)
     user_uuid = get_uuid_traveler()
+    session_uuid = invite.session_uuid
+    if not is_traveler_in_session(user_uuid, session_uuid):
+        if datetime.datetime.now() > invite.expired_at or invite.is_active is False:
+            abort(410, INVALID_INVITE)
 
-    trip_participant = TripParticipant(user_uuid=user_uuid, session_id=session.id)
-    invite.is_active = False
-    db.session.add(trip_participant)
-    db.session.commit()
+        session = get_trip_session_by_uuid(session_uuid)
+        if session is None:
+            abort(500, SESSION_NOT_FOUND)
+        user_uuid = get_uuid_traveler()
 
-    return redirect(url_for("views.trip_setup", sessionId=session.id))
+        _ = create_participant(user_uuid=user_uuid, session_id=session.id)
+        deactivate_trip_invite(invite)
+
+    short_uuid = shortuuid.encode(session_uuid)
+    return redirect(url_for("views.trip_setup", session_uuid=short_uuid))

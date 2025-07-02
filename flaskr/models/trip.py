@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 
 class TripSession(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
-    uuid: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), unique=True, default=module_uuid.uuid4()
+    uuid: Mapped[module_uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), unique=True, default=module_uuid.uuid4
     )
     route_id: Mapped[int] = mapped_column(ForeignKey("route.id"))
     departure_city_id: Mapped[int] = mapped_column(ForeignKey("city.id"))
@@ -35,7 +35,7 @@ class TripSession(db.Model):
 class TripParticipant(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_uuid: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("traveler.uuid"), default=module_uuid.uuid4()
+        UUID(as_uuid=True), ForeignKey("traveler.uuid")
     )
     session_id: Mapped[int] = mapped_column(ForeignKey("trip_session.id"))
     join_at: Mapped[datetime] = mapped_column(default=datetime.now())
@@ -43,9 +43,9 @@ class TripParticipant(db.Model):
 
     #   можно будет удалить когда перейду на uuid с id
     session: Mapped["TripSession"] = relationship()
-    user: Mapped["Traveler"] = relationship(back_populates="sessions")
+    user: Mapped["Traveler"] = relationship(back_populates="participations")
 
-    votes: Mapped[list["TripVote"]] = relationship(back_populates="participant")
+    votes: Mapped[list["TripVote"]] = relationship(back_populates="participation")
 
     __table_tags__ = (
         Index(
@@ -59,10 +59,10 @@ class TripParticipant(db.Model):
 
 
 class TripInvite(db.Model):
-    uuid: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=module_uuid.uuid4()
+    uuid: Mapped[module_uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=module_uuid.uuid4
     )
-    session_uuid: Mapped[UUID] = mapped_column(
+    session_uuid: Mapped[module_uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("trip_session.uuid")
     )
     is_active: Mapped[bool] = mapped_column(server_default="True")
@@ -84,4 +84,4 @@ class TripVote(db.Model):
     )
 
     day_variant: Mapped["DayVariant"] = relationship()
-    participant: Mapped["TripParticipant"] = relationship(back_populates="votes")
+    participation: Mapped["TripParticipant"] = relationship(back_populates="votes")

@@ -13,14 +13,16 @@ if TYPE_CHECKING:
 
 class UserMixin:
     uuid: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=module_uuid.uuid4()
+        UUID(as_uuid=True), primary_key=True, default=module_uuid.uuid4
     )
     name: Mapped[str | None] = mapped_column(default=None)
 
 
 class Traveler(UserMixin, db.Model):
     __tablename__ = "traveler"
-    sessions: Mapped[list["TripParticipant"]] = relationship(back_populates="user")
+    participations: Mapped[list["TripParticipant"]] = relationship(
+        back_populates="user"
+    )
 
 
 class Staff(UserMixin, db.Model):
@@ -44,9 +46,7 @@ class Staff(UserMixin, db.Model):
 
     @property
     def is_authenticated(self):
-        return self.is_admin or (
-            self.is_moderator and self.request.status == APPROVED
-        )
+        return self.is_admin or (self.is_moderator and self.request.status == APPROVED)
 
     @property
     def is_active(self):
@@ -55,6 +55,7 @@ class Staff(UserMixin, db.Model):
     @property
     def is_anonymous(self):
         return False
+
     def get_id(self):
         return self.uuid
 
