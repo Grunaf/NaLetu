@@ -1,12 +1,17 @@
-INSERT INTO public.city (name,lat,lon,yandex_code) VALUES
-	 ('Казань',55.7944,49.111,'c43'),
-	 ('Набережные челны',55.7441,52.3957,'c236'),
-	 ('Уфа',54.7388,55.9721,'c172'),
-	 ('Пятигорск',44.0377,43.0547,'c11067'),
-	 ('Сергиев Посад',56.3,38.1333,'c10752');
+INSERT INTO public.city (name,lat,lon,yandex_code,"location",slug) VALUES
+	 ('Казань',55.7944,49.111,'c43', 'SRID=4326;POINT (49.111 55.7944)', 'kazan'),
+	 ('Набережные челны',55.7441,52.3957,'c236', 'SRID=4326;POINT (52.3957 55.7441)', 'nabereznie-chelni'),
+	 ('Уфа',54.7388,55.9721,'c172', 'SRID=4326;POINT (55.9721 54.7388)', 'ufa'),
+	 ('Пятигорск',44.0377,43.0547,'c11067', 'SRID=4326;POINT (43.0547 44.0377)', 'patigorsk'),
+	 ('Сергиев Посад',56.3,38.1333,'c10752', 'SRID=4326;POINT (38.1333 56.3)', 'sergiev-posad'),
+	 ('Махачкала',42.9764,47.5024,'с0001', 'SRID=4326;POINT (55.9501 53.6246)', 'makhachkala'),
+	 ('Sterlitimak',53.6246,55.9501,'с0000', 'SRID=4326;POINT (47.5024 42.9764)','sterlitimak');
 INSERT INTO public.route (title,duration_days,estimated_budget_rub,img) VALUES
 	('Kazan – Kavkaz',5,15000,'kazan_kavkaz.jpg'),
-	('Sergiev Posad',2,2000,'sergiev_posad.jpg');
+	('Sergiev Posad',2,2000,'sergiev_posad.jpg'),
+	 ('Dagestan',3,4000,'dagestan.jpg'),
+	 ('Ufa',4,5200,'bashkiriya.jpg'),
+	 ('Sterlitimak',2,4200,'stel.jpg');
 INSERT INTO public."day" (day_order,route_id) VALUES
 	 (1,1),
 	 (2,1),
@@ -94,7 +99,10 @@ INSERT INTO public.route_city (route_id,city_id,"order") VALUES
 	 (1,2,2),
 	 (1,3,3),
 	 (1,4,4),
-	 (2,5,1);
+	 (2,5,1),
+	 (3,6,1),
+	 (4,3,1),
+	 (5,8,1);
 INSERT INTO public.segment (variant_id,"order",attached_next_segment_id,start_time,end_time,poi_id,lodging_name,city_id,"type") VALUES
 	 (2,6,NULL,'08:00:00','09:00:00',NULL,NULL,1,0),
 	 (1,3,NULL,'12:00:00','13:00:00',NULL,NULL,1,0),

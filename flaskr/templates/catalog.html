@@ -3,7 +3,37 @@
 {% block title %}Главная{% endblock %}
 {% block script %}<script defer src="{{url_for('static', filename='js/catalog.js')}}"></script>{% endblock %}
 {% block content %}
-  <h1 class="-mb-4">Каталог маршрутов</h1>
+  <h1 class="-mb-4">Куда поедем?</h1>
+  {% set session_len = sessions | length %}
+  {% if session_len != 0 %}
+    <div class="flex gap-2 items-end -mb-4 text-end">
+      <div class="text-xl font-semibold">Ваши поездки</div>
+      <span class="font-medium text-gray-500">{{ session_len }}</span>
+    </div>
+    <div class="flex gap-4 overflow-x-scroll overflow-y-hidden -mb-4 pb-3"
+         id="cards">
+      {% for session in sessions %}
+        <a class="flex shrink-0 w-xs h-30 rounded-xl shadow-md border border-gray-200"
+           href="{{ url_for('views.trip_setup', short_uuid=session.uuid) }}">
+          <img src="{{ session.route_img }}"
+               alt="{{ session.route_title }}"
+               class="shrink w-1/2 full-h object-cover rounded-lg">
+          <div class="flex flex-col justify-between grow p-2">
+            <div class="font-semibold text-lg">{{ session.route_title }}</div>
+            <div>{{ session.start_date | dateformat("d MMMM") }}-{{ session.end_date | dateformat("d MMMM") }}</div>
+            <div>
+              {% if session.travelers | length != 0 %}
+                Участники
+                {% for traveler in session.travelers %}{{ traveler.name }}{% endfor %}
+              {% endif %}
+            </div>
+            <div>{{ session.departure_city_name }}</div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <div class="-mb-4 text-xl font-semibold">Каталог маршрутов</div>
   <div class="flex flex-col gap-4" id="cards">
     {% for r in routes %}
       <div class="route-card"
@@ -31,4 +61,5 @@
     {% else %}
       <p>Маршрутов не найдено.</p>
     {% endfor %}
-  {% endblock %}
+  </div>
+{% endblock content %}

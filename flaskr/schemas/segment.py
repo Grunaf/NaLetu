@@ -9,20 +9,8 @@ from flaskr.constants import (
     START_DINNER_TIME,
     START_LUNCH_TIME,
 )
+from flaskr.schemas.poi import POI
 from flaskr.schemas.route import DayCreate
-
-
-class POIDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
-
-    id: int
-    name: str
-    must_see: bool
-    open_time: datetime.time
-    close_time: datetime.time
-    rating: float | None = None
-    lat: float
-    lon: float
 
 
 class SimularMealPlaceCacheDTO(BaseModel):
@@ -58,7 +46,7 @@ class SegmentDTO(BaseModel):
     type: int
     start_time: datetime.time
     end_time: datetime.time
-    poi: Optional[POIDTO] = None
+    poi: Optional[POI] = None
     meal_places: Optional[List[MealPlaceDTO]] = None
 
     @property

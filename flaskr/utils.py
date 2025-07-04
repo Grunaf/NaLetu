@@ -1,6 +1,5 @@
 import datetime
-
-import flask_babel
+import math
 
 
 def human_readeble_duration(duration: datetime.timedelta):
@@ -58,3 +57,12 @@ def format_transports(t):
         "start_cost_rub": start_cost_rub,
         "duration": formatted_duration,
     }
+
+
+def meters_to_degrees(meters: float, latitude_deg: float) -> tuple[float, float]:
+    meters_per_deg_lat = 111320.0
+    meters_per_deg_lon = 40075000 * math.cos(math.radians(latitude_deg)) / 360
+
+    deg_lat = meters / meters_per_deg_lat
+    deg_log = meters / meters_per_deg_lon
+    return deg_lat, deg_log

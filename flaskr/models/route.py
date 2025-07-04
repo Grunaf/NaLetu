@@ -9,7 +9,7 @@ from flaskr.models.models import db
 
 
 if TYPE_CHECKING:
-    from .city import City
+    from .cities import City
     from .route import POI
 
 
@@ -58,9 +58,7 @@ class DayVariant(db.Model):
     segments: Mapped[List["Segment"]] = relationship(
         back_populates="variant", cascade="all, delete-orphan"
     )
-    day: Mapped["Day"] = relationship(
-        back_populates="variants", foreign_keys=[day_id]
-    )
+    day: Mapped["Day"] = relationship(back_populates="variants", foreign_keys=[day_id])
 
     __table_args__ = (
         Index(
@@ -103,9 +101,7 @@ class Segment(db.Model):
     )
     attached_next_segment: Mapped["Segment"] = relationship()
 
-    poi_id: Mapped[int | None] = mapped_column(
-        ForeignKey("poi.id"), default=None
-    )
+    poi_id: Mapped[int | None] = mapped_column(ForeignKey("poi.id"), default=None)
     poi: Mapped["POI"] = relationship()
 
     lodging_name: Mapped[str | None] = mapped_column(default=None)

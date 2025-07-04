@@ -10,7 +10,10 @@ from flaskr.services.travelers import get_or_create_traveler, get_uuid_traveler
 def is_participant_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
-        short_uuid = request.args.get("session_uuid")
+        if kwargs.get("short_uuid") is not None:
+            short_uuid = kwargs["short_uuid"]
+        else:
+            short_uuid = request.args.get("session_uuid")
         if short_uuid is None:
             abort(400, "Укажите uuid сессии")
 

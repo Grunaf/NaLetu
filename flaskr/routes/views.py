@@ -2,7 +2,6 @@ import datetime
 from datetime import date
 
 import shortuuid
-from werkzeug.wrappers.response import Response
 from flask import (
     Blueprint,
     abort,
@@ -12,9 +11,12 @@ from flask import (
     url_for,
 )
 from flask import session as fk_session
+from werkzeug.wrappers.response import Response
 
 from config import Config
 from flaskr.constants import (
+    CITY_NOT_FOUND,
+    DEFAULT_CITY_SLUG,
     INVALID_INVITE,
     INVITE_NOT_FOUND,
     PARTIAL_VOTES,
@@ -22,7 +24,11 @@ from flaskr.constants import (
     SESSION_UUID_REQUIRED,
     TRANSPORTS_NOT_FOUND,
 )
-from flaskr.db.participants import create_participant, get_named_participants
+from flaskr.db.cities import get_city_by_slug
+from flaskr.db.participations import (
+    create_participant,
+    get_session_named_participations,
+)
 from flaskr.db.segments import get_segments_for_variants
 from flaskr.db.trip_invites import deactivate_trip_invite, get_trip_invite_by_uuid
 from flaskr.db.trip_sessions import get_trip_session_by_uuid
@@ -32,12 +38,18 @@ from flaskr.models.constants import POI as POI_TYPE
 from flaskr.models.models import db
 from flaskr.models.route import POI, Day, DayVariant, Route, Segment
 from flaskr.models.trip import TripInvite, TripVote
+from flaskr.schemas.city import City
 from flaskr.schemas.route import DayRead
 from flaskr.schemas.segment import MealPlaceDTO, SegmentDTO
 from flaskr.schemas.users import Traveler as TravelerRead
 from flaskr.services.get_f_api_transports import get_transports
 from flaskr.services.get_meal_places import get_f_db_meal_places_near_poi
-from flaskr.services.travelers import get_uuid_traveler, is_traveler_in_session
+from flaskr.services.routes import get_routes_for_departure_city
+from flaskr.services.sessions import get_traveler_trip_sessions
+from flaskr.services.travelers import (
+    get_uuid_traveler,
+    is_traveler_in_session,
+)
 from flaskr.services.voting import (
     get_days_with_winner_variant,
     get_travelers_choosed_variant,
@@ -51,10 +63,23 @@ mod = Blueprint("views", __name__)
 
 
 @mod.route("/")
-@mod.route("/routes")
-def catalog_routes() -> str:
+@mod.route("/city/")
+@mod.route("/city/<city_slug>/routes/")
+def catalog_routes(city_slug: str | None = None) -> str:
+    if city_slug is None:
+        city = get_city_by_slug(DEFAULT_CITY_SLUG)
+    else:
+        city = get_city_by_slug(city_slug)
+
+    user_city = City.model_validate(city).model_dump()
+    fk_session["user_city"] = user_city
+
+    if city is None:
+        abort(404, CITY_NOT_FOUND)
+
+    routes_db = get_routes_for_departure_city(city.location, city.lat)
     routes = []
-    for route in Route.query.all():
+    for route in routes_db:
         start = route.cities[0]
         est_budget_rub = (
             route.estimated_budget_rub
@@ -81,13 +106,18 @@ def catalog_routes() -> str:
         data["pois"] = [{"name": p.name, "rating": p.rating} for p in pois]
         routes.append(data)
 
-    return render_template("catalog.html", routes=routes)
+    traveler_uuid = get_uuid_traveler()
+    sessions = get_traveler_trip_sessions(traveler_uuid)
+
+    return render_template("catalog.html", routes=routes, sessions=sessions)
 
 
+@mod.route("/session/<short_uuid>/trip-setup/")
 @mod.route("/trip-setup/")
 @is_participant_required
-def trip_setup() -> str:
-    short_uuid = request.args.get("session_uuid")
+def trip_setup(short_uuid: str | None = None) -> str:
+    if short_uuid is None:
+        short_uuid = request.args.get("session_uuid")
     if not short_uuid:
         abort(400, SESSION_UUID_REQUIRED)
 
@@ -123,13 +153,14 @@ def trip_setup() -> str:
         trip_session.id, trip_session.route.duration_days
     )
 
-    participants = get_named_participants(trip_session.id)
     user_uuid = get_uuid_traveler()
+    travelers = get_session_named_participations(trip_session.id)
     other_travelers = [
-        TravelerRead.model_validate(participant.user)
-        for participant in participants
-        if participant.user_uuid != user_uuid
+        TravelerRead.model_validate(traveler.user)
+        for traveler in travelers
+        if traveler.user_uuid != user_uuid
     ]
+
     show_name_modal = False if fk_session.get("user_name") else True
 
     return render_template(
@@ -234,7 +265,7 @@ def trip_itinerary() -> str:
 @mod.route("/join/<short_invite_uuid>")
 def join_to_session(short_invite_uuid: str) -> Response:
     invite_uuid = shortuuid.decode(short_invite_uuid)
-    invite: TripInvite = get_trip_invite_by_uuid(invite_uuid)
+    invite: TripInvite | None = get_trip_invite_by_uuid(invite_uuid)
 
     if invite is None:
         abort(404, INVITE_NOT_FOUND)

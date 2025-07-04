@@ -17,14 +17,11 @@
               data-coords="{{ city.lat }},{{ city.lon }}">{{ city.name }}</span>
       </div>
     {% endmacro %}
-    {% if user_city %}
-      {{ choosed_city(user_city) }}
-    {% else %}
-      {{ choosed_city(cities[0]) }}
-    {% endif %}
+    {{ choosed_city(user_city) }}
     <div class="cities-modal flex flex-col gap-2 absolute right-0 mt-2 p-3 w-48 top-full origin-top-right rounded-xl bg-white shadow-lg z-50 hidden">
       {% for city in cities %}
         <div class="item"
+             data-city-slug="{{ city.slug }}"
              data-city-id="{{ city.id }}"
              data-coords="{{ city.lat }},{{ city.lon }}">{{ city.name }}</div>
       {% endfor %}

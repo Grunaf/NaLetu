@@ -1,7 +1,7 @@
 from collections import Counter
 from typing import Any, List
 
-from flaskr.db.participants import get_named_participants
+from flaskr.db.participations import get_session_named_participations
 from flaskr.db.trip_vote import get_session_votes_for_variant_id, get_trip_votes_by_uuid
 from flaskr.models.user import Traveler
 from flaskr.schemas.route import DayRead, DayVariantRead
@@ -80,7 +80,7 @@ def get_participants_votes(
 
 
 def get_voting_attributes(session_id: int, day_count) -> dict[str, Any]:
-    participants = get_named_participants(session_id)
+    participants = get_session_named_participations(session_id)
 
     votes: list[TripVote] = get_trip_votes_by_uuid(session_id)
     participants_that_vote = {vote.participation for vote in votes}

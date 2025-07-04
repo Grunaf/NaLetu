@@ -9,3 +9,4 @@ class City(BaseModel):
     name: str
     lat: float
     lon: float
+    slug: str

@@ -1,7 +1,7 @@
 import os
 
 from flaskr.models.models import db
-from flaskr.models.city import City
+from flaskr.models.cities import City
 from flaskr.models.route import Route, RouteCity
 
 

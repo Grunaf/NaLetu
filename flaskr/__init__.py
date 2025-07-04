@@ -17,8 +17,8 @@ from flaskr.db.travelers import create_traveler_db
 from flaskr.jinja_filters import setup_filters
 from shell import reset_db
 
-from flaskr.constants import ENDPOINTS
-from flaskr.db.cities import get_all_cities
+from flaskr.constants import DEFAULT_CITY_SLUG, ENDPOINTS
+from flaskr.db.cities import get_all_cities, get_city_by_slug
 from flaskr.db.staff import get_staff
 
 from flaskr.schemas.city import City as CityRead
@@ -94,11 +94,12 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
 
     @app.context_processor
     def inject_common_vars() -> Dict[str, Any]:
-        user_city = (
-            CityRead.model_validate(fk_session.get("user_city")).model_dump()
-            if fk_session.get("user_city")
-            else None
-        )
+        if fk_session.get("user_city"):
+            user_city = fk_session.get("user_city")
+        else:
+            default_city = get_city_by_slug(DEFAULT_CITY_SLUG)
+            user_city = CityRead.model_validate(default_city).model_dump()
+
         return {"cities": get_all_cities(), "user_city": user_city}
 
     @app.before_request

@@ -3,9 +3,10 @@ import datetime
 import factory
 from factory.alchemy import SQLAlchemyModelFactory
 from faker import Faker
-from sqlalchemy.orm import Session
+from geoalchemy2.shape import from_shape
+from shapely.geometry import Point
 
-from flaskr.models.city import City
+from flaskr.models.cities import City
 
 # from flaskr.models.meal_place import MealPlace, SimularMealPlaceCache
 from flaskr.models.constants import CUISINE, MEAL_PLACE_TYPE, SEGMENT_TYPE
@@ -13,22 +14,15 @@ from flaskr.models.meal_place import MealPlace
 from flaskr.models.route import POI
 from flaskr.models.route import Day, DayVariant, Route, RouteCity, Segment
 from flaskr.models.trip import (
-    TripInvite,
     TripParticipant,
     TripSession,
-    TripVote,
 )
 
-# from flaskr.models.trip import (
-#     TripInvite,
-#     TripParticipant,
-#     TripSession,
-#     TripVote,
-# )
-from flaskr.models.user import User
+from flaskr.models.user import Traveler
 from tests.conftest import db_from_model
 
 faker = Faker("ru_RU")
+faker_uuid_no_cast = lambda: faker.uuid4(cast_to=None)
 
 
 def generate_date_later(base_date, max_days_after) -> datetime:
@@ -56,7 +50,6 @@ def generate_time(min_hour: int, max_hour: int) -> datetime.time:
 
 
 def reset_all_pk_sequences() -> None:
-    UserFactory.reset_sequence()
     RouteCityFactory.reset_sequence()
     RouteFactory.reset_sequence()
     CityFactory.reset_sequence()
@@ -64,51 +57,70 @@ def reset_all_pk_sequences() -> None:
 
 class BaseFactory(SQLAlchemyModelFactory):
     class Meta:
+        abstract = True
         sqlalchemy_session = db_from_model.session
-
-    @classmethod
-    def _create(cls, target_class, *args, **kwargs):
-        session: Session = cls._meta.sqlalchemy_session
-        obj = target_class(*args, **kwargs)
-        session.add(obj)
-        session.commit()
-        return obj
+        sqlalchemy_session_persistence = "commit"
 
 
 class CityFactory(BaseFactory):
     class Meta:
         model = City
 
-    id = factory.Sequence(lambda n: n)
-    name = factory.Sequence(lambda n: "Route title #%d" % n)
-    lat = faker.latitude()
-    lon = faker.longitude()
+    name = factory.Sequence(lambda n: "City title #%d" % n)
+    lat = factory.LazyFunction(faker.latitude)
+    lon = factory.LazyFunction(faker.longitude)
+    location = factory.LazyAttribute(
+        lambda city: from_shape(Point(city.lon, city.lat), srid=4326)
+    )
     yandex_code = "c1234"
+    slug = faker.slug()
 
 
 class RouteFactory(BaseFactory):
     class Meta:
         model = Route
 
-    id = factory.Sequence(lambda n: n)
     title = factory.Sequence(lambda n: "Route title #%d" % n)
-    duration_days = faker.random_int(max=5)
-    estimated_budget_rub = faker.random_int(min=1000, max=10000, step=100)
-    days = factory.RelatedFactoryList(
-        "tests.factories.DayFactory", "route", duration_days
-    )
-    cities = factory.RelatedFactoryList(
-        "tests.factories.RouteCityFactory", "route", 4
+    duration_days = factory.LazyFunction(lambda: faker.random_int(max=5))
+    estimated_budget_rub = factory.LazyFunction(
+        lambda: faker.random_int(min=1000, max=10000, step=100)
     )
     img = faker.uri_path()
+
+    @factory.post_generation
+    def cities(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted:
+            created_route_cities = []
+            for i in range(extracted):
+                created_route_cities.append(
+                    RouteCityFactory(route=self, order=i + 1, **kwargs)
+                )
+
+            if created_route_cities:
+                self.start_city = created_route_cities[0]
+                BaseFactory._meta.sqlalchemy_session.commit()
+        else:
+            RouteCityFactory(route=self, **kwargs)
+
+    @factory.post_generation
+    def days(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted:
+            for i in range(self.duration_days):
+                DayFactory(route=self, day_order=i + 1, **kwargs)
+        else:
+            DayFactory(route=self, **kwargs)
 
 
 class RouteCityFactory(BaseFactory):
     class Meta:
         model = RouteCity
 
-    id = factory.Sequence(lambda n: n)
     city = factory.SubFactory(CityFactory)
+    route = None
     order = 1
 
 
@@ -116,10 +128,8 @@ class DayFactory(BaseFactory):
     class Meta:
         model = Day
 
-    id = factory.Sequence(lambda n: n)
     day_order = 1
     route = factory.SubFactory(RouteFactory)
-    default_variant = factory.RelatedFactory("tests.factories.DayVariantFactory")
     variants = factory.RelatedFactoryList("tests.factories.DayVariantFactory", "day", 3)
 
 
@@ -127,17 +137,16 @@ class DayVariantFactory(BaseFactory):
     class Meta:
         model = DayVariant
 
-    id = factory.Sequence(lambda n: n)
     name = factory.Sequence(lambda n: f"Day variant #{n}")
     est_budget = faker.random_int(min=1000, max=10000, step=100)
     is_default = False
+    day = None
 
 
 class POIFactory(BaseFactory):
     class Meta:
         model = POI
 
-    id = factory.Sequence(lambda n: n)
     name = factory.Sequence(lambda n: f"POI #{n}")
     must_see = faker.boolean(chance_of_getting_true=30)
     open_time = faker.time()
@@ -151,7 +160,6 @@ class SegmentFactory(BaseFactory):
     class Meta:
         model = Segment
 
-    id = factory.Sequence(lambda n: n)
     variant = factory.SubFactory(DayVariantFactory)
     type: int = faker.random_element(SEGMENT_TYPE.keys())
     order = 1
@@ -173,7 +181,6 @@ class MealPlaceFactory(BaseFactory):
     class Meta:
         model = MealPlace
 
-    id = factory.Sequence(lambda n: n)
     name = factory.Sequence(lambda n: f"Meal place #{n}")
     coords = faker.coordinate()
     city = factory.SubFactory(CityFactory)
@@ -191,33 +198,34 @@ class MealPlaceFactory(BaseFactory):
     updated_at = generate_date_later(created_at, 10)
 
 
-class UserFactory(BaseFactory):
+class TravelerFactory(BaseFactory):
     class Meta:
-        model = User
+        model = Traveler
 
-    uuid = faker.uuid4()
+    uuid = factory.LazyFunction(faker_uuid_no_cast)
     name = factory.Sequence(lambda n: "User name #%d" % n)
 
 
-class TripSessionFactory(factory.alchemy.SQLAlchemyModelFactory):
+class TripSessionFactory(BaseFactory):
     class Meta:
         model = TripSession
 
-    uuid = faker.uuid4()
+    uuid = factory.LazyFunction(faker_uuid_no_cast)
     departure_city_id = factory.SubFactory(CityFactory)
 
-    start_date = faker.date()
-    end_date = faker.date()
+    start_date = factory.LazyFunction(faker.date)
+    end_date = factory.LazyFunction(faker.date)
 
-    created_at = faker.date_time()
+    created_at = factory.LazyFunction(faker.date_time)
+    route = factory.SubFactory(RouteFactory)
+    city = factory.SubFactory(CityFactory)
 
 
-class TripParticipantFactory(factory.alchemy.SQLAlchemyModelFactory):
+class TripParticipantFactory(BaseFactory):
     class Meta:
         model = TripParticipant
 
-    id = factory.Sequence(lambda n: n)
-    user = factory.SubFactory(UserFactory)
+    user = factory.SubFactory(TravelerFactory)
     session = factory.SubFactory(TripSessionFactory)
     is_admin = False
     join_at = faker.date_time()

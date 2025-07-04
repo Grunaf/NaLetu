@@ -7,14 +7,8 @@ departureCity.addEventListener("click", async () => {
 });
 Array.from(citiesModal.children).forEach(element => {
   element.onclick = async () => {
-    const cityId = element.dataset.cityId;
-    checkedCityName.innerText = element.innerText;
-    checkedCityName.dataset.cityId = cityId;
-
-    const coords = element.dataset.coords;
-    checkedCityName.dataset.coords = coords;
-    citiesModal.classList.add("hidden");
-    updateDistances();
+    const citySlug = element.dataset.citySlug;
+    window.location.assign(`/city/${citySlug}/routes`);
   };
 });
 

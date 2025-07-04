@@ -10,7 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .models import db
 
 if TYPE_CHECKING:
-    from .city import City
+    from .cities import City
     from .route import DayVariant, Route
     from .user import Traveler
 
@@ -34,10 +34,12 @@ class TripSession(db.Model):
 
 class TripParticipant(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_uuid: Mapped[UUID] = mapped_column(
+    user_uuid: Mapped[module_uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("traveler.uuid")
     )
-    session_id: Mapped[int] = mapped_column(ForeignKey("trip_session.id"))
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("trip_session.id", ondelete="CASCADE")
+    )
     join_at: Mapped[datetime] = mapped_column(default=datetime.now())
     is_admin: Mapped[bool] = mapped_column(server_default="False")
 
@@ -63,7 +65,7 @@ class TripInvite(db.Model):
         UUID(as_uuid=True), primary_key=True, default=module_uuid.uuid4
     )
     session_uuid: Mapped[module_uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("trip_session.uuid")
+        UUID(as_uuid=True), ForeignKey("trip_session.uuid", ondelete="CASCADE")
     )
     is_active: Mapped[bool] = mapped_column(server_default="True")
 
@@ -75,7 +77,9 @@ class TripInvite(db.Model):
 
 class TripVote(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
-    session_id: Mapped[int] = mapped_column(ForeignKey("trip_session.id"))
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("trip_session.id", ondelete="CASCADE")
+    )
     variant_id: Mapped[int] = mapped_column(ForeignKey("day_variant.id"))
     participant_id: Mapped[int] = mapped_column(ForeignKey("trip_participant.id"))
     day_order: Mapped[int]

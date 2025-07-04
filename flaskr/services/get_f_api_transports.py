@@ -4,7 +4,7 @@ import requests
 
 from config import Config
 from flaskr.db.transports import create_transport_cache, get_transport_cache
-from flaskr.models.city import City
+from flaskr.models.cities import City
 from flaskr.models.models import db
 from flaskr.models.transport import TransportCache
 

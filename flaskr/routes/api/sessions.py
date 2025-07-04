@@ -1,23 +1,32 @@
 import datetime
-import uuid
 from datetime import date
 
+import shortuuid
 from flask import Blueprint, Response, abort, jsonify, request, url_for
 from flask import session as fk_session
-import shortuuid
 
-from flaskr.constants import MAX_PARTICIPANT_COUNT, SESSION_NOT_FOUND
+from flaskr.constants import (
+    DEPARTURE_CITY_ID,
+    MAX_PARTICIPANT_COUNT,
+    ROUTE_ID,
+    SESSION_NOT_FOUND,
+    SESSION_UUID_REQUIRED,
+)
 from flaskr.db.cities import get_city
-from flaskr.db.participants import create_participant, get_named_participants
+from flaskr.db.participations import (
+    create_participant,
+    get_session_participations,
+    is_many_travelers_in_session,
+)
 from flaskr.db.trip_invites import (
     create_trip_invite as create_trip_invite_db,
 )
 from flaskr.db.trip_sessions import (
     create_trip_session,
+    delete_trip_session,
     get_trip_session_by_uuid,
-    get_admin_participants,
 )
-from flaskr.models.city import City
+from flaskr.models.cities import City
 from flaskr.models.models import db
 from flaskr.models.route import Route
 from flaskr.models.trip import (
@@ -25,14 +34,14 @@ from flaskr.models.trip import (
     TripSession,
     TripVote,
 )
+from flaskr.routes.constants import API_SESSION_URI
 from flaskr.schemas.city import City as CityRead
 from flaskr.schemas.trip import TripVoteDTO
 from flaskr.services.get_f_api_transports import get_transports
-from flaskr.services.sessions import is_many_travelers_in_session
-from flaskr.services.voting import get_voting_attributes
 from flaskr.services.travelers import get_or_create_traveler, get_uuid_traveler
+from flaskr.services.voting import get_voting_attributes
 
-mod = Blueprint("api/session", __name__, url_prefix="/api/session")
+mod = Blueprint("api/session", __name__, url_prefix=API_SESSION_URI)
 
 
 @mod.route("/update_departure_city", methods=["POST"])
@@ -64,14 +73,22 @@ def update_transports_in_db() -> Response:
     return jsonify({"message": "Transport updated "})
 
 
-@mod.route("/create_or_get", methods=["POST"])
-def create_session_or_get_where_admin() -> Response:
+@mod.route("/", methods=["POST"])
+def create_session() -> tuple[Response, int]:
     data = request.json or {}
-    route_id = int(data["routeId"])
-    if not (route_id):
-        abort(400, "Нужно указать routeId")
+    route_id = data.get("routeId")
+    if route_id is None:
+        return jsonify({"error": ROUTE_ID.REQUIRED}), 400
+    try:
+        route_id = int(route_id)
+    except ValueError:
+        return jsonify({"error": ROUTE_ID.IS_NOT_INT}), 400
 
-    departure_city_id = int(data["departureCityId"])
+    departure_city_id = data.get("departureCityId")
+    if departure_city_id is None:
+        return jsonify({"error": DEPARTURE_CITY_ID.REQUIRED}), 400
+    departure_city_id = int(departure_city_id)
+
     fk_session["user_city"] = CityRead.model_validate(
         get_city(departure_city_id)
     ).model_dump()
@@ -80,38 +97,36 @@ def create_session_or_get_where_admin() -> Response:
     user_name = fk_session.get("user_name")
     _ = get_or_create_traveler(user_uuid, user_name)
 
-    admin_participants = get_admin_participants(user_uuid)
-    existed_session_uuid = next(
-        (
-            participant.session.uuid
-            for participant in admin_participants
-            if participant.session.route_id == route_id
-        ),
-        None,
+    route = db.session.get(Route, route_id)
+    if route is None:
+        return jsonify({"error": "Маршрут не найден"}), 404
+
+    today = datetime.datetime.today()
+    end_date = today + datetime.timedelta(days=route.duration_days)
+
+    trip_session = create_trip_session(
+        route_id=route_id,
+        departure_city_id=departure_city_id,
+        start_date=today,
+        end_date=end_date,
     )
+    session_uuid = trip_session.uuid
 
-    if existed_session_uuid is not None:
-        session_uuid = existed_session_uuid
-    else:
-        route = db.session.get(Route, route_id)
-        if route is None:
-            abort(404, "Маршрут не найден")
-
-        today = datetime.datetime.today()
-        end_date = today + datetime.timedelta(days=route.duration_days)
-
-        trip_session = create_trip_session(
-            route_id=route_id,
-            departure_city_id=departure_city_id,
-            start_date=today,
-            end_date=end_date,
-        )
-        session_uuid = trip_session.uuid
-
-        _ = create_participant(user_uuid, trip_session.id, is_admin=True)
+    _ = create_participant(user_uuid, trip_session.id, is_admin=True)
 
     short_uuid = shortuuid.encode(session_uuid)
-    return jsonify({"session_uuid": short_uuid})
+    return jsonify({"session_uuid": short_uuid}), 201
+
+
+@mod.route("/<short_uuid>", methods=["DELETE"])
+def delete_sesion(short_uuid: str) -> Response:
+    if short_uuid is None:
+        abort(400, SESSION_UUID_REQUIRED)
+    session_uuid = shortuuid.decode(short_uuid)
+    row_count = delete_trip_session(session_uuid)
+    if row_count == 0:
+        abort(404, "Сессии не сущесвует")
+    return Response(status=204)
 
 
 @mod.route("/add_user_name", methods=["POST"])
@@ -137,7 +152,7 @@ def create_trip_invite(short_uuid: str) -> Response:
     if session is None:
         abort(404, SESSION_NOT_FOUND)
 
-    participants = get_named_participants(session.id)
+    participants = get_session_participations(session.id)
     if len(participants) >= MAX_PARTICIPANT_COUNT:
         abort(422, "Группа заполнена")
 

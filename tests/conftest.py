@@ -12,7 +12,7 @@ from sqlalchemy import delete, text
 from testcontainers.postgres import PostgresContainer
 
 from flaskr import create_app
-from flaskr.models.city import City
+from flaskr.models.cities import City
 from flaskr.models.meal_place import MealPlace, SimularMealPlaceCache
 from flaskr.models.models import db as db_from_model
 from flaskr.models.route import POI
@@ -24,16 +24,12 @@ from flaskr.models.trip import (
     TripSession,
     TripVote,
 )
-from flaskr.models.user import User
+from flaskr.models.user import Traveler
 from tests.factories import (
-    # RouteCityFactory,
     RouteFactory,
-    # TripParticipantFactory,
-    # TripSessionFactory,
-    UserFactory,
 )
 
-postgres = PostgresContainer("postgres:16-alpine")
+postgres = PostgresContainer("postgis/postgis:16-3.4-alpine")
 
 
 @pytest.fixture(scope="module")
@@ -114,7 +110,7 @@ def setup_data(_db: SQLAlchemy):
     delete_entries(DayVariant, "day_variant")
     delete_entries(Day, "day")
 
-    delete_entries(User, update_seq=False)
+    delete_entries(Traveler, update_seq=False)
     delete_entries(RouteCity, "route_city")
     delete_entries(Route, "route")
     delete_entries(City, "city")
@@ -125,13 +121,6 @@ def mock_2gis_request(mocker, data, status=200):
 
     mock_get.return_value.status_code = status
     mock_get.return_value.text = data
-
-
-# # register(RouteFactory)
-# # register(RouteCityFactory)
-# # register(TripParticipantFactory)
-# # register(TripSessionFactory)
-# register(UserFactory)
 
 
 @pytest.fixture
@@ -513,13 +502,15 @@ def multiply_sessions(
 
 @pytest.fixture
 def users(_db):
-    u1 = User(name="Кирилл", uuid=uuid.UUID("16c9ec5e-90a5-4332-8822-d3a6ccd3c87e"))
-    u2 = User(
+    u1 = Traveler(name="Кирилл", uuid=uuid.UUID("16c9ec5e-90a5-4332-8822-d3a6ccd3c87e"))
+    u2 = Traveler(
         name="Инокентий",
         uuid=uuid.UUID("35d6f04c-f9d6-4103-8c71-1091f74a6475"),
     )
-    u3 = User(name="Кен", uuid=uuid.UUID("2aee1ad6-5f63-4d9e-99bf-9e88f3039b30"))
-    u4 = User(name="Кенилана", uuid=uuid.UUID("2dc89be5-8167-4894-922c-005b09a6ebc1"))
+    u3 = Traveler(name="Кен", uuid=uuid.UUID("2aee1ad6-5f63-4d9e-99bf-9e88f3039b30"))
+    u4 = Traveler(
+        name="Кенилана", uuid=uuid.UUID("2dc89be5-8167-4894-922c-005b09a6ebc1")
+    )
 
     _db.session.add_all([u1, u2, u3, u4])
     _db.session.commit()

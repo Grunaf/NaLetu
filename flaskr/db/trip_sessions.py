@@ -1,30 +1,27 @@
-from datetime import datetime
-from typing import List
 import uuid
+from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
+
 from flaskr.models.models import db
-from flaskr.models.trip import TripParticipant, TripSession
+from flaskr.models.trip import TripSession
 
 
-def get_admin_participants(user_uuid: uuid.UUID) -> List[TripParticipant]:
-    stmt = (
-        select(TripParticipant)
-        .where(TripParticipant.user_uuid == user_uuid)
-        .where(TripParticipant.is_admin)
-    )
-
-    return list(db.session.execute(stmt).scalars().all())
-
-
-def get_trip_session_by_uuid(session_uuid: uuid.UUID) -> TripParticipant | None:
+def get_trip_session_by_uuid(session_uuid: uuid.UUID) -> TripSession | None:
     stmt = select(TripSession).where(TripSession.uuid == session_uuid)
     return db.session.execute(stmt).scalar()
 
 
-def get_trip_session_by_id(id: int) -> TripParticipant | None:
+def get_trip_session_by_id(id: int) -> TripSession | None:
     stmt = select(TripSession).where(TripSession.id == id)
     return db.session.execute(stmt).scalar()
+
+
+def delete_trip_session(session_uuid: uuid.UUID) -> int:
+    stmt = delete(TripSession).where(TripSession.uuid == session_uuid)
+    result = db.session.execute(stmt)
+    db.session.commit()
+    return result.rowcount
 
 
 def create_trip_session(

@@ -1,6 +1,6 @@
 from flask.testing import FlaskClient
 from flaskr.models.route import Route
-from flaskr.models.city import City
+from flaskr.models.cities import City
 from flaskr.models.user import User
 from flaskr.models.trip import TripParticipant, TripSession
 

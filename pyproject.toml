@@ -1,9 +1,9 @@
 [tool.ruff]
 line-length = 88
+exclude = ["migrations/versions"]
 
 
 [tool.mypy]
-exclude = ["venv", ".venv", "migrations", "tests"]
 plugins = ["sqlalchemy.ext.mypy.plugin"]
 strict = true
 
