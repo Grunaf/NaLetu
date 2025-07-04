@@ -1,6 +1,7 @@
 import datetime
 
 import requests
+from sentry_sdk import logger as sentry_logger
 
 from config import Config
 from flaskr.db.transports import create_transport_cache, get_transport_cache
@@ -39,6 +40,8 @@ def get_transports(
 
     resp = fetch_transport_from_api(date, from_city.yandex_code, to_city.yandex_code)
     if resp.status_code != 200:
+        data = resp.json()
+        sentry_logger.error(data["error"]["text"])
         return None
 
     transport_data = resp.json()

@@ -1,5 +1,4 @@
 import json
-import os
 import uuid
 from typing import Any, Dict
 
@@ -10,9 +9,10 @@ from flask_swagger_ui import get_swaggerui_blueprint
 from flask_babel import Babel
 
 import sentry_sdk
+from sentry_sdk import logger as sentry_logger
 from sentry_sdk.integrations.flask import FlaskIntegration
 
-from config import Config
+from config import ENV, Config
 from flaskr.db.travelers import create_traveler_db
 from flaskr.jinja_filters import setup_filters
 from shell import reset_db
@@ -46,8 +46,7 @@ babel = Babel()
 
 def configure_app(app, test_config):
     if len(test_config) == 0:
-        env = os.getenv("FLASK_ENV", "dev")
-        if env == "prod":
+        if ENV == "prod":
             app.config.from_object("config.ProdConfig")
         else:
             app.config.from_object("config.DevConfig")
@@ -86,7 +85,14 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
         SWAGGER_API_URL,
         config={"app_name": "Test application"},
     )
-    sentry_sdk.init(SENTRY_DSN, integrations=[FlaskIntegration()])
+    sentry_sdk.init(
+        SENTRY_DSN,
+        _experiments={
+            "enable_logs": True,
+        },
+        environment=ENV,
+        integrations=[FlaskIntegration()],
+    )
 
     app.register_blueprint(swaggerui_blueprint)
 
@@ -116,7 +122,7 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
 
     @app.errorhandler(500)
     def server_error(e):
-        sentry_sdk.capture_event(e)
+        sentry_logger.error(e.description)
         return render_template("errors/500.html"), 500
 
     @app.errorhandler(403)

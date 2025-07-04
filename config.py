@@ -1,5 +1,7 @@
 import os
 
+ENV = os.getenv("FLASK_ENV", "dev")
+
 
 class Config:
     DB_USER = os.getenv("POSTGRES_USER")
