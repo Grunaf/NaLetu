@@ -102,7 +102,7 @@ INSERT INTO public.route_city (route_id,city_id,"order") VALUES
 	 (2,5,1),
 	 (3,6,1),
 	 (4,3,1),
-	 (5,8,1);
+	 (5,7,1);
 INSERT INTO public.segment (variant_id,"order",attached_next_segment_id,start_time,end_time,poi_id,lodging_name,city_id,"type") VALUES
 	 (2,6,NULL,'08:00:00','09:00:00',NULL,NULL,1,0),
 	 (1,3,NULL,'12:00:00','13:00:00',NULL,NULL,1,0),

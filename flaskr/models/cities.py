@@ -12,7 +12,7 @@ class City(db.Model):
     name: Mapped[str]
     lat: Mapped[float]
     lon: Mapped[float]
-    location = mapped_column(Geometry("POINT", srid=4326, spatial_index=True))
+    location = mapped_column(Geometry("POINT", srid=4326))
     yandex_code: Mapped[str]
     slug: Mapped[str] = mapped_column(unique=True)
 

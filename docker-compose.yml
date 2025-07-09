@@ -19,7 +19,7 @@ services:
           cpus: "0.5"
 
   db:
-    image: postgres:16
+    image: postgis/postgis:16-3.4-alpine
     restart: always
     env_file:
       - .env

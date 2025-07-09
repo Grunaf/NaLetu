@@ -1,16 +1,17 @@
 """init
 
-Revision ID: a7b2d50b7b86
+Revision ID: b08a30f09714
 Revises: 
-Create Date: 2025-06-14 20:50:45.903000
+Create Date: 2025-07-08 14:59:04.992270
 
 """
 from alembic import op
+import geoalchemy2
 import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'a7b2d50b7b86'
+revision = 'b08a30f09714'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,29 +22,26 @@ def upgrade():
     op.create_table('city',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('lat', sa.Float(), nullable=True),
-    sa.Column('lon', sa.Float(), nullable=True),
+    sa.Column('lat', sa.Float(), nullable=False),
+    sa.Column('lon', sa.Float(), nullable=False),
     sa.Column('yandex_code', sa.String(), nullable=False),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_city'))
+    sa.Column('location', geoalchemy2.types.Geometry(geometry_type='POINT', srid=4326, from_text='ST_GeomFromEWKT', name='geometry'), nullable=True),
+    sa.Column('slug', sa.String(), nullable=False),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_city')),
+    sa.UniqueConstraint('slug', name=op.f('uq_city_slug'))
     )
     op.create_table('poi',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(), nullable=True),
-    sa.Column('must_see', sa.Boolean(), nullable=True),
+    sa.Column('dgis_id', sa.String(), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('must_see', sa.Boolean(), nullable=False),
     sa.Column('open_time', sa.Time(), nullable=True),
     sa.Column('close_time', sa.Time(), nullable=True),
     sa.Column('rating', sa.Float(), nullable=True),
-    sa.Column('lat', sa.Float(), nullable=True),
-    sa.Column('lon', sa.Float(), nullable=True),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_poi'))
-    )
-    op.create_table('price_entry',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('object_type', sa.String(), nullable=False),
-    sa.Column('object_id', sa.Integer(), nullable=False),
-    sa.Column('price', sa.Integer(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_price_entry'))
+    sa.Column('lat', sa.Float(), nullable=False),
+    sa.Column('lon', sa.Float(), nullable=False),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_poi')),
+    sa.UniqueConstraint('dgis_id', name=op.f('uq_poi_dgis_id'))
     )
     op.create_table('route',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -53,18 +51,45 @@ def upgrade():
     sa.Column('img', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_route'))
     )
+    op.create_table('staff',
+    sa.Column('first_name', sa.String(), nullable=False),
+    sa.Column('last_name', sa.String(), nullable=False),
+    sa.Column('login', sa.String(), nullable=False),
+    sa.Column('email', sa.String(), nullable=False),
+    sa.Column('password', sa.String(), nullable=False),
+    sa.Column('role', sa.SmallInteger(), nullable=False),
+    sa.Column('uuid', sa.UUID(), nullable=False),
+    sa.Column('name', sa.String(), nullable=True),
+    sa.PrimaryKeyConstraint('uuid', name=op.f('pk_staff')),
+    sa.UniqueConstraint('email', name=op.f('uq_staff_email')),
+    sa.UniqueConstraint('login', name=op.f('uq_staff_login'))
+    )
     op.create_table('transport_price_entry',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('object_type', sa.String(), nullable=True),
-    sa.Column('object_id', sa.Integer(), nullable=True),
-    sa.Column('last_known_price', sa.Integer(), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.Column('source_url', sa.String(), nullable=True),
+    sa.Column('object_type', sa.SmallInteger(), nullable=False),
+    sa.Column('object_id', sa.Integer(), nullable=False),
+    sa.Column('last_known_price', sa.Integer(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('source_url', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_transport_price_entry'))
+    )
+    op.create_table('traveler',
+    sa.Column('uuid', sa.UUID(), nullable=False),
+    sa.Column('name', sa.String(), nullable=True),
+    sa.PrimaryKeyConstraint('uuid', name=op.f('pk_traveler'))
+    )
+    op.create_table('addition_request',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('status', sa.SmallInteger(), nullable=False),
+    sa.Column('staff_id', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['staff_id'], ['staff.uuid'], name=op.f('fk_addition_request_staff_id_staff')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_addition_request'))
     )
     op.create_table('day',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('day_order', sa.Integer(), nullable=True),
+    sa.Column('day_order', sa.Integer(), nullable=False),
     sa.Column('route_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['route_id'], ['route.id'], name=op.f('fk_day_route_id_route')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_day'))
@@ -72,16 +97,17 @@ def upgrade():
     op.create_table('meal_place',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('type', sa.String(), nullable=True),
     sa.Column('coords', sa.String(), nullable=False),
-    sa.Column('cuisine', sa.String(), nullable=False),
-    sa.Column('website', sa.String(), nullable=True),
-    sa.Column('avg_check_rub', sa.Integer(), nullable=True),
+    sa.Column('city_id', sa.Integer(), nullable=False),
+    sa.Column('type', sa.SmallInteger(), nullable=True),
     sa.Column('open_time', sa.Time(), nullable=True),
     sa.Column('close_time', sa.Time(), nullable=True),
+    sa.Column('cuisine', sa.SmallInteger(), nullable=False),
+    sa.Column('avg_check_rub', sa.Integer(), nullable=True),
     sa.Column('rating', sa.Float(), nullable=True),
+    sa.Column('website', sa.String(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.Column('city_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['city_id'], ['city.id'], name=op.f('fk_meal_place_city_id_city')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_meal_place'))
     )
@@ -99,71 +125,80 @@ def upgrade():
     sa.Column('start_city_id', sa.Integer(), nullable=False),
     sa.Column('end_city_id', sa.Integer(), nullable=False),
     sa.Column('data_json', sa.JSON(), nullable=False),
-    sa.Column('date_at', sa.DateTime(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('date_at', sa.DateTime(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['end_city_id'], ['city.id'], name=op.f('fk_transport_cache_end_city_id_city')),
     sa.ForeignKeyConstraint(['start_city_id'], ['city.id'], name=op.f('fk_transport_cache_start_city_id_city')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_transport_cache'))
     )
     op.create_table('trip_session',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('uuid', sa.UUID(), nullable=False),
     sa.Column('route_id', sa.Integer(), nullable=False),
     sa.Column('departure_city_id', sa.Integer(), nullable=False),
     sa.Column('start_date', sa.Date(), nullable=False),
     sa.Column('end_date', sa.Date(), nullable=False),
-    sa.Column('choices_json', sa.JSON(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['departure_city_id'], ['city.id'], name=op.f('fk_trip_session_departure_city_id_city')),
     sa.ForeignKeyConstraint(['route_id'], ['route.id'], name=op.f('fk_trip_session_route_id_route')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_trip_session'))
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_trip_session')),
+    sa.UniqueConstraint('uuid', name=op.f('uq_trip_session_uuid'))
     )
     op.create_table('day_variant',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(), nullable=True),
-    sa.Column('est_budget', sa.Integer(), nullable=True),
-    sa.Column('day_id', sa.Integer(), nullable=True),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('est_budget', sa.Integer(), nullable=False),
+    sa.Column('day_id', sa.Integer(), nullable=False),
+    sa.Column('is_default', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['day_id'], ['day.id'], name=op.f('fk_day_variant_day_id_day')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_day_variant'))
     )
+    with op.batch_alter_table('day_variant', schema=None) as batch_op:
+        batch_op.create_index('only_one_default_variant', ['day_id', 'is_default'], unique=True, postgresql_where='is_default')
+
     op.create_table('simular_meal_place_cache',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('meal_place_id', sa.Integer(), nullable=False),
     sa.Column('data_json', sa.JSON(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['meal_place_id'], ['meal_place.id'], name=op.f('fk_simular_meal_place_cache_meal_place_id_meal_place')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_simular_meal_place_cache'))
     )
+    op.create_table('trip_invite',
+    sa.Column('uuid', sa.UUID(), nullable=False),
+    sa.Column('session_uuid', sa.UUID(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), server_default='True', nullable=False),
+    sa.Column('expired_at', sa.DateTime(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['session_uuid'], ['trip_session.uuid'], name=op.f('fk_trip_invite_session_uuid_trip_session'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('uuid', name=op.f('pk_trip_invite'))
+    )
     op.create_table('trip_participant',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('user_uuid', sa.UUID(), nullable=False),
     sa.Column('session_id', sa.Integer(), nullable=False),
-    sa.Column('join_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['session_id'], ['trip_session.id'], name=op.f('fk_trip_participant_session_id_trip_session')),
+    sa.Column('join_at', sa.DateTime(), nullable=False),
+    sa.Column('is_admin', sa.Boolean(), server_default='False', nullable=False),
+    sa.ForeignKeyConstraint(['session_id'], ['trip_session.id'], name=op.f('fk_trip_participant_session_id_trip_session'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_uuid'], ['traveler.uuid'], name=op.f('fk_trip_participant_user_uuid_traveler')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_trip_participant'))
     )
-    op.create_table('lodging_option',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('variant_id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
-    sa.Column('type', sa.String(), nullable=False),
-    sa.Column('distance_km', sa.Float(), nullable=True),
-    sa.Column('route_city.id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['variant_id'], ['day_variant.id'], name=op.f('fk_lodging_option_variant_id_day_variant')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_lodging_option'))
-    )
+    with op.batch_alter_table('trip_participant', schema=None) as batch_op:
+        batch_op.create_index('one_admin_for_session', ['session_id', 'is_admin'], unique=True, postgresql_where='is_admin')
+
     op.create_table('segment',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('variant_id', sa.Integer(), nullable=True),
-    sa.Column('type', sa.String(), nullable=True),
+    sa.Column('variant_id', sa.Integer(), nullable=False),
+    sa.Column('type', sa.SmallInteger(), nullable=False),
     sa.Column('order', sa.Integer(), nullable=False),
-    sa.Column('attached_next_segment_id', sa.Integer(), nullable=True),
     sa.Column('start_time', sa.Time(), nullable=True),
     sa.Column('end_time', sa.Time(), nullable=True),
+    sa.Column('attached_next_segment_id', sa.Integer(), nullable=True),
     sa.Column('poi_id', sa.Integer(), nullable=True),
     sa.Column('lodging_name', sa.String(), nullable=True),
-    sa.Column('city_id', sa.Integer(), nullable=True),
+    sa.Column('city_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['attached_next_segment_id'], ['segment.id'], name=op.f('fk_segment_attached_next_segment_id_segment')),
     sa.ForeignKeyConstraint(['city_id'], ['route_city.id'], name=op.f('fk_segment_city_id_route_city')),
     sa.ForeignKeyConstraint(['poi_id'], ['poi.id'], name=op.f('fk_segment_poi_id_poi')),
@@ -178,7 +213,7 @@ def upgrade():
     sa.Column('day_order', sa.Integer(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['participant_id'], ['trip_participant.id'], name=op.f('fk_trip_vote_participant_id_trip_participant')),
-    sa.ForeignKeyConstraint(['session_id'], ['trip_session.id'], name=op.f('fk_trip_vote_session_id_trip_session')),
+    sa.ForeignKeyConstraint(['session_id'], ['trip_session.id'], name=op.f('fk_trip_vote_session_id_trip_session'), ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['variant_id'], ['day_variant.id'], name=op.f('fk_trip_vote_variant_id_day_variant')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_trip_vote'))
     )
@@ -187,7 +222,7 @@ def upgrade():
     sa.Column('mode', sa.String(), nullable=False),
     sa.Column('time_min', sa.Integer(), nullable=False),
     sa.Column('cost_rub', sa.Integer(), nullable=True),
-    sa.Column('is_default', sa.Boolean(), nullable=True),
+    sa.Column('is_default', sa.Boolean(), nullable=False),
     sa.Column('segment_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['segment_id'], ['segment.id'], name=op.f('fk_transition_option_segment_id_segment')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_transition_option'))
@@ -200,18 +235,29 @@ def downgrade():
     op.drop_table('transition_option')
     op.drop_table('trip_vote')
     op.drop_table('segment')
-    op.drop_table('lodging_option')
+    with op.batch_alter_table('trip_participant', schema=None) as batch_op:
+        batch_op.drop_index('one_admin_for_session', postgresql_where='is_admin')
+
     op.drop_table('trip_participant')
+    op.drop_table('trip_invite')
     op.drop_table('simular_meal_place_cache')
+    with op.batch_alter_table('day_variant', schema=None) as batch_op:
+        batch_op.drop_index('only_one_default_variant', postgresql_where='is_default')
+
     op.drop_table('day_variant')
     op.drop_table('trip_session')
     op.drop_table('transport_cache')
     op.drop_table('route_city')
     op.drop_table('meal_place')
     op.drop_table('day')
+    op.drop_table('addition_request')
+    op.drop_table('traveler')
     op.drop_table('transport_price_entry')
+    op.drop_table('staff')
     op.drop_table('route')
-    op.drop_table('price_entry')
     op.drop_table('poi')
+    with op.batch_alter_table('city', schema=None) as batch_op:
+        batch_op.drop_index('idx_city_location', postgresql_using='gist')
+
     op.drop_table('city')
     # ### end Alembic commands ###
