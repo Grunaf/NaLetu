@@ -7,7 +7,7 @@ from flaskr.models.models import db
 mod = Blueprint("shell", __name__)
 
 
-def seed_db(file_seed: str = "initial_data.sql") -> None:
+def seed_db(file_seed: str = "dev-scripts/initial_data.sql") -> None:
     db.create_all()
     with open(file_seed, encoding="UTF-8") as file:
         db.session.execute(text(file.read()))

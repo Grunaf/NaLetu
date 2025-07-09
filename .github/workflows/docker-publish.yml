@@ -46,8 +46,7 @@ jobs:
       run: |
         ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
           cd ${{ secrets.WORK_DIR }} &&
-          docker compose exec app flask db upgrade &&
-          docker compose exec app flask reset-db && exit
+          docker compose exec app flask db upgrade && exit
         "
     - name: cleanup
       run: rm -rf ~/.ssh

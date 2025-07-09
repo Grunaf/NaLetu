@@ -5,7 +5,8 @@ __pycache__/
 node_modules/
 venv/
 tests/
-seeds/
+dev-scripts/
+shell.py
 .env
 .prettierignore
 
