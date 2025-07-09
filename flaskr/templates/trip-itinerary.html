@@ -123,36 +123,24 @@
                         </p>
                       </div>
                     {% elif segment.type == MEAL_TYPE %}
-                      <div class="flex flex-col bg-neutral-100 rounded-lg p-4 gap-4">
-                        <p>{{ segment.meal_type }}</p>
-                        <div class="flex">
-                          {% for meal_p in segment.meal_places %}
-                            <label class="flex flex-col gap-2">
-                              <input onchange="updateBudget()"
-                                     type="radio"
-                                     name="meal_{{ day.day_order }}_{{ segment.meal_type }}"
-                                     value="{{ meal_p.id }}"
-                                     data-cost="{{ meal_p.avg_check_rub }}"
-                                     class="peer hidden"
-                                     {% if loop.first %}checked{% endif %}>
-                              <div class="peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500 px-4 py-2 rounded w-full">
-                                {{ meal_p.name }} — {{ meal_p.avg_check_rub }}₽
-                              </div>
-                              <button class="show-simular-spots peer-checked:flex btn-secondary w-fit flex-start hidden"
-                                      data-meal-place-name="{{ meal_p.name }}"
-                                      data-meal-place-id="{{ meal_p.id }}"
-                                      data-day-order-meal-type="{{ day.day_order }}_{{ segment.meal_type }}">
-                                Показать похожие места
-                              </button>
-                            </label>
-                          {% endfor %}
+                    {% if segment.meal_places | length != 0 %}
+                      <div class="flex bg-neutral-100 rounded-lg gap-4 h-33">
+                          {% set meal_p = segment.meal_places[0] %}
+                          <div class="flex flex-col grow-1 p-4">
+                            <div class="flex flex-col gap-2 grow-1">
+                              <div class="font-medium">{{ meal_p.name }}</div>
+                              <div class="flex">{{ meal_p.general_rating }} {{ meal_p.general_review_count}} — {{ meal_p.avg_check_rub }}₽</div>
+                            </div>
+                            <button class="show-simular-spots peer-checked:flex btn-secondary w-fit flex-start hidden bottom-0"
+                                    data-meal-place-name="{{ meal_p.name }}"
+                                    data-meal-place-id="{{ meal_p.id }}"
+                                    data-day-order-meal-type="{{ day.day_order }}_{{ segment.meal_type }}">
+                              Найти еще заведения
+                            </button>
+                          </div>
+                          <img class="w-50 object-cover rounded-lg" src="https://images.unsplash.com/photo-1628066068625-015ea7bcc21a" alt="meal place image">
                         </div>
-                        <div class="block-simular-spots flex flex-col gap-2 hidden"
-                             id="simular_spots_{{ day.day_order }}_{{ segment.meal_type }}">
-                          <div class="header">Места похожие на</div>
-                          <div class="items"></div>
-                        </div>
-                      </div>
+                      {% endif %}
                     {% endif %}
                   {% endfor %}
                 </div>
@@ -174,8 +162,13 @@
         </div>
       </div>
     </div>
-    <div class="itinerary-right">
+    <div class="itinerary-right relative">
       <div id="map" class="map-box"></div>
+      <div class="block-simular-spots flex flex-col gap-2 left-6 rounded-xl w-2/3 absolute bottom-6 p-6 hidden h-80 bg-white"
+            id="simular_spots">
+            <div class="font-medium text-lg"></div>
+            <div class="flex flex-col gap-2 overflow-y-scroll -mr-1 pr-2" id="simular-spots"></div>
+      </div>
     </div>
   </body>
 {% endblock body %}
