@@ -1,3 +1,4 @@
+import htmx from "htmx.org";
 export function alert(message, color) {
   const alertPlaceholder = document.getElementById("alert-placeholder");
   const wrapper = document.createElement("div");

@@ -1,36 +1,36 @@
 @font-face {
   font-family: "Cygre";
-  src: url("/fonts/CYGRE-LIGHT.TTF") format("truetype");
+  src: url("../fonts/CYGRE-LIGHT.TTF") format("truetype");
   font-weight: 300;
 }
 @font-face {
   font-family: "Cygre";
-  src: url("/fonts/CYGRE-REGULAR.TTF") format("truetype");
+  src: url("../fonts/CYGRE-REGULAR.TTF") format("truetype");
   font-weight: 400;
 }
 @font-face {
   font-family: "Cygre";
-  src: url("/fonts/CYGRE-MEDIUM.TTF") format("truetype");
+  src: url("../fonts/CYGRE-MEDIUM.TTF") format("truetype");
   font-weight: 500;
 }
 @font-face {
   font-family: "Cygre";
-  src: url("/fonts/CYGRE-SEMIBOLD.TTF") format("truetype");
+  src: url("../fonts/CYGRE-SEMIBOLD.TTF") format("truetype");
   font-weight: 600;
 }
 @font-face {
   font-family: "Cygre";
-  src: url("/fonts/CYGRE-BOLD.TTF") format("truetype");
+  src: url("../fonts/CYGRE-BOLD.TTF") format("truetype");
   font-weight: 700;
 }
 @font-face {
   font-family: "Cygre";
-  src: url("/fonts/CYGRE-EXTRABOLD.TTF") format("truetype");
+  src: url("../fonts/CYGRE-EXTRABOLD.TTF") format("truetype");
   font-weight: 800;
 }
 @font-face {
   font-family: "Cygre";
-  src: url("/fonts/CYGRE-BLACK.TTF") format("truetype");
+  src: url("../fonts/CYGRE-BLACK.TTF") format("truetype");
   font-weight: 900;
 }
 .btn {
@@ -315,11 +315,11 @@ input {
   gap: 8px;
 }
 
-.segments .block-simular-spots {
+.segments .similar-spots-block {
   flex-direction: column;
   gap: 12px;
 }
-.segments .block-simular-spots .items {
+.segments .similar-spots-block .items {
   display: flex;
   flex-direction: row;
   gap: 16px;
@@ -327,14 +327,14 @@ input {
   overflow-y: hidden;
   padding-bottom: 6px;
 }
-.segments .block-simular-spots .items .item {
+.segments .similar-spots-block .items .item {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   width: 250px;
   gap: 6px;
 }
-.segments .block-simular-spots .items .item .attributes {
+.segments .similar-spots-block .items .item .attributes {
   font-size: 14px;
   color: #48464C;
 }

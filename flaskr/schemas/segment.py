@@ -27,6 +27,13 @@ class SimularMealPlaceCacheDTO(BaseModel):
             "data_json": self.data_json,
         }
 
+    # name: str
+    # general_rating: float
+    # general_review_count: int
+    # avg_price: int
+    # address_name: str
+    # img_src: str
+
 
 class MealPlaceDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)

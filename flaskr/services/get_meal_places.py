@@ -38,7 +38,7 @@ def get_nearby_cuisins_spots(
     if result is None:
         return None
 
-    simular_meal_places: SimularMealPlaceCache = add_simular_meal_places_in_db(
+    simular_meal_places = add_simular_meal_places_in_db(
         meal_place_id=meal_place_id, items_json=result["items"]
     )
     return simular_meal_places

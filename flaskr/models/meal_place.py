@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from sqlalchemy import JSON, ForeignKey, SmallInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -28,4 +28,4 @@ class MealPlace(DataEntryMixin, db.Model):
 class SimularMealPlaceCache(DataEntryMixin, db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     meal_place_id: Mapped[int] = mapped_column(ForeignKey("meal_place.id"))
-    data_json: Mapped[JSON] = mapped_column(type_=JSON)
+    data_json: Mapped[dict[str, Any]] = mapped_column(type_=JSON)

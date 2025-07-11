@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict
 
 import flask_login as login
-from flask import Flask, Response, render_template, send_from_directory
+from flask import Flask, render_template
 from flask import session as fk_session
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_babel import Babel
@@ -12,7 +12,7 @@ import sentry_sdk
 from sentry_sdk import logger as sentry_logger
 from sentry_sdk.integrations.flask import FlaskIntegration
 
-from config import ENV, Config
+from config import ENV, IS_DEV, Config
 from flaskr.db.travelers import create_traveler_db
 from flaskr.jinja_filters import setup_filters
 from shell import reset_db
@@ -29,6 +29,7 @@ from flaskr.routes.api.pois import mod as poisModule, limiter
 from flaskr.routes.api.routes import mod as routesModule
 from flaskr.routes.api.sessions import mod as sessionsModule
 from flaskr.routes.views import mod as viewsModule
+from flaskr.routes.assets_blueprint import mod as assetsModule
 
 DEFAULT_TIMEZONE = Config.DEFAULT_TIMEZONE
 SWAGGER_API_URL = Config.SWAGGER_API_URL
@@ -46,10 +47,10 @@ babel = Babel()
 
 def configure_app(app, test_config):
     if len(test_config) == 0:
-        if ENV == "prod":
-            app.config.from_object("config.ProdConfig")
-        else:
+        if IS_DEV:
             app.config.from_object("config.DevConfig")
+        else:
+            app.config.from_object("config.ProdConfig")
     else:
         app.config.from_mapping(test_config)
 
@@ -67,6 +68,7 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
     app.register_blueprint(routesModule)
     app.register_blueprint(poisModule)
     app.register_blueprint(viewsModule)
+    app.register_blueprint(assetsModule)
 
     login_manager = login.LoginManager()
     login_manager.init_app(app)
@@ -128,9 +130,5 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
     @app.errorhandler(403)
     def not_accesed(e):
         return render_template("errors/403.html"), 403
-
-    @app.route("/<path:filename>")
-    def static_files(filename: str) -> Response:
-        return send_from_directory(app.static_folder, filename)
 
     return app
