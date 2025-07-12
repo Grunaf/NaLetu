@@ -1,5 +1,5 @@
-import {TRANSLATIONS, LOCATION, MARKER_LOCATION, POIS} from '../variables';
-import {InfoMessage, fetchGeoObject} from '../common';
+import {TRANSLATIONS, LOCATION, MARKER_LOCATION, POIS} from './variables';
+import {InfoMessage, fetchGeoObject} from './common';
 import {MarkerPopupProps} from '@yandex/ymaps3-default-ui-theme';
 
 async function main() {

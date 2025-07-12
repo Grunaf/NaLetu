@@ -1,6 +1,7 @@
 import os
 
 ENV = os.getenv("FLASK_ENV", "dev")
+IS_DEV = ENV == "dev"
 
 
 class Config:
@@ -38,6 +39,7 @@ class Config:
 class DevConfig(Config):
     DEBUG = True
     TESTING = True
+    VITE_DEV_SERVER = os.getenv("VITE_DEV_SERVER")
 
 
 class ProdConfig(Config):

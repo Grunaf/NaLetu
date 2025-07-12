@@ -13,20 +13,20 @@
   <script data-plugins="transform-modules-umd"
           data-presets="react, typescript"
           type="text/babel"
-          src="{{url_for('static', filename='js/variables.ts')}}"></script>
+          src="{{asset('js/variables.ts')}}"></script>
   <script data-plugins="transform-modules-umd"
           data-presets="react, typescript"
           type="text/babel"
-          src="{{url_for('static', filename='js/common.ts')}}"></script>
+          src="{{asset('js/common.ts')}}"></script>
   <script data-plugins="transform-modules-umd"
           data-presets="react, typescript"
           type="text/babel"
-          src="{{url_for('static', filename='js/index.ts')}}"></script>
+          src="{{asset('js/index.ts')}}"></script>
   <link rel="stylesheet"
-        href="{{ url_for('static', filename='js/common.css') }}" />
+        href="{{ asset('js/common.css') }}" />
   <script defer
           type="module"
-          src="{{url_for('static', filename='js/trip-itinerary.js')}}"></script>
+          src="{{asset('js/trip-itinerary.js')}}"></script>
 {% endblock script %}
 {% block body %}
   <body class="layout-2col"
