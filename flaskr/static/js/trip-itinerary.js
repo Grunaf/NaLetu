@@ -18,10 +18,11 @@ const expancesBlock = document.getElementById("expances-block");
 function expandeBudgetBlock() {
   const observer = new IntersectionObserver(([entry]) => {
     if (entry.isIntersecting) {
+      budgetAmountBlock.classList.add("mb-3", "mt-2");
       budgetAmountBlock.classList.remove("border-t", "mt-6", "shadow");
       expancesBlock.classList.remove("hidden");
     } else {
-      budgetAmountBlock.classList.remove("mb-3");
+      budgetAmountBlock.classList.remove("mb-3", "mt-2");
       budgetAmountBlock.classList.add("border-t", "mt-6", "shadow");
       expancesBlock.classList.add("hidden");
     }
@@ -171,14 +172,14 @@ function createExpanceBlock(option, option_name, dayOrder) {
   newExpanceBlock.classList.add("flex", "gap-3");
   newExpanceBlock.dataset.inputName = option_name;
   newExpanceBlock.innerHTML = `
-  <div class="bg-gray-200 rounded-3xl size-10 flex justify-center items-center">
+  <div class="bg-gray-200 rounded-3xl size-10 flex justify-center items-center text-gray-600">
   <i class="material-icons-round">${icon}</i>
   </div>
   <div class="grow-1 text-gray-700">
   <div class="font-medium">${title}</div>
   <div>${readable_date}</div>
   </div>
-  <div>${avgPrice}</div>
+  <div>${avgPrice} ₽</div>
   `;
   return newExpanceBlock;
 }
