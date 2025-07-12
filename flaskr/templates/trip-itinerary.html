@@ -29,9 +29,12 @@
           src="{{url_for('static', filename='js/trip-itinerary.js')}}"></script>
 {% endblock script %}
 {% block body %}
-  <body class="layout-2col">
+  <body class="layout-2col"
+        id="body"
+        data-session-id="{{ session.id }}"
+        data-start-date="{{ session.start_date }}">
     {{ alert() }}
-    <div class="itinerary-left px-1" data-session-id="{{ session.id }}">
+    <div class="itinerary-left px-1">
       {% include "partials/header.html" %}
       <div class="flex flex-col flex-1 gap-5 overflow-y-auto overflow-x-visible min-w-0">
         <div class="flex items-end gap-4">
@@ -64,11 +67,12 @@
                       {% for t in trips[:3] %}
                         <label for="transport-{{ t.uid }}">
                           <input class="peer hidden"
-                                 onchange="updateBudget()"
                                  type="radio"
                                  name="transport_{{ direction }}"
                                  value="{{ t.uid }}"
+                                 data-type="transport"
                                  data-cost="{{ t.start_cost_rub }}"
+                                 data-name="{{ t.title }}"
                                  id="transport-{{ t.uid }}">
                           <div class="bg-neutral-100 peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500 px-5 py-6 rounded-lg cursor-pointer transition">
                             {{ t.transport_type }} {{ t.number }}
@@ -109,7 +113,7 @@
           {% endif %}
           <div class="itinerary-block flex flex-col gap-6">
             {% for day in days %}
-              <div class="day-block">
+              <div class="day-block" data-day-order="{{ day.day_order }}">
                 <h3 class="font-medium ml-4">День {{ day.day_order }}</h3>
                 <div class="segments flex flex-col gap-3">
                   {% for segment in day.segments %}
@@ -123,23 +127,33 @@
                         </p>
                       </div>
                     {% elif segment.type == MEAL_TYPE %}
-                    {% if segment.meal_places | length != 0 %}
-                      <div class="flex bg-neutral-100 rounded-lg gap-4 h-33">
-                          {% set meal_p = segment.meal_places[0] %}
-                          <div class="flex flex-col grow-1 p-4">
-                            <div class="flex flex-col gap-2 grow-1">
-                              <div class="font-medium">{{ meal_p.name }}</div>
-                              <div class="flex">{{ meal_p.general_rating }} {{ meal_p.general_review_count}} — {{ meal_p.avg_check_rub }}₽</div>
+                      {% if segment.meal_places | length != 0 %}
+                        {% set meal_p = segment.meal_places[0] %}
+                        <label>
+                          <input class="peer hidden"
+                                 name="meal_place_{{ day.day_order }}_{{ segment.meal_type }}"
+                                 type="radio"
+                                 data-type="meal_place"
+                                 data-cost="{{ meal_p.avg_check_rub }}"
+                                 data-name="{{ meal_p.name }}"
+                                 checked>
+                          <div class="flex bg-neutral-100 rounded-lg gap-4 h-33 peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500">
+                            <div class="flex flex-col grow-1 p-4">
+                              <div class="flex flex-col gap-2 grow-1">
+                                <div class="font-medium">{{ meal_p.name }}</div>
+                                <div class="flex">{{ meal_p.general_rating }} {{ meal_p.general_review_count }} — {{ meal_p.avg_check_rub }}₽</div>
+                              </div>
+                              <button class="show-simular-spots peer-checked:flex btn-secondary w-fit flex-start hidden bottom-0"
+                                      data-meal-place-name="{{ meal_p.name }}"
+                                      data-meal-place-id="{{ meal_p.id }}"
+                                      data-day-order="{{ day.day_order }}"
+                                      data-meal-type="{{ segment.meal_type }}">Найти еще заведения</button>
                             </div>
-                            <button class="show-simular-spots peer-checked:flex btn-secondary w-fit flex-start hidden bottom-0"
-                                    data-meal-place-name="{{ meal_p.name }}"
-                                    data-meal-place-id="{{ meal_p.id }}"
-                                    data-day-order-meal-type="{{ day.day_order }}_{{ segment.meal_type }}">
-                              Найти еще заведения
-                            </button>
+                            <img class="w-50 object-cover rounded-lg"
+                                 src="https://images.unsplash.com/photo-1628066068625-015ea7bcc21a"
+                                 alt="meal place image">
                           </div>
-                          <img class="w-50 object-cover rounded-lg" src="https://images.unsplash.com/photo-1628066068625-015ea7bcc21a" alt="meal place image">
-                        </div>
+                        </label>
                       {% endif %}
                     {% endif %}
                   {% endfor %}
@@ -156,18 +170,24 @@
               </div>
             {% endfor %}
           </div>
-          <div class="budget-box sticky bottom-0 bg-white border-t p-4 mt-6 shadow">
-            <strong>Вы потратите:</strong> <span id="budgetAmount">0</span> ₽
+          <div class="flex gap-2 sticky items-end bottom-0 bg-white border-t pt-4 mt-6 mb-3 shadow" id="budget-amount-block">
+            <div class="text-xl font-medium">Бюджет</div>
+            <div>
+              от <span id="budgetAmount">0</span> ₽
+            </div>
           </div>
+          <div class="h-1" id="sentinel_budget"></div>
+          <div class="flex flex-col gap-2" id="expances-block"></div>
         </div>
       </div>
     </div>
     <div class="itinerary-right relative">
       <div id="map" class="map-box"></div>
-      <div class="block-simular-spots flex flex-col gap-2 left-6 rounded-xl w-2/3 absolute bottom-6 p-6 hidden h-80 bg-white"
-            id="simular_spots">
-            <div class="font-medium text-lg"></div>
-            <div class="flex flex-col gap-2 overflow-y-scroll -mr-1 pr-2" id="simular-spots"></div>
+      <div class="similar-spots-block flex flex-col gap-2 left-6 rounded-xl w-2/3 absolute bottom-6 p-6 hidden h-80 bg-white"
+           id="similar-spots-block">
+        <div class="font-medium text-lg">Поесть рядом с {{ meal_place_name }}</div>
+        <div class="flex flex-col gap-3 overflow-y-scroll -mr-1 pr-2"
+             id="similar-spots"></div>
       </div>
     </div>
   </body>
