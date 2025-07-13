@@ -41,12 +41,12 @@
             </div>
             <div class="flex gap-4">
               <div class="flex gap-2 text-gray-700">
-                <span class="material-icons-round">home_pin</span>
+                <span class="material-symbols-outlined">home_pin</span>
                 Город отбытия: {{ departure_city_name }}
               </div>
               {% if other_travelers %}
               <div class="flex gap-2 text-gray-700">
-                  <span class="material-icons-round">group</span>
+                  <span class="material-symbols-outlined">group</span>
                   В группе:
                   {% for participant in other_travelers %}{{ participant.name }}{% endfor %}
                 </div>

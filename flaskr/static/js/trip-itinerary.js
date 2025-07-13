@@ -90,7 +90,7 @@ function createExpanceBlock(option, option_name, dayOrder) {
   newExpanceBlock.dataset.inputName = option_name;
   newExpanceBlock.innerHTML = `
   <div class="bg-gray-200 rounded-3xl size-10 flex justify-center items-center text-gray-600">
-  <i class="material-icons-round">${icon}</i>
+  <i class="material-symbols-outlined">${icon}</i>
   </div>
   <div class="grow-1 text-gray-700">
   <div class="font-medium">${title}</div>
