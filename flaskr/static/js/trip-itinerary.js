@@ -8,12 +8,12 @@ const startDateInput = document.getElementById("start-date");
 const startDateSession = startDateInput
   ? startDateInput.value
   : new Date(body.dataset.startDate);
-console.log(startDateSession);
 
 const sentinelBudget = document.getElementById("sentinel_budget");
 const budgetAmountBlock = document.getElementById("budget-amount-block");
 const budgetAmount = document.getElementById("budgetAmount");
 const expancesBlock = document.getElementById("expances-block");
+const simularSpots = document.getElementById("similar-spots-block");
 
 function expandeBudgetBlock() {
   const observer = new IntersectionObserver(([entry]) => {
@@ -54,7 +54,6 @@ document.addEventListener("DOMContentLoaded", () => {
     option.addEventListener("click", () => updateBudgetBlock(option, dayOrder));
   });
 
-  const simularSpots = document.getElementById("similar-spots");
   simularSpots.addEventListener("click", event => {
     const target = event.target;
     if (target.matches("input[type='radio'][data-cost]")) {
@@ -66,96 +65,14 @@ document.addEventListener("DOMContentLoaded", () => {
       updateBudgetBlock(target, dayOrder);
     }
   });
-  const buttonsShowSimularMPs =
-    document.getElementsByClassName("show-simular-spots");
-
-  Array.from(buttonsShowSimularMPs).forEach(btn => {
-    btn.addEventListener("click", showSimularMealPlaces);
-  });
 });
-
-async function showSimularMealPlaces() {
-  const dayOrder = this.dataset.dayOrder;
-  const mealType = this.dataset.mealType;
-  const dayOrderMealType = `${dayOrder}_${mealType}`;
-
-  const mealPlaceId = this.dataset.mealPlaceId;
-
-  const blockSimilarMealPlaces = document.getElementById(`similar-spots-block`);
-  blockSimilarMealPlaces.classList.remove("hidden");
-  const resp = await fetch(`/api/meal_place/${mealPlaceId}/get_simulars`, {
-    method: "GET",
-    headers: { "Content-type": "application/json" },
-  });
-  if (resp.status == 200) {
-    const data = await resp.json();
-    const simular_meal_places_result = JSON.parse(
-      data.simular_meal_places_result,
-    );
-    blockSimilarMealPlaces.firstElementChild.innerHTML = `Поесть рядом с ${this.dataset.mealPlaceName}`;
-
-    let food_service_avg_price = "";
-
-    const simularSpots = blockSimilarMealPlaces.lastElementChild;
-    simularSpots.innerHTML = "";
-    simular_meal_places_result.forEach(spot => {
-      for (let index_top in spot.data_json.attribute_groups) {
-        for (let index_low in spot.data_json.attribute_groups[index_top]
-          .attributes) {
-          if (
-            spot.data_json.attribute_groups[index_top].attributes[index_low]
-              .tag == "food_service_avg_price"
-          ) {
-            food_service_avg_price =
-              spot.data_json.attribute_groups[index_top].attributes[index_low]
-                .name;
-            break;
-          }
-        }
-      }
-
-      let nameMealPlace = `meal_place_${dayOrderMealType}`;
-      let avg_price = food_service_avg_price.match(/\d+/)?.[0];
-      let address_name = spot.data_json.address_name;
-      let img_src = spot.data_json.external_content[0]?.main_photo_url;
-
-      simularSpots.dataset.dayOrder = dayOrder;
-      simularSpots.dataset.mealType = mealType;
-      simularSpots.innerHTML += `
-      <label>
-        <input class="peer hidden"
-                name="${nameMealPlace}"
-                type="radio"
-                data-type="meal_place"
-                data-cost="${avg_price}"
-                data-name="${spot.data_json.name}"
-                data-general-rating="${spot.data_json.reviews.general_rating}"
-                data-general-review-count="${spot.data_json.reviews.general_review_count}"
-                data-img-src="${img_src}"
-                data-address-name="${address_name}">
-        <div class="item flex w-full h-30 bg-gray-100 gap-4 rounded-xl peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500">
-          <div class="flex flex-col gap-3 grow-1 p-3">
-            <div class="header">${spot.data_json.name}</div>
-            <div class="text-gray-600 flex flex-col gap-1 text-sm">
-              <div class="attributes flex gap-2">
-                <div class="flex">
-                  <i class="material-icons-round">star</i>
-                  ${spot.data_json.reviews.general_rating}
-                </div>
-                ${spot.data_json.reviews.general_review_count} отзывов ${food_service_avg_price}
-              </div>
-              <div class="second-line">${address_name}</div>
-            </div>
-          </div>
-          <img class="w-40 rounded-xl object-cover" src="${img_src}">
-        </div>
-      </label>
-      `;
-    });
+document.addEventListener("htmx:afterSwap", () => {
+  if (simularSpots.innerHTML.trim()) {
+    simularSpots.classList.remove("hidden");
   } else {
-    alert(resp.status);
+    simularSpots.classList.remove("hidden");
   }
-}
+});
 
 function createExpanceBlock(option, option_name, dayOrder) {
   let icon =

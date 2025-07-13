@@ -144,11 +144,8 @@
                                 <div class="flex">{{ meal_p.general_rating }} {{ meal_p.general_review_count }} — {{ meal_p.avg_check_rub }}₽</div>
                               </div>
                               <button class="show-simular-spots peer-checked:flex btn-secondary w-fit flex-start hidden bottom-0"
-                                      data-meal-place-name="{{ meal_p.name }}"
-                                      data-meal-place-id="{{ meal_p.id }}"
-                                      data-day-order="{{ day.day_order }}"
-                                      data-meal-type="{{ segment.meal_type }}">Найти еще заведения</button>
-                            </div>
+                                      hx-get="/api/meal_place/{{ meal_p.id }}/get_simulars?day-order={{ day.day_order }}&meal-type={{ segment.meal_type }}"
+                                      hx-target="#similar-spots-block">Найти еще заведения</button>                            </div>
                             <img class="w-50 object-cover rounded-lg"
                                  src="https://images.unsplash.com/photo-1628066068625-015ea7bcc21a"
                                  alt="meal place image">
@@ -183,11 +180,8 @@
     </div>
     <div class="itinerary-right relative">
       <div id="map" class="map-box"></div>
-      <div class="similar-spots-block flex flex-col gap-2 left-6 rounded-xl w-2/3 absolute bottom-6 p-6 hidden h-80 bg-white"
+      <div class="similar-spots-block flex flex-col gap-2 left-6 rounded-xl w-2/3 absolute bottom-6 p-6 max-h-80 hidden bg-white"
            id="similar-spots-block">
-        <div class="font-medium text-lg">Поесть рядом с {{ meal_place_name }}</div>
-        <div class="flex flex-col gap-3 overflow-y-scroll -mr-1 pr-2"
-             id="similar-spots"></div>
       </div>
     </div>
   </body>

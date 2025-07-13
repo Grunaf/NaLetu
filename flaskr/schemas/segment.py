@@ -18,14 +18,12 @@ class SimularMealPlaceCacheDTO(BaseModel):
 
     id: int
     meal_place_id: int
-    data_json: dict
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "meal_plcae_id": self.meal_place_id,
-            "data_json": self.data_json,
-        }
+    name: str
+    general_rating: float
+    general_review_count: int
+    avg_price: int
+    address_name: str
+    img_src: str
 
 
 class MealPlaceDTO(BaseModel):
