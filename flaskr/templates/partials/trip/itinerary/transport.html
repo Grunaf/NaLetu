@@ -34,6 +34,7 @@
                            data-type="transport"
                            data-cost="{{ t.start_cost_rub }}"
                            data-name="{{ t.title }}"
+                           data-datetime="{{ t.departure }}"
                            id="transport-{{ t.uid }}">
                     <div class="bg-neutral-100 peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500 px-5 py-6 rounded-lg cursor-pointer transition">
                       {{ t.transport_type }} {{ t.number }}

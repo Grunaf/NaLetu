@@ -6,7 +6,7 @@ const sessionId = body.dataset.sessionId;
 const startDateInput = document.getElementById("start-date");
 
 const startDateSession = startDateInput
-  ? startDateInput.value
+  ? new Date(startDateInput.value)
   : new Date(body.dataset.startDate);
 
 const sentinelBudget = document.getElementById("sentinel_budget");
@@ -31,6 +31,20 @@ function expandeBudgetBlock() {
 }
 expandeBudgetBlock();
 
+function diffInDays(date) {
+  const MS_PER_DAY = 1000 * 60 * 60 * 24;
+  const utc_start_session_date = Date.UTC(
+    startDateSession.getFullYear(),
+    startDateSession.getMonth(),
+    startDateSession.getDate(),
+  );
+  const utc_count_date = Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
+  return Math.floor((utc_count_date - utc_start_session_date) / MS_PER_DAY);
+}
 if (startDateInput) {
   startDateInput.addEventListener("change", async () => {
     const startDateValue = startDateInput.value;
@@ -49,8 +63,14 @@ if (startDateInput) {
 
 document.addEventListener("DOMContentLoaded", () => {
   const options = document.querySelectorAll("input[type='radio'][data-cost]");
+
   Array.from(options).forEach(option => {
-    const dayOrder = option.closest(".day-block").dataset.dayOrder;
+    let dayOrder = null;
+    if (option.closest(".day-block")) {
+      dayOrder = option.closest(".day-block").dataset.dayOrder;
+    } else {
+      dayOrder = diffInDays(new Date(option.dataset.datetime));
+    }
     option.addEventListener("click", () => updateBudgetBlock(option, dayOrder));
   });
 
@@ -80,10 +100,9 @@ function createExpanceBlock(option, option_name, dayOrder) {
   let title = option.dataset.name;
   let avgPrice = option.dataset.cost;
 
-  let date = new Date(startDateSession);
-  date.setDate(date.getDate() + (dayOrder - 1));
+  startDateSession.setDate(startDateSession.getDate() + (dayOrder - 1));
   const options = { day: "numeric", month: "long" };
-  const readable_date = date.toLocaleDateString("ru-RU", options);
+  const readable_date = startDateSession.toLocaleDateString("ru-RU", options);
 
   const newExpanceBlock = document.createElement("div");
   newExpanceBlock.classList.add("flex", "gap-3");
@@ -123,7 +142,12 @@ function initBudgetBlock() {
   options.forEach(option => {
     const cost = parseFloat(option.dataset.cost);
     total += isNaN(cost) ? 0 : cost;
-    const dayOrder = option.closest("[data-day-order]").dataset.dayOrder;
+    let dayOrder = null;
+    if (option.closest(".day-block")) {
+      dayOrder = option.closest(".day-block").dataset.dayOrder;
+    } else {
+      dayOrder = diffInDays(new Date(option.dataset.datetime)) + 1;
+    }
     addOrUpdateExpanceBlock(option, dayOrder);
   });
   budgetAmount.textContent = total;
