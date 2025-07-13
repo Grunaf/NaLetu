@@ -7,7 +7,7 @@
   <script defer type="module" src="{{ asset('js/trip-setup.js')}}"></script>
 {% endblock script %}
 {% block dataset_main %}
-  data-session-uuid="{{ plan.session_uuid }}" data-count-other-participants="{{ participants | length }}" data-is-voting-completed="{{ voting_attributes["is_voting_completed"] }}"
+  data-session-uuid="{{ trip_session.short_uuid }}" data-count-other-participants="{{ other_travelers| length }}" data-is-voting-completed="{{ voting_attributes["is_voting_completed"] }}"
 {% endblock dataset_main %}
 {% block content %}
   {% if show_name_modal %}
@@ -34,15 +34,22 @@
       <span class="text-2xl text-gray-600 font-medium">{{ plan.title }}</span>
     </div>
     <div class="flex flex-col gap-2">
-      {% if participants %}
+      <div class="flex gap-4">
         <div class="flex gap-2 text-gray-700">
-          Остальные участники поездки:
-          {% for participant in participants %}{{ participant.name }}{% endfor %}
+          <span class="material-icons-round">home_pin</span>
+          Город отбытия: {{ trip_session.departure_city_name }}
         </div>
-      {% endif %}
+        {% if other_travelers %}
+        <div class="flex gap-2 text-gray-700">
+            <span class="material-icons-round">group</span>
+            В группе:
+            {% for participant in other_travelers %}{{ participant.name }}{% endfor %}
+          </div>
+        {% endif %}
+      </div>
       <div class="flex flex-col gap-3">
         <button id="create-invite" class="btn-secondary btn-with-icon">
-          <i class="material-icons-round">person_add</i>Создать ссылку-приглашение
+          <span class="material-icons-round">person_add</span>Создать ссылку-приглашение
         </button>
         <div class="flex flex-col bg-neutral-100 p-4 rounded-xl gap-1 hidden"
              id="block-invite-link">
@@ -90,7 +97,7 @@
       {% endfor %}
     </div>
   </div>
-  {% if voting_attributes["is_voting_completed"] and participants | length != 0 %}
+  {% if voting_attributes["is_voting_completed"] and other_travelers | length != 0 %}
     <div class="shadow-xl rounded-xl p-4 flex flex-col gap-3"
          id="is-completed-vote">
       <div class="text-lg font-medium">Голосование завершено. Итоговый маршрут:</div>

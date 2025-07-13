@@ -108,7 +108,11 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
             default_city = get_city_by_slug(DEFAULT_CITY_SLUG)
             user_city = CityRead.model_validate(default_city).model_dump()
 
-        return {"cities": get_all_cities(), "user_city": user_city}
+        return {
+            "cities": get_all_cities(),
+            "user_city": user_city,
+            "show_user_city": False,
+        }
 
     @app.before_request
     def ensure_participant_joined() -> None:

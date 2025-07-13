@@ -1,7 +1,6 @@
 const checkedCityName = document.getElementById("cityName");
 const citiesModal = document.getElementsByClassName("cities-modal")[0];
 const departureCity = document.getElementById("departureCity");
-departureCity.classList.remove("opacity-50");
 departureCity.addEventListener("click", async () => {
   citiesModal.classList.remove("hidden");
 });

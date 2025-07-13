@@ -41,6 +41,9 @@ from flaskr.models.trip import TripInvite, TripVote
 from flaskr.schemas.city import City
 from flaskr.schemas.route import DayRead
 from flaskr.schemas.segment import MealPlaceDTO, SegmentDTO
+from flaskr.schemas.trip import (
+    TripSessionBase,
+)
 from flaskr.schemas.users import Traveler as TravelerRead
 from flaskr.services.get_f_api_transports import get_transports
 from flaskr.services.get_meal_places import get_f_db_meal_places_near_poi
@@ -109,7 +112,9 @@ def catalog_routes(city_slug: str | None = None) -> str:
     traveler_uuid = get_uuid_traveler()
     sessions = get_traveler_trip_sessions(traveler_uuid)
 
-    return render_template("catalog.html", routes=routes, sessions=sessions)
+    return render_template(
+        "catalog.html", routes=routes, sessions=sessions, show_user_city=True
+    )
 
 
 @mod.route("/session/<short_uuid>/trip-setup/")
@@ -123,12 +128,21 @@ def trip_setup(short_uuid: str | None = None) -> str:
 
     session_uuid = shortuuid.decode(short_uuid)
     trip_session = get_trip_session_by_uuid(session_uuid)
-    if not trip_session:
+    if trip_session is None:
         abort(404, SESSION_NOT_FOUND)
+
+    departure_city = trip_session.city
+    trip_session_read = TripSessionBase(
+        short_uuid=short_uuid,
+        start_date=trip_session.start_date,
+        end_date=trip_session.end_date,
+        departure_city_name=departure_city.name,
+    )
+    trip_session_read.short_uuid = short_uuid
+    route = trip_session.route
     plan = {
-        "session_uuid": short_uuid,
-        "title": trip_session.route.title,
-        "durations_day": trip_session.route.duration_days,
+        "title": route.title,
+        "durations_day": route.duration_days,
         "day_variants": [
             {
                 "day": d.day_order,
@@ -146,12 +160,10 @@ def trip_setup(short_uuid: str | None = None) -> str:
                     for v in d.variants
                 ],
             }
-            for d in sorted(trip_session.route.days, key=lambda d: d.day_order)
+            for d in sorted(route.days, key=lambda d: d.day_order)
         ],
     }
-    voting_attributes = get_voting_attributes(
-        trip_session.id, trip_session.route.duration_days
-    )
+    voting_attributes = get_voting_attributes(trip_session.id, route.duration_days)
 
     user_uuid = get_uuid_traveler()
     travelers = get_session_named_participations(trip_session.id)
@@ -167,7 +179,8 @@ def trip_setup(short_uuid: str | None = None) -> str:
         "trip-setup.html",
         show_name_modal=show_name_modal,
         voting_attributes=voting_attributes,
-        participants=other_travelers,
+        trip_session=trip_session_read,
+        other_travelers=other_travelers,
         plan=plan,
         today=date.today(),
     )
@@ -250,10 +263,22 @@ def trip_itinerary() -> str:
     else:
         transports = None
 
+    user_uuid = get_uuid_traveler()
+    travelers = get_session_named_participations(session.id)
+    other_travelers = [
+        TravelerRead.model_validate(traveler.user)
+        for traveler in travelers
+        if traveler.user_uuid != user_uuid
+    ]
+
+    departure_city_name = session.city.name
+
     return render_template(
         "trip-itinerary.html",
         route=route,
         session=session,
+        departure_city_name=departure_city_name,
+        other_travelers=other_travelers,
         days=days,
         transports=transports,
         POI_TYPE=POI_TYPE,

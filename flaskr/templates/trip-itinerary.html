@@ -34,9 +34,24 @@
     <div class="itinerary-left px-1">
       {% include "partials/header.html" %}
       <div class="flex flex-col flex-1 gap-5 overflow-y-auto overflow-x-visible min-w-0">
-        <div class="flex items-end gap-4">
-          <span class="text-3xl font-semibold mt-4">Маршрут</span>
-          <span class="text-2xl text-gray-600 font-medium">{{ route.title }}</span>
+        <div class="flex flex-col gap-2">
+            <div class="flex items-end gap-4">
+              <span class="text-3xl font-semibold mt-4">Маршрут</span>
+              <span class="text-2xl text-gray-600 font-medium">{{ route.title }}</span>
+            </div>
+            <div class="flex gap-4">
+              <div class="flex gap-2 text-gray-700">
+                <span class="material-icons-round">home_pin</span>
+                Город отбытия: {{ departure_city_name }}
+              </div>
+              {% if other_travelers %}
+              <div class="flex gap-2 text-gray-700">
+                  <span class="material-icons-round">group</span>
+                  В группе:
+                  {% for participant in other_travelers %}{{ participant.name }}{% endfor %}
+                </div>
+              {% endif %}
+            </div>
         </div>
         <div class="transports-block">
           {% if transports is none %}

@@ -21,8 +21,5 @@ class City(db.Model):
         self.slug = slugify(self.name)
         self.location = from_shape(Point(self.lon, self.lat), srid=4326)
 
-    def __repr__(self):
-        return f"Название: {self.name},  Широта: {self.lat}, Долгота: {self.lon}, Местоположение: {self.location}"
-
     def __str__(self):
         return f"Название: {self.name},  Широта: {self.lat}, Долгота: {self.lon}, Местоположение: {self.location}"

@@ -20,6 +20,14 @@ class ParticipantVotesDTO(BaseModel):
     days_with_variant: list[DayRead]
 
 
+class TripSessionBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
+    short_uuid: str
+    start_date: datetime.date
+    end_date: datetime.date
+    departure_city_name: str
+
+
 class TripSession(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
