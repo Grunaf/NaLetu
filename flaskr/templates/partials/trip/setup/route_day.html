@@ -1,0 +1,9 @@
+<div class="shadow-md overflow-hidden rounded-2xl">
+  <div class="px-4 py-3 text-base font-medium bg-neutral-200">День {{ day_block.day }}</div>
+  <div class="px-6 py-3">
+    {% for variant in day_block.variants %}
+      {% set loop_index = loop.index %}
+      {% include "partials/trip/setup/route_option_item.html" %}
+    {% endfor %}
+  </div>
+</div>

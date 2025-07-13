@@ -6,60 +6,7 @@
   <h1 class="-mb-4">Куда поедем?</h1>
   {% set session_len = sessions | length %}
   {% if session_len != 0 %}
-    <div class="flex gap-2 items-end -mb-4 text-end">
-      <div class="text-xl font-semibold">Ваши поездки</div>
-      <span class="font-medium text-gray-500">{{ session_len }}</span>
-    </div>
-    <div class="flex gap-4 overflow-x-scroll overflow-y-hidden -mb-4 pb-3"
-         id="cards">
-      {% for session in sessions %}
-        <a class="flex shrink-0 w-xs h-30 rounded-xl shadow-md border border-gray-200"
-           href="{{ url_for('views.trip_setup', short_uuid=session.uuid) }}">
-          <img src="{{ session.route_img }}"
-               alt="{{ session.route_title }}"
-               class="shrink w-1/2 full-h object-cover rounded-lg">
-          <div class="flex flex-col justify-between grow p-2">
-            <div class="font-semibold text-lg">{{ session.route_title }}</div>
-            <div>{{ session.start_date | dateformat("d MMMM") }}-{{ session.end_date | dateformat("d MMMM") }}</div>
-            <div>
-              {% if session.travelers | length != 0 %}
-                Участники
-                {% for traveler in session.travelers %}{{ traveler.name }}{% endfor %}
-              {% endif %}
-            </div>
-            <div>{{ session.departure_city_name }}</div>
-          </div>
-        </a>
-      {% endfor %}
-    </div>
+    {% include 'partials/catalog/user_sessions.html' %}
   {% endif %}
-  <div class="-mb-4 text-xl font-semibold">Каталог маршрутов</div>
-  <div class="flex flex-col gap-4" id="cards">
-    {% for r in routes %}
-      <div class="route-card"
-           data-start-lat="{{ r.start_coords[0] }}"
-           data-start-lon="{{ r.start_coords[1] }}">
-        <img src="{{ r.img }}" alt="{{ r.title }}">
-        <div class="route-info">
-          <h2 class="route-title">{{ r.title }}</h2>
-          <div class="route-meta flex">
-            <span class="items-center days-trip"><i class="material-symbols-outlined">date_range</i> {{ r.duration_days }} дня</span><span>•</span>
-            <span class="items-center hours-road"><i class="material-symbols-outlined">schedule</i><span class="road_time">–</span></span><span>•</span>
-            <span class="items-center budget"><i class="material-symbols-outlined">currency_ruble</i> {{ r.estimated_budget_rub }}</span>
-          </div>
-          <div class="route-poi">
-            <p class="line-clamp-3">
-              {% for poi in r.pois %}{{ poi.name }} •{% endfor %}
-            </p>
-
-          </div>
-          <div class="route-actions">
-            <button class="btn-to-itinerary" data-route-id="{{ r.id }}">Просмотр маршрута</button>
-          </div>
-        </div>
-      </div>
-    {% else %}
-      <p>Маршрутов не найдено.</p>
-    {% endfor %}
-  </div>
+  {% include 'partials/catalog/routes.html' %}
 {% endblock content %}

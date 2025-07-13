@@ -1,0 +1,8 @@
+<div class="flex flex-col gap-3">
+  <span class="text-xl">Выберите варианты дня</span>
+  <div class="flex flex-col gap-4">
+    {% for day_block in plan.day_variants %}
+      {% include "partials/trip/setup/route_day.html" %}
+    {% endfor %}
+  </div>
+</div>

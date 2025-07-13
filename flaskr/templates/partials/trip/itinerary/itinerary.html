@@ -1,0 +1,57 @@
+<div class="itinerary-block flex flex-col gap-6">
+  {% for day in days %}
+    <div class="day-block" data-day-order="{{ day.day_order }}">
+      <h3 class="font-medium ml-4">День {{ day.day_order }}</h3>
+      <div class="segments flex flex-col gap-3">
+        {% for segment in day.segments %}
+          {% if segment.type == POI_TYPE %}
+            <div class="poi bg-neutral-100 rounded-lg p-4"
+                 data-lat="{{ segment.poi.lat }}"
+                 data-lon="{{ segment.poi.lon }}"
+                 data-name="{{ segment.poi.name }}">
+              <p>
+                <b>{{ segment.poi.name }}</b> — с {{ segment.poi.open_time }} до {{ segment.poi.close_time }} (Рейтинг: {{ segment.poi.rating }})
+              </p>
+            </div>
+          {% elif segment.type == MEAL_TYPE %}
+            {% if segment.meal_places | length != 0 %}
+              {% set meal_p = segment.meal_places[0] %}
+              <label>
+                <input class="peer hidden"
+                       name="meal_place_{{ day.day_order }}_{{ segment.meal_type }}"
+                       type="radio"
+                       data-type="meal_place"
+                       data-cost="{{ meal_p.avg_check_rub }}"
+                       data-name="{{ meal_p.name }}"
+                       checked>
+                <div class="flex bg-neutral-100 rounded-lg gap-4 h-33 peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500">
+                  <div class="flex flex-col grow-1 p-4">
+                    <div class="flex flex-col gap-2 grow-1">
+                      <div class="font-medium">{{ meal_p.name }}</div>
+                      <div class="flex">{{ meal_p.general_rating }} {{ meal_p.general_review_count }} — {{ meal_p.avg_check_rub }}₽</div>
+                    </div>
+                    <button class="show-simular-spots peer-checked:flex btn-secondary w-fit flex-start hidden bottom-0"
+                            hx-get="/api/meal_place/{{ meal_p.id }}/get_simulars?day-order={{ day.day_order }}&meal-type={{ segment.meal_type }}"
+                            hx-target="#similar-spots-block">Найти еще заведения</button>
+                  </div>
+                  <img class="w-50 object-cover rounded-lg"
+                       src="https://images.unsplash.com/photo-1628066068625-015ea7bcc21a"
+                       alt="meal place image">
+                </div>
+              </label>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% if not loop.last and day.lodgings %}
+        <p>Ночлег:</p>
+        {% for l in day.lodgings %}
+          <label>
+            <input onchange="updateBudget()" type="radio" name="lodgings">
+            {{ l.type }} - {{ l.name }} {{ l.distance_km }} км от центра
+          </label>
+        {% endfor %}
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>

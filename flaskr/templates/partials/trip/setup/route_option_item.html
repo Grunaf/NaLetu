@@ -1,0 +1,25 @@
+<label class="flex max-h-[34px] items-center gap-4">
+  <input type="radio"
+         name="day{{ day_block.day }}"
+         value="{{ variant.id }}"
+         class=""
+         data-day-number="{{ day_block.day }}"
+         {% if loop_index == 1 %}checked{% endif %}>
+  <div class="flex gap-4">
+    <div>
+      <strong>{{ variant.name }}</strong> —
+      {% if variant.is_default != True %}
+        +{{ day_block.budget_for_default - variant.est_budget }}
+      {% else %}
+        {{ variant.est_budget }}
+      {% endif %}
+      ₽
+    </div>
+    <div class="flex gap-2 text-gray-600">
+      {% if  variant.travelers_choosed | length > 0 %}
+        Выбрал:
+        {% for participant in variant.travelers_choosed %}<span>{{ participant.name }}</span>{% endfor %}
+      {% endif %}
+    </div>
+  </div>
+</label>

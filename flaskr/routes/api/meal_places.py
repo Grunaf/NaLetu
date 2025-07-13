@@ -68,7 +68,7 @@ def get_simulars_meal_places_for_segment(meal_place_id: int):
 
     similar_meal_places_read = parse_meal_place_json(nearby_similar_meal_places)
     return render_template(
-        "partials/similar-meal-place.html",
+        "partials/trip/itinerary/similar-meal-place.html",
         meal_place_name=meal_place.name,
         name_input=name_input,
         similar_meal_places_read=similar_meal_places_read,
