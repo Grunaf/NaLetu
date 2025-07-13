@@ -45,6 +45,10 @@
         {% include 'partials/trip/itinerary/budget.html' %}
       </div>
     </div>
-    {% include 'partials/trip/itinerary/similar_meal_places_list.html' %}
+    <div class="itinerary-right relative">
+      <div id="map" class="map-box"></div>
+      <div class="similar-spots-block flex flex-col gap-2 left-6 rounded-xl w-2/3 absolute bottom-6 p-6 max-h-80 hidden bg-white"
+          id="similar-spots-block"></div>
+    </div>
   </body>
 {% endblock body %}
