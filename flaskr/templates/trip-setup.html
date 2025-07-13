@@ -4,9 +4,7 @@
   Выбрать маршрут
 {% endblock title %}
 {% block script %}
-  <script defer
-          type="module"
-          src="{{ url_for('static', filename='js/trip-setup.js')}}"></script>
+  <script defer type="module" src="{{ asset('js/trip-setup.js')}}"></script>
 {% endblock script %}
 {% block dataset_main %}
   data-session-uuid="{{ plan.session_uuid }}" data-count-other-participants="{{ participants | length }}" data-is-voting-completed="{{ voting_attributes["is_voting_completed"] }}"

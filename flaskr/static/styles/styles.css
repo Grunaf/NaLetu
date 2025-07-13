@@ -295,7 +295,6 @@ input {
 .itinerary-date-picker .date-block {
   display: flex;
   align-items: center;
-  gap: 8px;
   margin-bottom: 12px;
 }
 .itinerary-date-picker label {

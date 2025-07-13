@@ -22,11 +22,8 @@
           data-presets="react, typescript"
           type="text/babel"
           src="{{asset('js/index.ts')}}"></script>
-  <link rel="stylesheet"
-        href="{{ asset('js/common.css') }}" />
-  <script defer
-          type="module"
-          src="{{asset('js/trip-itinerary.js')}}"></script>
+  <link rel="stylesheet" href="{{ asset('js/common.css') }}" />
+  <script defer type="module" src="{{asset('js/trip-itinerary.js')}}"></script>
 {% endblock script %}
 {% block body %}
   <body class="layout-2col"
@@ -41,148 +38,153 @@
           <span class="text-3xl font-semibold mt-4">Маршрут</span>
           <span class="text-2xl text-gray-600 font-medium">{{ route.title }}</span>
         </div>
-        {% if transports is none %}
-          <div class="transports-block">
-            <div class="w-md">Вообще здесь должен быть блок доступных транспортов, но вы уже в городе отбытия</div>
-          {% elif transports["there"]|length != 0 %}
+        <div class="transports-block">
+          {% if transports is none %}
+            <div class="">Вообще здесь должен быть блок доступных транспортов, но вы уже в городе отбытия</div>
+          {% else %}
             <div class="itinerary-date-picker">
               <h2>Дата поездки</h2>
-              <div class="date-block">
+              <div class="date-block gap-4">
                 <label>
                   <input type="date" value="{{ session.start_date }}" id="start-date">
                 </label>
+                <div class="flex flex-col"><span class="font-medium">Обратно</span><span>{{ session.end_date | datetimeformat("d MMMM") }}</span></div>
               </div>
             </div>
-            <div>
-              <h2 class="text-2xl">Выбор транспорта</h2>
-              <form method="post" class="flex flex-col gap-5">
-                {% for direction, trips in transports.items() %}
-                  <div class="flex flex-col gap-4">
-                    {% if direction == "there" %}
-                      <h3 class="text-lg font-medium text-gray-800 tracking-tight">Туда:</h3>
-                    {% else %}
-                      <h3 class="text-lg font-medium text-gray-800 tracking-tight">Обратно:</h3>
-                    {% endif %}
-                    <div class="flex flex-col gap-3">
-                      {% for t in trips[:3] %}
-                        <label for="transport-{{ t.uid }}">
-                          <input class="peer hidden"
-                                 type="radio"
-                                 name="transport_{{ direction }}"
-                                 value="{{ t.uid }}"
-                                 data-type="transport"
-                                 data-cost="{{ t.start_cost_rub }}"
-                                 data-name="{{ t.title }}"
-                                 id="transport-{{ t.uid }}">
-                          <div class="bg-neutral-100 peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500 px-5 py-6 rounded-lg cursor-pointer transition">
-                            {{ t.transport_type }} {{ t.number }}
-                            <div class="grid grid-cols-3 gap-6">
-                              {% macro transport_time_block(datetime, station_title) %}
-                                <div>
-                                  <div class="flex gap-2 items-start">
-                                    <span class="text-2xl font-medium">{{ datetime | datetimeformat("HH:mm") }}</span>
-                                    {{ datetime | datetimeformat("d MMMM") }}
+            {% if transports["there"]|length != 0 %}
+              <div>
+                <h2 class="text-2xl">Выбор транспорта</h2>
+                <form method="post" class="flex flex-col gap-5">
+                  {% for direction, trips in transports.items() %}
+                    <div class="flex flex-col gap-4">
+                      {% if direction == "there" %}
+                        <h3 class="text-lg font-medium text-gray-800 tracking-tight">Туда:</h3>
+                      {% else %}
+                        <h3 class="text-lg font-medium text-gray-800 tracking-tight">Обратно:</h3>
+                      {% endif %}
+                      <div class="flex flex-col gap-3">
+                        {% for t in trips[:3] %}
+                          <label for="transport-{{ t.uid }}">
+                            <input class="peer hidden"
+                                   type="radio"
+                                   name="transport_{{ direction }}"
+                                   value="{{ t.uid }}"
+                                   data-type="transport"
+                                   data-cost="{{ t.start_cost_rub }}"
+                                   data-name="{{ t.title }}"
+                                   id="transport-{{ t.uid }}">
+                            <div class="bg-neutral-100 peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500 px-5 py-6 rounded-lg cursor-pointer transition">
+                              {{ t.transport_type }} {{ t.number }}
+                              <div class="grid grid-cols-3 gap-6">
+                                {% macro transport_time_block(datetime, station_title) %}
+                                  <div>
+                                    <div class="flex gap-2 items-start">
+                                      <span class="text-2xl font-medium">{{ datetime | datetimeformat("HH:mm") }}</span>
+                                      {{ datetime | datetimeformat("d MMMM") }}
+                                    </div>
+                                    <span class="font-medium">{{ station_title }}</span>
                                   </div>
-                                  <span class="font-medium">{{ station_title }}</span>
-                                </div>
-                              {% endmacro %}
-                              {{ transport_time_block(t.departure, t.from_title) }}
-                              {{ transport_time_block(t.arrival, t.to_title) }}
-                              <div class="flex flex-col justify-between">
-                                <div>{{ t.duration }}</div>
-                                <div class="font-medium">
-                                  {% if t.start_cost_rub == None %}
-                                    Информации о цене нет
-                                  {% else %}
-                                    {{ t.start_cost_rub }}₽
-                                  {% endif %}
-                                  <div class="text-gray-700">{{ t.carrier.title }}</div>
+                                {% endmacro %}
+                                {{ transport_time_block(t.departure, t.from_title) }}
+                                {{ transport_time_block(t.arrival, t.to_title) }}
+                                <div class="flex flex-col justify-between">
+                                  <div>{{ t.duration }}</div>
+                                  <div class="font-medium">
+                                    {% if t.start_cost_rub == None %}
+                                      Информации о цене нет
+                                    {% else %}
+                                      {{ t.start_cost_rub }}₽
+                                    {% endif %}
+                                    <div class="text-gray-700">{{ t.carrier.title }}</div>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </label>
-                      {% endfor %}
-                    </div>
-                  </div>
-                {% endfor %}
-              </form>
-            </div>
-          {% else %}
-            Рейсов из {{ session.city.name }} в {{ route.cities[0].city.name }} на {{ session.start_date }} не найдено. Попробуйте поменять даты поездки
-          {% endif %}
-          <div class="itinerary-block flex flex-col gap-6">
-            {% for day in days %}
-              <div class="day-block" data-day-order="{{ day.day_order }}">
-                <h3 class="font-medium ml-4">День {{ day.day_order }}</h3>
-                <div class="segments flex flex-col gap-3">
-                  {% for segment in day.segments %}
-                    {% if segment.type == POI_TYPE %}
-                      <div class="poi bg-neutral-100 rounded-lg p-4"
-                           data-lat="{{ segment.poi.lat }}"
-                           data-lon="{{ segment.poi.lon }}"
-                           data-name="{{ segment.poi.name }}">
-                        <p>
-                          <b>{{ segment.poi.name }}</b> — с {{ segment.poi.open_time }} до {{ segment.poi.close_time }} (Рейтинг: {{ segment.poi.rating }})
-                        </p>
+                          </label>
+                        {% endfor %}
                       </div>
-                    {% elif segment.type == MEAL_TYPE %}
-                      {% if segment.meal_places | length != 0 %}
-                        {% set meal_p = segment.meal_places[0] %}
-                        <label>
-                          <input class="peer hidden"
-                                 name="meal_place_{{ day.day_order }}_{{ segment.meal_type }}"
-                                 type="radio"
-                                 data-type="meal_place"
-                                 data-cost="{{ meal_p.avg_check_rub }}"
-                                 data-name="{{ meal_p.name }}"
-                                 checked>
-                          <div class="flex bg-neutral-100 rounded-lg gap-4 h-33 peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500">
-                            <div class="flex flex-col grow-1 p-4">
-                              <div class="flex flex-col gap-2 grow-1">
-                                <div class="font-medium">{{ meal_p.name }}</div>
-                                <div class="flex">{{ meal_p.general_rating }} {{ meal_p.general_review_count }} — {{ meal_p.avg_check_rub }}₽</div>
-                              </div>
-                              <button class="show-simular-spots peer-checked:flex btn-secondary w-fit flex-start hidden bottom-0"
-                                      hx-get="/api/meal_place/{{ meal_p.id }}/get_simulars?day-order={{ day.day_order }}&meal-type={{ segment.meal_type }}"
-                                      hx-target="#similar-spots-block">Найти еще заведения</button>                            </div>
-                            <img class="w-50 object-cover rounded-lg"
-                                 src="https://images.unsplash.com/photo-1628066068625-015ea7bcc21a"
-                                 alt="meal place image">
-                          </div>
-                        </label>
-                      {% endif %}
-                    {% endif %}
+                    </div>
                   {% endfor %}
-                </div>
-                {% if not loop.last and day.lodgings %}
-                  <p>Ночлег:</p>
-                  {% for l in day.lodgings %}
-                    <label>
-                      <input onchange="updateBudget()" type="radio" name="lodgings">
-                      {{ l.type }} - {{ l.name }} {{ l.distance_km }} км от центра
-                    </label>
-                  {% endfor %}
-                {% endif %}
+                </form>
               </div>
-            {% endfor %}
-          </div>
-          <div class="flex gap-2 sticky items-end bottom-0 bg-white border-t pt-4 mt-6 mb-3 shadow" id="budget-amount-block">
-            <div class="text-xl font-medium">Бюджет</div>
-            <div>
-              от <span id="budgetAmount">0</span> ₽
-            </div>
-          </div>
-          <div class="h-1" id="sentinel_budget"></div>
-          <div class="flex flex-col gap-2" id="expances-block"></div>
+            {% else %}
+              Рейсов из {{ session.city.name }} в {{ route.cities[0].city.name }} на {{ session.start_date }} не найдено. Попробуйте поменять даты поездки
+            {% endif %}
+          {% endif %}
         </div>
+        <div class="itinerary-block flex flex-col gap-6">
+          {% for day in days %}
+            <div class="day-block" data-day-order="{{ day.day_order }}">
+              <h3 class="font-medium ml-4">День {{ day.day_order }}</h3>
+              <div class="segments flex flex-col gap-3">
+                {% for segment in day.segments %}
+                  {% if segment.type == POI_TYPE %}
+                    <div class="poi bg-neutral-100 rounded-lg p-4"
+                         data-lat="{{ segment.poi.lat }}"
+                         data-lon="{{ segment.poi.lon }}"
+                         data-name="{{ segment.poi.name }}">
+                      <p>
+                        <b>{{ segment.poi.name }}</b> — с {{ segment.poi.open_time }} до {{ segment.poi.close_time }} (Рейтинг: {{ segment.poi.rating }})
+                      </p>
+                    </div>
+                  {% elif segment.type == MEAL_TYPE %}
+                    {% if segment.meal_places | length != 0 %}
+                      {% set meal_p = segment.meal_places[0] %}
+                      <label>
+                        <input class="peer hidden"
+                               name="meal_place_{{ day.day_order }}_{{ segment.meal_type }}"
+                               type="radio"
+                               data-type="meal_place"
+                               data-cost="{{ meal_p.avg_check_rub }}"
+                               data-name="{{ meal_p.name }}"
+                               checked>
+                        <div class="flex bg-neutral-100 rounded-lg gap-4 h-33 peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500">
+                          <div class="flex flex-col grow-1 p-4">
+                            <div class="flex flex-col gap-2 grow-1">
+                              <div class="font-medium">{{ meal_p.name }}</div>
+                              <div class="flex">{{ meal_p.general_rating }} {{ meal_p.general_review_count }} — {{ meal_p.avg_check_rub }}₽</div>
+                            </div>
+                            <button class="show-simular-spots peer-checked:flex btn-secondary w-fit flex-start hidden bottom-0"
+                                    hx-get="/api/meal_place/{{ meal_p.id }}/get_simulars?day-order={{ day.day_order }}&meal-type={{ segment.meal_type }}"
+                                    hx-target="#similar-spots-block">Найти еще заведения</button>
+                          </div>
+                          <img class="w-50 object-cover rounded-lg"
+                               src="https://images.unsplash.com/photo-1628066068625-015ea7bcc21a"
+                               alt="meal place image">
+                        </div>
+                      </label>
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+              </div>
+              {% if not loop.last and day.lodgings %}
+                <p>Ночлег:</p>
+                {% for l in day.lodgings %}
+                  <label>
+                    <input onchange="updateBudget()" type="radio" name="lodgings">
+                    {{ l.type }} - {{ l.name }} {{ l.distance_km }} км от центра
+                  </label>
+                {% endfor %}
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        <div class="flex gap-2 sticky items-end bottom-0 bg-white border-t pt-4 mt-6 mb-3 shadow"
+             id="budget-amount-block">
+          <div class="text-xl font-medium">Бюджет</div>
+          <div>
+            от <span id="budgetAmount">0</span> ₽
+          </div>
+        </div>
+        <div class="h-1" id="sentinel_budget"></div>
+        <div class="flex flex-col gap-2" id="expances-block"></div>
       </div>
     </div>
-    <div class="itinerary-right relative">
-      <div id="map" class="map-box"></div>
-      <div class="similar-spots-block flex flex-col gap-2 left-6 rounded-xl w-2/3 absolute bottom-6 p-6 max-h-80 hidden bg-white"
-           id="similar-spots-block">
-      </div>
-    </div>
-  </body>
+  </div>
+  <div class="itinerary-right relative">
+    <div id="map" class="map-box"></div>
+    <div class="similar-spots-block flex flex-col gap-2 left-6 rounded-xl w-2/3 absolute bottom-6 p-6 max-h-80 hidden bg-white"
+         id="similar-spots-block"></div>
+  </div>
+</body>
 {% endblock body %}
