@@ -9,26 +9,48 @@ const startDateSession = startDateInput
   ? new Date(startDateInput.value)
   : new Date(body.dataset.startDate);
 
-const sentinelBudget = document.getElementById("sentinel_budget");
+const sentinelHideExpanses = document.getElementById(
+  "sentinel_for_hide_expanses",
+);
+const sentinelShowExpanses = document.getElementById(
+  "sentinel_for_show_expanses",
+);
+const itineraryLeft = document.getElementById("scroll-block-itinerary");
+
+const budgetBlock = document.getElementById("budget-block");
 const budgetAmountBlock = document.getElementById("budget-amount-block");
 const budgetAmount = document.getElementById("budgetAmount");
 const expancesBlock = document.getElementById("expances-block");
 const simularSpots = document.getElementById("similar-spots-block");
 
 function expandeBudgetBlock() {
-  const observer = new IntersectionObserver(([entry]) => {
-    if (entry.isIntersecting) {
-      budgetAmountBlock.classList.add("mb-3", "mt-2");
-      budgetAmountBlock.classList.remove("border-t", "mt-6", "shadow");
-      expancesBlock.classList.remove("hidden");
-    } else {
-      budgetAmountBlock.classList.remove("mb-3", "mt-2");
-      budgetAmountBlock.classList.add("border-t", "mt-6", "shadow");
-      expancesBlock.classList.add("hidden");
-    }
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.target === sentinelHideExpanses) {
+        if (!entry.isIntersecting) {
+          console.log("Hide");
+          budgetBlock.classList.add("sticky");
+          budgetAmountBlock.classList.remove("mb-3", "mt-2");
+          budgetAmountBlock.classList.add("border-t", "mt-6", "shadow");
+          expancesBlock.classList.add("hidden");
+        }
+      }
+      if (entry.target === sentinelShowExpanses) {
+        if (entry.isIntersecting) {
+          console.log("Show");
+          budgetBlock.classList.remove("sticky");
+          budgetAmountBlock.classList.add("mb-3", "mt-2");
+          budgetAmountBlock.classList.remove("border-t", "mt-6", "shadow");
+          expancesBlock.classList.remove("hidden");
+        }
+      }
+    });
   });
-  observer.observe(sentinelBudget);
+
+  observer.observe(sentinelHideExpanses);
+  observer.observe(sentinelShowExpanses);
 }
+
 expandeBudgetBlock();
 
 function diffInDays(date) {
