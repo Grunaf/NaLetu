@@ -2,7 +2,6 @@
 @use 'sass:color';
 
 @mixin button-style($bg) {
-  display: inline-block;
   background: $bg;
   color: v.$white;
   border: none;

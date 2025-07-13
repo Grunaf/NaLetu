@@ -14,61 +14,69 @@
       </div>
     </div>
     {% if transports["there"]|length != 0 %}
-      <div>
+      <div id="transports_items">
         <h2 class="text-2xl">Выбор транспорта</h2>
-        <form method="post" class="flex flex-col gap-5">
+        <div class="flex flex-col gap-5">
           {% for direction, trips in transports.items() %}
             <div class="flex flex-col gap-4">
               {% if direction == "there" %}
-                <h3 class="text-lg font-medium text-gray-800 tracking-tight">Туда:</h3>
+                {% set direction_ru = "Туда" %}
               {% else %}
-                <h3 class="text-lg font-medium text-gray-800 tracking-tight">Обратно:</h3>
+                {% set direction_ru = "Обратно" %}
               {% endif %}
-              <div class="flex flex-col gap-3">
-                {% for t in trips[:3] %}
-                  <label for="transport-{{ t.uid }}">
-                    <input class="peer hidden"
-                           type="radio"
-                           name="transport_{{ direction }}"
-                           value="{{ t.uid }}"
-                           data-type="transport"
-                           data-cost="{{ t.start_cost_rub }}"
-                           data-name="{{ t.title }}"
-                           data-datetime="{{ t.departure }}"
-                           id="transport-{{ t.uid }}">
-                    <div class="bg-neutral-100 peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500 px-5 py-6 rounded-lg cursor-pointer transition">
-                      {{ t.transport_type }} {{ t.number }}
-                      <div class="grid grid-cols-3 gap-6">
-                        {% macro transport_time_block(datetime, station_title) %}
-                          <div>
-                            <div class="flex gap-2 items-start">
-                              <span class="text-2xl font-medium">{{ datetime | datetimeformat("HH:mm") }}</span>
-                              {{ datetime | datetimeformat("d MMMM") }}
+              <h3 class="text-lg font-medium text-gray-800 tracking-tight">{{ direction_ru }}:</h3>
+
+              <div class="flex flex-col gap-3" id="transports-groups-{{ direction }}">
+                {% for tranport_group in trips|batch(3) %}
+                  <div class="tranport-group flex flex-col gap-2 hidden"
+                       data-index="{{ loop.index }}">
+                    {% for transport in tranport_group %}
+                      <label for="transport-{{ transport.uid }}">
+                        <input class="peer hidden"
+                               type="radio"
+                               name="transport_{{ direction }}"
+                               value="{{ transport.uid }}"
+                               data-type="transport"
+                               data-cost="{{ transport.start_cost_rub }}"
+                               data-name="{{ transport.title }}"
+                               data-datetime="{{ transport.departure }}"
+                               id="transport-{{ transport.uid }}">
+                        <div class="bg-neutral-100 peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500 px-5 py-6 rounded-lg cursor-pointer transition">
+                          {{ transport.transport_type }} {{ transport.number }}
+                          <div class="grid grid-cols-3 gap-6">
+                            {% macro transport_time_block(datetime, station_title) %}
+                              <div>
+                                <div class="flex gap-2 items-start">
+                                  <span class="text-2xl font-medium">{{ datetime | datetimeformat("HH:mm") }}</span>
+                                  {{ datetime | datetimeformat("d MMMM") }}
+                                </div>
+                                <span class="font-medium">{{ station_title }}</span>
+                              </div>
+                            {% endmacro %}
+                            {{ transport_time_block(transport.departure, transport.from_title) }}
+                            {{ transport_time_block(transport.arrival, transport.to_title) }}
+                            <div class="flex flex-col justify-between">
+                              <div>{{ transport.duration }}</div>
+                              <div class="font-medium">
+                                {% if transport.start_cost_rub == None %}
+                                  Информации о цене нет
+                                {% else %}
+                                  {{ transport.start_cost_rub }}₽
+                                {% endif %}
+                                <div class="text-gray-700">{{ transport.carrier.title }}</div>
+                              </div>
                             </div>
-                            <span class="font-medium">{{ station_title }}</span>
-                          </div>
-                        {% endmacro %}
-                        {{ transport_time_block(t.departure, t.from_title) }}
-                        {{ transport_time_block(t.arrival, t.to_title) }}
-                        <div class="flex flex-col justify-between">
-                          <div>{{ t.duration }}</div>
-                          <div class="font-medium">
-                            {% if t.start_cost_rub == None %}
-                              Информации о цене нет
-                            {% else %}
-                              {{ t.start_cost_rub }}₽
-                            {% endif %}
-                            <div class="text-gray-700">{{ t.carrier.title }}</div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </label>
+                      </label>
+                    {% endfor %}
+                  </div>
                 {% endfor %}
+                <button id="show-more-transports-{{ direction }}">Показать еще</button>
               </div>
             </div>
           {% endfor %}
-        </form>
+        </div>
       </div>
     {% else %}
       Рейсов из {{ session.city.name }} в {{ route.cities[0].city.name }} на {{ session.start_date }} не найдено. Попробуйте поменять даты поездки

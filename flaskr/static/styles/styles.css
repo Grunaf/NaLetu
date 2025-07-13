@@ -34,7 +34,6 @@
   font-weight: 900;
 }
 .btn {
-  display: inline-block;
   background: #155BDD;
   color: #fff;
   border: none;
@@ -60,7 +59,6 @@
   box-shadow: none;
 }
 #extraButtons .btn-export {
-  display: inline-block;
   background: #155BDD;
   color: #fff;
   border: none;
@@ -76,7 +74,6 @@
   background: rgb(16.5743801653, 71.8223140496, 174.4256198347);
 }
 #extraButtons .btn-new {
-  display: inline-block;
   background: #34c759;
   color: #fff;
   border: none;
@@ -183,7 +180,6 @@ input {
 }
 
 .btn {
-  display: inline-block;
   background: #155BDD;
   color: #fff;
   border: none;
@@ -413,7 +409,6 @@ input[type=radio]:checked + span {
 }
 
 button {
-  display: inline-block;
   background: #155BDD;
   color: #fff;
   border: none;
