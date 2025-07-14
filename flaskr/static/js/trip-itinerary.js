@@ -153,11 +153,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-document.addEventListener("htmx:afterSwap", () => {
-  if (simularSpots.innerHTML.trim()) {
-    simularSpots.classList.remove("hidden");
-  } else {
-    simularSpots.classList.remove("hidden");
+document.addEventListener("htmx:afterSwap", event => {
+  if (event.detail.target.id == "similar-spots-block") {
+    if (simularSpots.innerHTML.trim()) {
+      simularSpots.classList.remove("hidden");
+    } else {
+      simularSpots.classList.remove("hidden");
+    }
   }
 });
 
