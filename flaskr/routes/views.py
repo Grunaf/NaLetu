@@ -256,9 +256,13 @@ def trip_itinerary() -> str:
         transports_from_json = transports_from_with_data_json.data_json
         transports = {}
 
-        transports["there"] = [format_transports(t_to) for t_to in transports_to_json]
+        transports["there"] = [
+            format_transports(t_to, session.city.slug, route.cities[0].city.slug)
+            for t_to in transports_to_json
+        ]
         transports["back"] = [
-            format_transports(t_from) for t_from in transports_from_json
+            format_transports(t_from, route.cities[0].city.slug, session.city.slug)
+            for t_from in transports_from_json
         ]
     else:
         transports = None
@@ -284,6 +288,7 @@ def trip_itinerary() -> str:
         POI_TYPE=POI_TYPE,
         MEAL_TYPE=MEAL_TYPE,
         ya_map_js_api_key=YA_MAP_API_KEY,
+        ENABLE_TUTU_REDIRECT=Config.ENABLE_TUTU_REDIRECT,
     )
 
 

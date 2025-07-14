@@ -26,6 +26,9 @@ class Config:
     DGIS_API_URI_HINT = DGIS_API_URI + "suggests"
     DGIS_API_URI_GET_BY_ID = DGIS_API_URI_ITEMS + "/byid"
 
+    TUTU_SEARCH_URI = os.getenv("TUTU_SEARCH_URI")
+    ENABLE_TUTU_REDIRECT = False
+
     TRAVEL_PAY_HOTEL_API_KEY = os.getenv("TRAVEL_PAY_HOTEL_API_KEY")
     LOOKUP_URL = "https://engine.hotellook.com/api/v2/lookup.json"
     CACHE_URL = "https://engine.hotellook.com/api/v2/cache.json"

@@ -43,18 +43,21 @@
                                id="transport-{{ transport.uid }}">
                         <div class="bg-neutral-100 peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500 px-5 py-6 rounded-lg cursor-pointer transition">
                           {% if transport.transport_type == "bus" %}
-                            {% set transport_icon = "directions_bus" %} 
+                            {% set transport_icon = "directions_bus" %}
                           {% elif transport.transport_type == "train" %}
-                            {% set transport_icon = "directions_railway_2" %} 
+                            {% set transport_icon = "directions_railway_2" %}
                           {% elif transport.transport_type == "suburban" %}
-                            {% set transport_icon = "directions_subway" %} 
+                            {% set transport_icon = "directions_subway" %}
                           {% elif transport.transport_type == "plane" %}
-                            {% set transport_icon = "flight" %} 
+                            {% set transport_icon = "flight" %}
                           {% endif %}
                           <div class="flex gap-2">
-                            <span class="material-symbols-outlined">
-                              {{ transport_icon }}
-                            </span> {{ transport.number }}
+                            <span class="material-symbols-outlined">{{ transport_icon }}</span>
+                            {% if ENABLE_TUTU_REDIRECT %}
+                              <a href="{{ transport.buy_page }}">{{ transport.number }}</a>
+                            {% else %}
+                              {{ transport.number }}
+                            {% endif %}
                           </div>
                           <div class="grid grid-cols-3 gap-6">
                             {% macro transport_time_block(datetime, station_title) %}

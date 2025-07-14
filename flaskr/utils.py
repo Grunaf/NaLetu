@@ -1,6 +1,10 @@
 import datetime
 import math
 
+from urllib.parse import urlencode
+
+from config import Config
+
 
 def human_readeble_duration(duration: datetime.timedelta):
     total_minutes = int(duration.total_seconds() // 60)
@@ -15,7 +19,7 @@ def human_readeble_duration(duration: datetime.timedelta):
     return " ".join(parts) or "0 м."
 
 
-def format_transports(t):
+def format_transports(t, from_city_slug, to_city_slug):
     tickets = t.get("tickets_info")
     places = tickets.get("places") if tickets else []
     thread = t.get("thread")
@@ -44,7 +48,7 @@ def format_transports(t):
     departure = datetime.datetime.fromisoformat(t.get("departure"))
     arrival = datetime.datetime.fromisoformat(t.get("arrival"))
 
-    return {
+    data = {
         "uid": thread.get("uid"),
         "carrier": thread.get("carrier"),
         "number": thread.get("number"),
@@ -57,6 +61,19 @@ def format_transports(t):
         "start_cost_rub": start_cost_rub,
         "duration": formatted_duration,
     }
+
+    # NOTE: Tutu redirect currently inactive
+    # Waiting for partnership integration
+    # URL logic and parameters to be updated when partner links are available
+    if Config.ENABLE_TUTU_REDIRECT:
+        base_url = f"{Config.TUTU_SEARCH_URI}/{from_city_slug}/{to_city_slug}"
+        params = {"class": "Y", "travelers": "1"}
+        query = urlencode(params)
+        buy_page = f"{base_url}/{query}"
+
+        data["buy_page"] = buy_page
+
+    return data
 
 
 def meters_to_degrees(meters: float, latitude_deg: float) -> tuple[float, float]:
