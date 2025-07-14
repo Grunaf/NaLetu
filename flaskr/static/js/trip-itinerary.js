@@ -22,9 +22,25 @@ const budgetAmountBlock = document.getElementById("budget-amount-block");
 const budgetAmount = document.getElementById("budgetAmount");
 const expancesBlock = document.getElementById("expances-block");
 const simularSpots = document.getElementById("similar-spots-block");
-const isTransports = document.getElementById("transports_items") != null;
+const transportsItems = document.getElementById("transports_items");
 
-if (isTransports) {
+if (transportsItems) {
+  function showMoreTransports(direction) {
+    const blockDirection = document.getElementById(
+      `transports-groups-${direction}`,
+    );
+    for (let children of blockDirection.children) {
+      const classList = children.classList;
+      if (classList.contains("hidden")) {
+        classList.remove("hidden");
+        hideButtonIfNoMoreTranports();
+        break;
+      }
+    }
+  }
+  showMoreTransports("there");
+  showMoreTransports("back");
+
   const showMoreTransportThereBtn = document.getElementById(
     "show-more-transports-there",
   );
@@ -51,21 +67,6 @@ if (isTransports) {
     showMoreTransports("back"),
   );
 }
-function showMoreTransports(direction) {
-  const blockDirection = document.getElementById(
-    `transports-groups-${direction}`,
-  );
-  for (let children of blockDirection.children) {
-    const classList = children.classList;
-    if (classList.contains("hidden")) {
-      classList.remove("hidden");
-      break;
-      hideButtonIfNoMoreTranports();
-    }
-  }
-}
-showMoreTransports("there");
-showMoreTransports("back");
 
 function expandeBudgetBlock() {
   const observer = new IntersectionObserver(entries => {
