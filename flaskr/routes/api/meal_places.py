@@ -16,6 +16,9 @@ def parse_meal_place_json(nearby_similar_meal_places: List[SimularMealPlaceCache
     for place in nearby_similar_meal_places:
         data = place.data_json
 
+        point = data["point"]
+        point_lat, point_lon = point["lat"], point["lon"]
+
         attribute_avg_price = data["attribute_groups"][0]["attributes"][0]["name"]
         match_price = re.search(r"\d+", attribute_avg_price)
 
@@ -41,6 +44,8 @@ def parse_meal_place_json(nearby_similar_meal_places: List[SimularMealPlaceCache
                 avg_price=attribute_avg_price,
                 img_src=img_src,
                 address_name=address_name,
+                lat=point_lat,
+                lon=point_lon,
             )
         )
     return similar_places

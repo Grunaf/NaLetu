@@ -3,7 +3,8 @@ import datetime
 FIELDS_FOR_MEAL_PLACE = (
     "items.schedule,items.external_content,"
     "items.reviews,items.description,"
-    "items.attribute_groups"
+    "items.attribute_groups,"
+    "items.point"
 )
 START_BREAKFAST_TIME = datetime.time(7)
 START_LUNCH_TIME = datetime.time(12)

@@ -1,5 +1,6 @@
 import { alert } from "./main.js";
 import { SERVER_ERROR } from "./constants.js";
+import { similarSpotsMarkers } from "./leaflet.js";
 
 const body = document.getElementById("body");
 const sessionId = body.dataset.sessionId;
@@ -127,6 +128,12 @@ if (startDateInput) {
     }
   });
 }
+function openPopupForSpotMarker(spotName) {
+  const spotMarker = similarSpotsMarkers.find(
+    marker => marker.options.spotName === spotName,
+  );
+  spotMarker.openPopup();
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   const options = document.querySelectorAll("input[type='radio'][data-cost]");
@@ -149,6 +156,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const name_input = `meal_place_${dayOrder}_${mealType}`;
       const input = document.querySelectorAll(`input[name=${name_input}]`)[0];
 
+      const spotName = target.dataset.name;
+
+      openPopupForSpotMarker(spotName);
       updateBudgetBlock(target, dayOrder);
     }
   });
@@ -160,6 +170,19 @@ document.addEventListener("htmx:afterSwap", event => {
     } else {
       simularSpots.classList.remove("hidden");
     }
+
+    let detailSpots = [];
+
+    let similarSpotsItems = document.getElementById("similar-spots");
+    Array.from(similarSpotsItems.children).forEach(spot => {
+      const dataset = spot.querySelector("input").dataset;
+      let location = { lon: dataset.lon, lat: dataset.lat };
+      detailSpots.push({ name: dataset.name, location: location });
+    });
+    const eventShowedSimilarSpots = new CustomEvent("showedSimilarSpots", {
+      detail: { detailSpots: detailSpots },
+    });
+    window.dispatchEvent(eventShowedSimilarSpots);
   }
 });
 

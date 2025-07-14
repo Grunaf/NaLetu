@@ -23,6 +23,8 @@ class SimularMealPlaceCacheDTO(BaseModel):
     general_review_count: int
     avg_price: int
     address_name: str
+    lat: float
+    lon: float
     img_src: str
 
 
