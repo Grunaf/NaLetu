@@ -4,15 +4,17 @@
   Главная
 {% endblock title %}
 {% block script %}
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-     crossorigin=""/>
+  <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-     crossorigin=""></script>
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin=""></script>
   <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp"
         rel="stylesheet">
-  <script src="https://api-maps.yandex.ru/2.1/?lang=en_RU&amp;apikey=4410e526-6ed4-4303-af5b-e6be145e2460" type="text/javascript"></script>
+  <script src="https://api-maps.yandex.ru/2.1/?lang=en_RU&amp;apikey=4410e526-6ed4-4303-af5b-e6be145e2460"
+          type="text/javascript"></script>
   <script src="https://rawcdn.githack.com/shramov/leaflet-plugins/master/layer/tile/Yandex.js"></script>
   <link rel="stylesheet" href="{{ asset('js/common.css') }}" />
   <script defer type="module" src="{{asset('js/variables.js')}}"></script>

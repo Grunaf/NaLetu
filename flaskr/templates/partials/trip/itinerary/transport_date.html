@@ -1,11 +1,11 @@
 <div class="itinerary-date-picker">
-    <h2>Дата поездки</h2>
-    <div class="date-block gap-4">
+  <h2>Дата поездки</h2>
+  <div class="date-block gap-4">
     <label>
-        <input type="date" value="{{ session.start_date }}" id="start-date">
+      <input type="date" value="{{ session.start_date }}" id="start-date">
     </label>
     <div class="flex flex-col">
-        <span class="font-medium">Обратно</span><span>{{ session.end_date | datetimeformat("d MMMM") }}</span>
+      <span class="font-medium">Обратно</span><span>{{ session.end_date | datetimeformat("d MMMM") }}</span>
     </div>
-    </div>
+  </div>
 </div>
