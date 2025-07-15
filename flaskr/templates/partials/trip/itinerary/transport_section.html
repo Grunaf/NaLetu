@@ -1,0 +1,26 @@
+<div class="transports-block">
+  {% if transports is none %}
+    <div>Вообще здесь должен быть блок доступных транспортов, но вы уже в городе отбытия</div>
+  {% else %}
+    {% include "partials/trip/itinerary/transport_date.html" %}
+    {% if transports["there"]|length != 0 or transports["back"]|length != 0 %}
+      <div id="transports_items">
+        <h2 class="text-2xl">Выбор транспорта</h2>
+        <div class="flex flex-col gap-5">
+          {% for direction, trips in transports.items() %}
+            <div class="flex flex-col gap-4">
+              {% if direction == "there" %}
+                {% set direction_ru = "Туда" %}
+              {% else %}
+                {% set direction_ru = "Обратно" %}
+              {% endif %}
+              {% include "partials/trip/itinerary/transport_direction.html" %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      Рейсов из {{ session.city.name }} в {{ route.cities[0].city.name }} на {{ session.start_date }} не найдено. Попробуйте поменять даты поездки
+    {% endif %}
+  {% endif %}
+</div>
