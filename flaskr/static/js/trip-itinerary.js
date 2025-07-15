@@ -1,6 +1,7 @@
 import { alert } from "./main.js";
 import { SERVER_ERROR } from "./constants.js";
 import { similarSpotsMarkers } from "./leaflet.js";
+import { handleTransports } from "./transport.mjs";
 
 const body = document.getElementById("body");
 const sessionId = body.dataset.sessionId;
@@ -23,51 +24,8 @@ const budgetAmountBlock = document.getElementById("budget-amount-block");
 const budgetAmount = document.getElementById("budgetAmount");
 const expancesBlock = document.getElementById("expances-block");
 const simularSpots = document.getElementById("similar-spots-block");
-const transportsItems = document.getElementById("transports_items");
 
-if (transportsItems) {
-  function showMoreTransports(direction) {
-    const blockDirection = document.getElementById(
-      `transports-groups-${direction}`,
-    );
-    for (let children of blockDirection.children) {
-      const classList = children.classList;
-      if (classList.contains("hidden")) {
-        classList.remove("hidden");
-        hideButtonIfNoMoreTranports();
-        break;
-      }
-    }
-  }
-  showMoreTransports("there");
-  showMoreTransports("back");
-
-  const showMoreTransportThereBtn = document.getElementById(
-    "show-more-transports-there",
-  );
-  const showMoreTransportBackBtn = document.getElementById(
-    "show-more-transports-back",
-  );
-  function hideButtonIfNoMoreTranports() {
-    if (
-      document.getElementById("transports-groups-there").children.length == 2
-    ) {
-      showMoreTransportThereBtn.classList.add("hidden");
-    }
-    if (
-      document.getElementById("transports-groups-back").children.length == 2
-    ) {
-      showMoreTransportBackBtn.classList.add("hidden");
-    }
-  }
-  hideButtonIfNoMoreTranports();
-  showMoreTransportThereBtn.addEventListener("click", () =>
-    showMoreTransports("there"),
-  );
-  showMoreTransportBackBtn.addEventListener("click", () =>
-    showMoreTransports("back"),
-  );
-}
+handleTransports();
 
 function expandeBudgetBlock() {
   const observer = new IntersectionObserver(entries => {
