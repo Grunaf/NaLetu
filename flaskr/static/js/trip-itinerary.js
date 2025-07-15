@@ -1,76 +1,23 @@
 import { alert } from "./main.js";
 import { SERVER_ERROR } from "./constants.js";
 import { similarSpotsMarkers } from "./leaflet.js";
-import { handleTransports } from "./transport.mjs";
+import { handleTransports } from "./transport.js";
+import { expandeBudgetBlock, expancesBlock } from "./budget.js";
+import { diffInDays } from "./utils.js";
 
 const body = document.getElementById("body");
 const sessionId = body.dataset.sessionId;
+const startDateStr = body.dataset.startDate;
 const startDateInput = document.getElementById("start-date");
 
-const startDateSession = startDateInput
-  ? new Date(startDateInput.value)
-  : new Date(body.dataset.startDate);
+const startDateSession = new Date(startDateStr);
 
-const sentinelHideExpanses = document.getElementById(
-  "sentinel_for_hide_expanses",
-);
-const sentinelShowExpanses = document.getElementById(
-  "sentinel_for_show_expanses",
-);
-const itineraryLeft = document.getElementById("scroll-block-itinerary");
-
-const budgetBlock = document.getElementById("budget-block");
-const budgetAmountBlock = document.getElementById("budget-amount-block");
 const budgetAmount = document.getElementById("budgetAmount");
-const expancesBlock = document.getElementById("expances-block");
 const simularSpots = document.getElementById("similar-spots-block");
 
 handleTransports();
-
-function expandeBudgetBlock() {
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.target === sentinelHideExpanses) {
-        if (!entry.isIntersecting) {
-          console.log("Hide");
-          budgetBlock.classList.add("sticky");
-          budgetAmountBlock.classList.remove("mb-3", "mt-2");
-          budgetAmountBlock.classList.add("border-t", "mt-6", "shadow");
-          expancesBlock.classList.add("hidden");
-        }
-      }
-      if (entry.target === sentinelShowExpanses) {
-        if (entry.isIntersecting) {
-          console.log("Show");
-          budgetBlock.classList.remove("sticky");
-          budgetAmountBlock.classList.add("mb-3", "mt-2");
-          budgetAmountBlock.classList.remove("border-t", "mt-6", "shadow");
-          expancesBlock.classList.remove("hidden");
-        }
-      }
-    });
-  });
-
-  observer.observe(sentinelHideExpanses);
-  observer.observe(sentinelShowExpanses);
-}
-
 expandeBudgetBlock();
 
-function diffInDays(date) {
-  const MS_PER_DAY = 1000 * 60 * 60 * 24;
-  const utc_start_session_date = Date.UTC(
-    startDateSession.getFullYear(),
-    startDateSession.getMonth(),
-    startDateSession.getDate(),
-  );
-  const utc_count_date = Date.UTC(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-  );
-  return Math.floor((utc_count_date - utc_start_session_date) / MS_PER_DAY);
-}
 if (startDateInput) {
   startDateInput.addEventListener("change", async () => {
     const startDateValue = startDateInput.value;
@@ -122,25 +69,23 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 document.addEventListener("htmx:afterSwap", event => {
-  if (event.detail.target.id == "similar-spots-block") {
-    if (simularSpots.innerHTML.trim()) {
-      simularSpots.classList.remove("hidden");
-    } else {
-      simularSpots.classList.remove("hidden");
-    }
+  if (event.detail.target === simularSpots) {
+    simularSpots.classList.remove("hidden");
 
     let detailSpots = [];
 
     let similarSpotsItems = document.getElementById("similar-spots");
-    Array.from(similarSpotsItems.children).forEach(spot => {
-      const dataset = spot.querySelector("input").dataset;
-      let location = { lon: dataset.lon, lat: dataset.lat };
-      detailSpots.push({ name: dataset.name, location: location });
-    });
-    const eventShowedSimilarSpots = new CustomEvent("showedSimilarSpots", {
-      detail: { detailSpots: detailSpots },
-    });
-    window.dispatchEvent(eventShowedSimilarSpots);
+    if (similarSpotsItems) {
+      Array.from(similarSpotsItems.children).forEach(spot => {
+        const dataset = spot.querySelector("input").dataset;
+        let location = { lon: dataset.lon, lat: dataset.lat };
+        detailSpots.push({ name: dataset.name, location: location });
+      });
+      const eventShowedSimilarSpots = new CustomEvent("showedSimilarSpots", {
+        detail: { detailSpots: detailSpots },
+      });
+      window.dispatchEvent(eventShowedSimilarSpots);
+    }
   }
 });
 

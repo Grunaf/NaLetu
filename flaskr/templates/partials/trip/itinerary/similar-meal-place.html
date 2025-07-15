@@ -1,36 +1,40 @@
 <div class="font-medium text-lg">Поесть рядом с {{ meal_place_name }}</div>
 <div class="flex flex-col gap-3 overflow-y-scroll -mr-1 pr-2"
      id="similar-spots">
-  {% for place in similar_meal_places_read %}
-    <label>
-      <input class="peer hidden"
-             name="{{ name_input }}"
-             type="radio"
-             data-type="meal_place"
-             data-cost="{{ place.avg_price }}"
-             data-name="{{ place.name }}"
-             data-lat="{{ place.lat }}"
-             data-lon="{{ place.lon }}"
-             data-general-rating="{{ place.general_rating }}"
-             data-general-review-count="{{ place.general_review_count }}"
-             data-img-src="{{ place.img_src }}"
-             data-address-name="{{ place.address_name }}">
-      <div class="item flex w-full h-30 bg-gray-100 gap-4 rounded-xl peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500">
-        <div class="flex flex-col gap-3 grow-1 p-3">
-          <div class="header">{{ place.name }}</div>
-          <div class="text-gray-600 flex flex-col gap-1 text-sm">
-            <div class="attributes flex gap-2">
-              <div class="flex">
-                <i class="material-symbols-outlined">star</i>
-                {{ place.general_rating }}
+  {% if similar_meal_places_read|length == 0 %}
+    Рядом нет заведений
+  {% else %}
+    {% for place in similar_meal_places_read %}
+      <label>
+        <input class="peer hidden"
+              name="{{ name_input }}"
+              type="radio"
+              data-type="meal_place"
+              data-cost="{{ place.avg_price }}"
+              data-name="{{ place.name }}"
+              data-lat="{{ place.lat }}"
+              data-lon="{{ place.lon }}"
+              data-general-rating="{{ place.general_rating }}"
+              data-general-review-count="{{ place.general_review_count }}"
+              data-img-src="{{ place.img_src }}"
+              data-address-name="{{ place.address_name }}">
+        <div class="item flex w-full h-30 bg-gray-100 gap-4 rounded-xl peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500">
+          <div class="flex flex-col gap-3 grow-1 p-3">
+            <div class="header">{{ place.name }}</div>
+            <div class="text-gray-600 flex flex-col gap-1 text-sm">
+              <div class="attributes flex gap-2">
+                <div class="flex">
+                  <i class="material-symbols-outlined">star</i>
+                  {{ place.general_rating }}
+                </div>
+                {{ place.general_review_count }} отзывов {{ place.avg_price }} ₽
               </div>
-              {{ place.general_review_count }} отзывов {{ place.avg_price }} ₽
+              <div class="second-line">{{ place.address_name }}</div>
             </div>
-            <div class="second-line">{{ place.address_name }}</div>
           </div>
+          <img class="w-40 rounded-xl object-cover" src="{{ place.img_src }}">
         </div>
-        <img class="w-40 rounded-xl object-cover" src="{{ place.img_src }}">
-      </div>
-    </label>
-  {% endfor %}
+      </label>
+    {% endfor %}
+  {% endif %}
 </div>

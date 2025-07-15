@@ -1,3 +1,6 @@
+import { alert } from "./main.js";
+import { SERVER_ERROR } from "./constants.js";
+
 const checkedCityName = document.getElementById("cityName");
 const citiesModal = document.getElementsByClassName("cities-modal")[0];
 const departureCity = document.getElementById("departureCity");
@@ -14,18 +17,22 @@ Array.from(citiesModal.children).forEach(element => {
 Array.from(document.getElementsByClassName("btn-to-itinerary")).forEach(
   element => {
     element.onclick = async () => {
-      const departureCityId = checkedCityName.dataset.cityId;
-      routeId = element.dataset.routeId;
-      const res = await fetch("/api/session/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          routeId: routeId,
-          departureCityId: departureCityId,
-        }),
-      });
-      const data = await res.json();
-      location.assign(`/trip-setup?session_uuid=${data.session_uuid}`);
+      if (checkedCityName) {
+        const departureCityId = checkedCityName.dataset.cityId;
+        routeId = element.dataset.routeId;
+        const res = await fetch("/api/session/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            routeId: routeId,
+            departureCityId: departureCityId,
+          }),
+        });
+        const data = await res.json();
+        location.assign(`/trip-setup?session_uuid=${data.session_uuid}`);
+      } else {
+        alert(SERVER_ERROR.message, SERVER_ERROR.color);
+      }
     };
   },
 );
@@ -58,17 +65,21 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 function updateDistances() {
-  const userCoords = checkedCityName.dataset.coords.split(",");
-  document.querySelectorAll(".route-card").forEach(card => {
-    const lat = parseFloat(card.dataset.startLat);
-    const lon = parseFloat(card.dataset.startLon);
-    if (!isNaN(lat)) {
-      const km = haversine(userCoords[0], userCoords[1], lat, lon);
-      card.querySelector(".route-meta .road_time").textContent = `${formatHours(
-        km / 60,
-      )}`;
-    }
-  });
+  if (checkedCityName) {
+    const userCoords = checkedCityName.dataset.coords.split(",");
+    document.querySelectorAll(".route-card").forEach(card => {
+      const lat = parseFloat(card.dataset.startLat);
+      const lon = parseFloat(card.dataset.startLon);
+      if (!isNaN(lat)) {
+        const km = haversine(userCoords[0], userCoords[1], lat, lon);
+        card.querySelector(
+          ".route-meta .road_time",
+        ).textContent = `${formatHours(km / 60)}`;
+      }
+    });
+  } else {
+    alert(SERVER_ERROR.message, SERVER_ERROR.color);
+  }
 }
 
 function updateBudget() {
