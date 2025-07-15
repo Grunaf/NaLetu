@@ -10,8 +10,8 @@
         {% endfor %}
       </div>
     {% endfor %}
+    <button id="show-more-transports-{{ direction }}">Показать еще</button>
   {% else %}
     Нет рейсов на {{ session.start_date }}
   {% endif %}
-  <button id="show-more-transports-{{ direction }}">Показать еще</button>
 </div>
