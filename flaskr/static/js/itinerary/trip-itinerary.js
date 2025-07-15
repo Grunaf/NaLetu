@@ -1,5 +1,5 @@
-import { alert } from "./main.js";
-import { SERVER_ERROR } from "./constants.js";
+import { alert } from "../main.js";
+import { SERVER_ERROR } from "../constants.js";
 import { similarSpotsMarkers } from "./leaflet.js";
 import { handleTransports } from "./transport.js";
 import { expandeBudgetBlock, expancesBlock } from "./budget.js";

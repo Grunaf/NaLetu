@@ -19,7 +19,7 @@ Array.from(document.getElementsByClassName("btn-to-itinerary")).forEach(
     element.onclick = async () => {
       if (checkedCityName) {
         const departureCityId = checkedCityName.dataset.cityId;
-        routeId = element.dataset.routeId;
+        const routeId = element.dataset.routeId;
         const res = await fetch("/api/session/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
