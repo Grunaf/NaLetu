@@ -13,7 +13,7 @@
         </div>
       </div>
     </div>
-    {% if transports["there"]|length != 0 %}
+    {% if transports["there"]|length != 0 or transports["back"]|length != 0 %}
       <div id="transports_items">
         <h2 class="text-2xl">Выбор транспорта</h2>
         <div class="flex flex-col gap-5">
@@ -27,67 +27,71 @@
               <h3 class="text-lg font-medium text-gray-800 tracking-tight">{{ direction_ru }}:</h3>
 
               <div class="flex flex-col gap-3" id="transports-groups-{{ direction }}">
-                {% for tranport_group in trips|batch(3) %}
-                  <div class="tranport-group flex flex-col gap-2 hidden"
-                       data-index="{{ loop.index }}">
-                    {% for transport in tranport_group %}
-                      <label for="transport-{{ transport.uid }}">
-                        <input class="peer hidden"
-                               type="radio"
-                               name="transport_{{ direction }}"
-                               value="{{ transport.uid }}"
-                               data-type="transport"
-                               data-cost="{{ transport.start_cost_rub }}"
-                               data-name="{{ transport.title }}"
-                               data-datetime="{{ transport.departure }}"
-                               id="transport-{{ transport.uid }}">
-                        <div class="bg-neutral-100 peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500 px-5 py-6 rounded-lg cursor-pointer transition">
-                          {% if transport.transport_type == "bus" %}
-                            {% set transport_icon = "directions_bus" %}
-                          {% elif transport.transport_type == "train" %}
-                            {% set transport_icon = "directions_railway_2" %}
-                          {% elif transport.transport_type == "suburban" %}
-                            {% set transport_icon = "directions_subway" %}
-                          {% elif transport.transport_type == "plane" %}
-                            {% set transport_icon = "flight" %}
-                          {% endif %}
-                          <div class="flex gap-2">
-                            <span class="material-symbols-outlined">{{ transport_icon }}</span>
-                            {% if ENABLE_TUTU_REDIRECT %}
-                              <a href="{{ transport.buy_page }}">{{ transport.number }}</a>
-                            {% else %}
-                              {{ transport.number }}
+                {% if trips|length != 0 %}
+                  {% for tranport_group in trips|batch(3) %}
+                    <div class="tranport-group flex flex-col gap-2 hidden"
+                        data-index="{{ loop.index }}">
+                      {% for transport in tranport_group %}
+                        <label for="transport-{{ transport.uid }}">
+                          <input class="peer hidden"
+                                type="radio"
+                                name="transport_{{ direction }}"
+                                value="{{ transport.uid }}"
+                                data-type="transport"
+                                data-cost="{{ transport.start_cost_rub }}"
+                                data-name="{{ transport.title }}"
+                                data-datetime="{{ transport.departure }}"
+                                id="transport-{{ transport.uid }}">
+                          <div class="bg-neutral-100 peer-checked:ring-inset peer-checked:ring-2 peer-checked:ring-blue-500 px-5 py-6 rounded-lg cursor-pointer transition">
+                            {% if transport.transport_type == "bus" %}
+                              {% set transport_icon = "directions_bus" %}
+                            {% elif transport.transport_type == "train" %}
+                              {% set transport_icon = "directions_railway_2" %}
+                            {% elif transport.transport_type == "suburban" %}
+                              {% set transport_icon = "directions_subway" %}
+                            {% elif transport.transport_type == "plane" %}
+                              {% set transport_icon = "flight" %}
                             {% endif %}
-                          </div>
-                          <div class="grid grid-cols-3 gap-6">
-                            {% macro transport_time_block(datetime, station_title) %}
-                              <div>
-                                <div class="flex gap-2 items-start">
-                                  <span class="text-2xl font-medium">{{ datetime | datetimeformat("HH:mm") }}</span>
-                                  {{ datetime | datetimeformat("d MMMM") }}
+                            <div class="flex gap-2">
+                              <span class="material-symbols-outlined">{{ transport_icon }}</span>
+                              {% if ENABLE_TUTU_REDIRECT %}
+                                <a href="{{ transport.buy_page }}">{{ transport.number }}</a>
+                              {% else %}
+                                {{ transport.number }}
+                              {% endif %}
+                            </div>
+                            <div class="grid grid-cols-3 gap-6">
+                              {% macro transport_time_block(datetime, station_title) %}
+                                <div>
+                                  <div class="flex gap-2 items-start">
+                                    <span class="text-2xl font-medium">{{ datetime | datetimeformat("HH:mm") }}</span>
+                                    {{ datetime | datetimeformat("d MMMM") }}
+                                  </div>
+                                  <span class="font-medium">{{ station_title }}</span>
                                 </div>
-                                <span class="font-medium">{{ station_title }}</span>
-                              </div>
-                            {% endmacro %}
-                            {{ transport_time_block(transport.departure, transport.from_title) }}
-                            {{ transport_time_block(transport.arrival, transport.to_title) }}
-                            <div class="flex flex-col justify-between">
-                              <div>{{ transport.duration }}</div>
-                              <div class="font-medium">
-                                {% if transport.start_cost_rub == None %}
-                                  Информации о цене нет
-                                {% else %}
-                                  {{ transport.start_cost_rub }}₽
-                                {% endif %}
-                                <div class="text-gray-700">{{ transport.carrier.title }}</div>
+                              {% endmacro %}
+                              {{ transport_time_block(transport.departure, transport.from_title) }}
+                              {{ transport_time_block(transport.arrival, transport.to_title) }}
+                              <div class="flex flex-col justify-between">
+                                <div>{{ transport.duration }}</div>
+                                <div class="font-medium">
+                                  {% if transport.start_cost_rub == None %}
+                                    Информации о цене нет
+                                  {% else %}
+                                    {{ transport.start_cost_rub }}₽
+                                  {% endif %}
+                                  <div class="text-gray-700">{{ transport.carrier.title }}</div>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      </label>
-                    {% endfor %}
-                  </div>
-                {% endfor %}
+                        </label>
+                      {% endfor %}
+                    </div>
+                  {% endfor %}
+                {% else %}
+                    Нет рейсов на {{ session.start_date }}
+                {%endif%}
                 <button id="show-more-transports-{{ direction }}">Показать еще</button>
               </div>
             </div>
