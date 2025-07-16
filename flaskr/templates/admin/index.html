@@ -22,11 +22,11 @@
               {% endif %}
             </div>
           {% endfor %}
-          <button class="btn btn-primary" type="submit">Submit</button>
+          <button class="btn bg-primary" type="submit">Submit</button>
         </form>
         {{ link | safe }}
       {% endif %}
     </div>
-    <a class="btn btn-primary" href="{{ url_for('views.catalog_routes') }}"><i class="icon-arrow-left icon-white"></i> Back</a>
+    <a class="btn bg-primary" href="{{ url_for('views.catalog_routes') }}"><i class="icon-arrow-left icon-white"></i> Back</a>
   </div>
 {% endblock body %}

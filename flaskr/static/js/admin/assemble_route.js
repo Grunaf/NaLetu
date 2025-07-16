@@ -1,26 +1,25 @@
-let index_poi_name = 1
+let index_poi_name = 1;
 
-const route_container = document.getElementById('route');
-const days_container = document.getElementById('days');
-
+const route_container = document.getElementById("route");
+const days_container = document.getElementById("days");
 
 const dayControlButtonHTML = `
     <div class="dayControlButton">
-        <button type="button" onclick="addDay()">Добавить день</button>
-        <button type="button" onclick="dropDay(this)">Удалить последний день</button>
+        <button class="btn bg-primary" type="button" onclick="addDay()">Добавить день</button>
+        <button class="btn bg-primary" type="button" onclick="dropDay(this)">Удалить последний день</button>
     </div>
     `;
-    
+
 const variantControlButtonsHTML = `
     <div class="variantsControlButton">
-        <button type="button" onclick="addVariant(this)">Добавить вариант дня</button>
-        <button type="button" onclick="dropVariant(this)">Удалить последний вариант дня</button>
+        <button class="btn bg-primary" type="button" onclick="addVariant(this)">Добавить вариант дня</button>
+        <button class="btn bg-primary" type="button" onclick="dropVariant(this)">Удалить последний вариант дня</button>
     </div>`;
 
 const segmentAddButtonsHTML = `
     <div class="segmentAddButton">
-        <button type="button" onclick="addSegment(this, 'poi')">Добавить точку</button>
-        <button type="button" onclick="addSegment(this, 'meal')">Добавить время на поесть</button>
+        <button class="btn bg-primary" type="button" onclick="addSegment(this, 'poi')">Добавить точку</button>
+        <button class="btn bg-primary" type="button" onclick="addSegment(this, 'meal')">Добавить время на поесть</button>
     </div>`;
 
 const timeSegmentHTML = `
@@ -33,14 +32,14 @@ const poiSegmentHTML = `
         <input type="text" oninput="pausedFetchHint(this)" id="poi-name" name="poi-name" autocomplete="off">
         <div class="poi-hints"></div>
         ${timeSegmentHTML}
-        <button type="button" onclick="this.parentElement.remove()">Удалить</button>
+        <button class="btn bg-primary" type="button" onclick="this.parentElement.remove()">Удалить</button>
     </div>`;
 
 const mealSegmentHTML = `
     <div class="segment" data-type="meal">
         <strong>Перерыв на поесть</strong>
         ${timeSegmentHTML}
-        <button type="button" onclick="this.parentElement.remove()">Удалить</button>
+        <button class="btn bg-primary" type="button" onclick="this.parentElement.remove()">Удалить</button>
     </div>`;
 
 const dayVariantHTML = `

@@ -1,49 +1,42 @@
 @font-face {
   font-family: "Cygre";
-  src: url("/fonts/CYGRE-LIGHT.TTF") format("truetype");
+  src: url("/../fonts/CYGRE-LIGHT.TTF") format("truetype");
   font-weight: 300;
 }
 @font-face {
   font-family: "Cygre";
-  src: url("/fonts/CYGRE-REGULAR.TTF") format("truetype");
+  src: url("../fonts/CYGRE-REGULAR.TTF") format("truetype");
   font-weight: 400;
 }
 @font-face {
   font-family: "Cygre";
-  src: url("/fonts/CYGRE-MEDIUM.TTF") format("truetype");
+  src: url("../fonts/CYGRE-MEDIUM.TTF") format("truetype");
   font-weight: 500;
 }
 @font-face {
   font-family: "Cygre";
-  src: url("/fonts/CYGRE-SEMIBOLD.TTF") format("truetype");
+  src: url("../fonts/CYGRE-SEMIBOLD.TTF") format("truetype");
   font-weight: 600;
 }
 @font-face {
   font-family: "Cygre";
-  src: url("/fonts/CYGRE-BOLD.TTF") format("truetype");
+  src: url("../fonts/CYGRE-BOLD.TTF") format("truetype");
   font-weight: 700;
 }
 @font-face {
   font-family: "Cygre";
-  src: url("/fonts/CYGRE-EXTRABOLD.TTF") format("truetype");
+  src: url("../fonts/CYGRE-EXTRABOLD.TTF") format("truetype");
   font-weight: 800;
 }
 @font-face {
   font-family: "Cygre";
-  src: url("/fonts/CYGRE-BLACK.TTF") format("truetype");
+  src: url("../fonts/CYGRE-BLACK.TTF") format("truetype");
   font-weight: 900;
 }
-.btn {
-  background: #155BDD;
-  color: #fff;
-  border: none;
-  font-size: 14px;
-  font-weight: 600;
-  min-width: 146px;
-  padding: 14px 20px;
-  border-radius: 12px;
-  cursor: pointer;
-  text-decoration: none;
+@import "tailwindcss";
+
+@theme {
+  --color-primary:#155BDD;
 }
 .btn:hover {
   background: rgb(16.5743801653, 71.8223140496, 174.4256198347);
@@ -180,7 +173,6 @@ input {
 }
 
 .btn {
-  background: #155BDD;
   color: #fff;
   border: none;
   font-size: 14px;
@@ -408,19 +400,7 @@ input[type=radio]:checked + span {
   margin-bottom: 8px;
 }
 
-button {
-  background: #155BDD;
-  color: #fff;
-  border: none;
-  font-size: 14px;
-  font-weight: 600;
-  min-width: 146px;
-  padding: 14px 20px;
-  border-radius: 12px;
-  cursor: pointer;
-  text-decoration: none;
-}
-button:hover {
+.btn:hover {
   background: rgb(16.5743801653, 71.8223140496, 174.4256198347);
 }
 

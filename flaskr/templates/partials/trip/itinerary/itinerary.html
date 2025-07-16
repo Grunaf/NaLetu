@@ -30,7 +30,7 @@
                       <div class="font-medium">{{ meal_p.name }}</div>
                       <div class="flex">{{ meal_p.general_rating }} {{ meal_p.general_review_count }} — {{ meal_p.avg_check_rub }}₽</div>
                     </div>
-                    <button class="show-simular-spots peer-checked:flex btn-secondary w-fit flex-start hidden bottom-0"
+                    <button class="btn bg-primary show-simular-spots peer-checked:flex btn-secondary w-fit flex-start hidden bottom-0"
                             hx-get="/api/meal_place/{{ meal_p.id }}/get_simulars?day-order={{ day.day_order }}&meal-type={{ segment.meal_type }}"
                             hx-target="#similar-spots-block">Найти еще заведения</button>
                   </div>
