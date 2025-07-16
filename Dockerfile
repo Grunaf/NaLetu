@@ -8,11 +8,10 @@ RUN npm run build
 FROM python:3.12-slim
 
 WORKDIR /app
-COPY --from=build /app/flaskr/static/assets_compiled/bundled/ /app/flaskr/static/assets_compiled/bundled
-
+COPY --from=build /app/flaskr/static/assets_compiled/ /app/flaskr/static/assets_compiled/
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
 COPY . .
 
-CMD ["python3", "-m", "gunicorn", "-c gunicorn.conf.py", "app:app"]
+CMD ["python3", "-m", "gunicorn", "-c", "./gunicorn.conf.py", "app:app"]
