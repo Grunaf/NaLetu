@@ -8,7 +8,7 @@ RUN npm run build
 FROM python:3.12-slim
 
 WORKDIR /app
-COPY --from=build /app/dist /app/static
+COPY --from=build /app/flaskr/static/assets_compiled/bundled/ /app/flaskr/static/assets_compiled/bundled
 
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
