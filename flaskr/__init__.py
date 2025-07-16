@@ -15,7 +15,6 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 from config import ENV, IS_DEV, Config
 from flaskr.db.travelers import create_traveler_db
 from flaskr.jinja_filters import setup_filters
-from shell import reset_db
 
 from flaskr.constants import DEFAULT_CITY_SLUG, ENDPOINTS
 from flaskr.db.cities import get_all_cities, get_city_by_slug
@@ -49,6 +48,10 @@ def configure_app(app, test_config):
     if len(test_config) == 0:
         if IS_DEV:
             app.config.from_object("config.DevConfig")
+
+            from shell import reset_db
+
+            app.cli.add_command(reset_db)
         else:
             app.config.from_object("config.ProdConfig")
     else:
@@ -97,8 +100,6 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
     )
 
     app.register_blueprint(swaggerui_blueprint)
-
-    app.cli.add_command(reset_db)
 
     @app.context_processor
     def inject_common_vars() -> Dict[str, Any]:
