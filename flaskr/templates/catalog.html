@@ -2,7 +2,9 @@
 {% extends 'base.html' %}
 {% block title %}Главная{% endblock %}
 {% block script %}
-  <script defer type="module" src="{{asset('js/catalog/departure_city.js')}}"></script>
+  {% if is_dev %}
+    <script defer type="module" src="{{asset('js/catalog/departure_city.js')}}"></script>
+  {% endif %}
   <script defer type="module" src="{{asset('js/catalog/catalog.js')}}"></script>
 {% endblock script %}
 {% block content %}

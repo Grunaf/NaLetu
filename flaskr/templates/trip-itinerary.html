@@ -16,13 +16,14 @@
   <script src="https://api-maps.yandex.ru/2.1/?lang=en_RU&amp;apikey=4410e526-6ed4-4303-af5b-e6be145e2460"
           type="text/javascript"></script>
   <script src="https://rawcdn.githack.com/shramov/leaflet-plugins/master/layer/tile/Yandex.js"></script>
-  <script defer type="module" src="{{asset('js/constants.js')}}"></script>
-  <script defer type="module" src="{{asset('js/itinerary/variables.js')}}"></script>
-  <script defer type="module" src="{{asset('js/itinerary/init_map.js')}}"></script>
-  <script defer type="module" src="{{asset('js/itinerary/leaflet.js')}}"></script>
-  <script defer type="module" src="{{asset('js/itinerary/transport.js')}}"></script>
-  <script defer type="module" src="{{asset('js/itinerary/budget.js')}}"></script>
-  <script defer type="module" src="{{asset('js/itinerary/utils.js')}}"></script>
+  {% if is_dev %}
+    <script defer type="module" src="{{asset('js/itinerary/variables.js')}}"></script>
+    <script defer type="module" src="{{asset('js/itinerary/init_map.js')}}"></script>
+    <script defer type="module" src="{{asset('js/itinerary/leaflet.js')}}"></script>
+    <script defer type="module" src="{{asset('js/itinerary/transport.js')}}"></script>
+    <script defer type="module" src="{{asset('js/itinerary/budget.js')}}"></script>
+    <script defer type="module" src="{{asset('js/itinerary/utils.js')}}"></script>
+  {% endif %}
   <script defer type="module" src="{{asset('js/itinerary/trip-itinerary.js')}}"></script>
 {% endblock script %}
 {% block body %}

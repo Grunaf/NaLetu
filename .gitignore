@@ -67,3 +67,5 @@ plan_travel.json
 .mypy_cache/
 dmypy.json
 mypy-report/
+
+flaskr/static/assets_compiled/

@@ -12,14 +12,13 @@
           href="{{ url_for('static', filename='img/favicon.png') }}">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
           rel="stylesheet">
+    {% if is_dev %}
+      <script defer type="module" src="{{ url_for('static', filename='js/constants.js')}}"></script>
+    {% endif %}
     <script defer type="module" src="{{ asset('js/main.js')}}"></script>
-    <script defer
-            type="module"
-            src="{{ url_for('static', filename='js/constants.js')}}"></script>
     {% block script %}
     {% endblock script %}
-    <link rel="stylesheet"
-          href="{{ asset('styles/styles.css') }}">
+    <link rel="stylesheet" href="{{ asset('styles/styles.css') }}">
     {% block styles %}
     {% endblock styles %}
   </head>

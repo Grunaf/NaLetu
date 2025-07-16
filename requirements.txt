@@ -50,5 +50,7 @@ greenlet==3.2.2
 shortuuid==1.0.13
 python-slugify==8.0.4
 limits==5.4.0
+regex==2024.11.6
 
 sentry-sdk[flask]==2.32
+gunicorn==23.0.0

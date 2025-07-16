@@ -11,7 +11,6 @@ services:
       - .env
     depends_on:
       - db
-    command: ["python3", "-m", "flask", "run", "--host=0.0.0.0"]
     deploy:
       resources:
         limits:
