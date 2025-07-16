@@ -1,7 +1,10 @@
 <!-- templates/index.html -->
 {% extends 'base.html' %}
 {% block title %}Главная{% endblock %}
-{% block script %}<script defer type="module" src="{{asset('js/catalog.js')}}"></script>{% endblock %}
+{% block script %}
+  <script defer type="module" src="{{asset('js/catalog/departure_city.js')}}"></script>
+  <script defer type="module" src="{{asset('js/catalog/catalog.js')}}"></script>
+{% endblock script %}
 {% block content %}
   <h1 class="-mb-4">Куда поедем?</h1>
   {% set session_len = sessions | length %}

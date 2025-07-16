@@ -19,6 +19,18 @@
         </div>
       {% endmacro %}
       {{ choosed_city(user_city) }}
+      <div class="flex flex-col gap-2 absolute right-[-20px] mt-2 p-4 w-66 top-full origin-top-right rounded-xl bg-white shadow-xl z-50 hidden"
+           id="prompt-choose-city">
+        <div class="flex flex-col   ">
+          <span>Ваш город <span class="font-bold">{{ user_city.name }}</span>?</span>
+          <span>Покажем маршруты рядом</span>
+        </div>
+        <div class="flex gap-2">
+          <button class="grow-1 px-4 py-2 rounded-xl bg-primary text-white"
+                  id="prompt-hide">Все верно</button>
+          <button class="grow-1 px-4 py-2 rounded-xl bg-gray-200" id="choose-city">Изменить</button>
+        </div>
+      </div>
       <div class="cities-modal flex flex-col gap-2 absolute right-0 mt-2 p-3 w-48 top-full origin-top-right rounded-xl bg-white shadow-lg z-50 hidden">
         {% for city in cities %}
           <div class="item"

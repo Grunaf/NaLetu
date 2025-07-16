@@ -1,18 +1,10 @@
-import { alert } from "./main.js";
-import { SERVER_ERROR } from "./constants.js";
+import { alert } from "../main.js";
+import { SERVER_ERROR } from "../constants.js";
+import { handleDepartureCity } from "./departure_city.js";
 
 const checkedCityName = document.getElementById("cityName");
-const citiesModal = document.getElementsByClassName("cities-modal")[0];
-const departureCity = document.getElementById("departureCity");
-departureCity.addEventListener("click", async () => {
-  citiesModal.classList.remove("hidden");
-});
-Array.from(citiesModal.children).forEach(element => {
-  element.onclick = async () => {
-    const citySlug = element.dataset.citySlug;
-    window.location.assign(`/city/${citySlug}/routes`);
-  };
-});
+
+handleDepartureCity();
 
 Array.from(document.getElementsByClassName("btn-to-itinerary")).forEach(
   element => {
