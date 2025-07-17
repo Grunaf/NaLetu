@@ -1,7 +1,19 @@
 import os
+from typing import NoReturn
 
 ENV = os.getenv("FLASK_ENV", "dev")
 IS_DEV = ENV == "dev"
+
+
+def fail_missing_env(var_name: str) -> NoReturn:
+    raise RuntimeError(f"Переменная {var_name} не указана")
+
+
+def get_required_env(var_name) -> str:
+    value = os.getenv(var_name)
+    if value is None:
+        fail_missing_env(var_name)
+    return value
 
 
 class Config:
@@ -37,6 +49,8 @@ class Config:
     SENTRY_DSN = os.getenv("SENTRY_DSN")
 
     DEFAULT_TIMEZONE = os.getenv("DEFAULT_TIMEZONE")
+
+    DEFAULT_CITY_SLUG: str = get_required_env("DEFAULT_CITY_SLUG")
 
 
 class DevConfig(Config):

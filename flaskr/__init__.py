@@ -16,7 +16,7 @@ from config import ENV, IS_DEV, Config
 from flaskr.db.travelers import create_traveler_db
 from flaskr.jinja_filters import setup_filters
 
-from flaskr.constants import DEFAULT_CITY_SLUG, ENDPOINTS
+from flaskr.constants import ENDPOINTS
 from flaskr.db.cities import get_all_cities, get_city_by_slug
 from flaskr.db.staff import get_staff
 
@@ -106,7 +106,7 @@ def create_app(test_config: Dict[str, Any] = {}) -> Flask:
         if fk_session.get("user_city"):
             user_city = fk_session.get("user_city")
         else:
-            default_city = get_city_by_slug(DEFAULT_CITY_SLUG)
+            default_city = get_city_by_slug(Config.DEFAULT_CITY_SLUG)
             user_city = CityRead.model_validate(default_city).model_dump()
 
         return {

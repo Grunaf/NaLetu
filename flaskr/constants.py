@@ -12,7 +12,6 @@ START_DINNER_TIME = datetime.time(16)
 
 MAX_PARTICIPANT_COUNT = 5
 RADIUS_SEARCH_ROUTES_IN_METERS = 200000
-DEFAULT_CITY_SLUG = "kazan"
 
 CITY_NOT_FOUND = "Город не найден"
 SESSION_NOT_FOUND = "Сессия указанная в ссылке не найдена"

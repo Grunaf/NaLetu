@@ -16,7 +16,6 @@ from werkzeug.wrappers.response import Response
 from config import Config
 from flaskr.constants import (
     CITY_NOT_FOUND,
-    DEFAULT_CITY_SLUG,
     INVALID_INVITE,
     INVITE_NOT_FOUND,
     PARTIAL_VOTES,
@@ -61,6 +60,7 @@ from flaskr.services.voting import (
 from flaskr.utils import format_transports
 
 YA_MAP_API_KEY = Config.YA_MAP_API_KEY
+DEFAULT_CITY_SLUG = Config.DEFAULT_CITY_SLUG
 
 mod = Blueprint("views", __name__)
 
